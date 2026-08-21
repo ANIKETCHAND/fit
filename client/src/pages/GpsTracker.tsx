@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, LoaderCircle, MapPinned, Navigation, Pause, Play, Radio, Route, Save, Timer, Trash2, Waves, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Crosshair, LoaderCircle, MapPinned, Navigation, Pause, Play, Radio, Route, Save, Timer, Trash2, Waves } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
@@ -79,7 +79,7 @@ export default function GpsTracker() {
   const activePoint = isTracking ? livePoints[livePoints.length - 1] : undefined;
   const mapLabel = mapState === "loading" ? "Initializing map" : isTracking ? "Live GPS capture active" : displayedPoints.length ? "Saved route replay" : userLocationInfo ? "GPS Position Locked" : "Ready for field capture";
 
-  const addPoint = (position: GeolocationPosition) => {
+  const addPoint = useCallback((position: GeolocationPosition) => {
     const pt: RoutePoint = {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
@@ -93,14 +93,14 @@ export default function GpsTracker() {
       accuracy: position.coords.accuracy,
     });
     setLivePoints((current) => [...current, pt]);
-  };
+  }, []);
 
-  const endTraceOnError = (error: GeolocationPositionError) => {
+  const endTraceOnError = useCallback((error: GeolocationPositionError) => {
     if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     watchIdRef.current = null;
     setIsTracking(false);
     setCaptureError(locationMessage(error));
-  };
+  }, []);
 
   const beginTracking = () => {
     if (!navigator.geolocation) {
@@ -175,6 +175,22 @@ export default function GpsTracker() {
     });
   };
 
+  const handleLoadingChange = useCallback((loading: boolean) => {
+    setMapState(loading ? "loading" : "ready");
+  }, []);
+
+  const handleMapReady = useCallback(() => {
+    setMapState("ready");
+  }, []);
+
+  const handleMapError = useCallback(() => {
+    setMapState("error");
+  }, []);
+
+  const handleLocationFound = useCallback((lat: number, lng: number, accuracy: number) => {
+    setUserLocationInfo({ lat, lng, accuracy });
+  }, []);
+
   return (
     <WorkflowLayout kicker="GPS / movement trace" title="Route your training signal" detail="Capture an outdoor movement route, inspect the telemetry, and save the completed trace to your athlete history.">
       <motion.section className="gps-command-deck" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
@@ -194,10 +210,10 @@ export default function GpsTracker() {
             <RouteMap
               points={displayedPoints}
               activePoint={activePoint}
-              onMapLoadingChange={(loading) => setMapState(loading ? "loading" : "ready")}
-              onMapReady={() => setMapState("ready")}
-              onMapError={() => setMapState("error")}
-              onLocationFound={(lat, lng, accuracy) => setUserLocationInfo({ lat, lng, accuracy })}
+              onMapLoadingChange={handleLoadingChange}
+              onMapReady={handleMapReady}
+              onMapError={handleMapError}
+              onLocationFound={handleLocationFound}
             />
             <div className="gps-map-corners">
               <span>LAT / LON</span>

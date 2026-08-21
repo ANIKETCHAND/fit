@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { MapView, UnifiedMapInstance } from "@/components/Map";
 import type { RoutePoint } from "@shared/fitness-contract";
 
@@ -21,7 +21,7 @@ export function RouteMap({
 }: RouteMapProps) {
   const mapInstanceRef = useRef<UnifiedMapInstance | null>(null);
 
-  // Sync route whenever points or activePoint changes
+  // Sync route points without causing any map re-initialization
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -37,6 +37,23 @@ export function RouteMap({
     mapInstanceRef.current.setRoute(formattedPoints, formattedActive);
   }, [points, activePoint]);
 
+  const handleMapReady = useCallback((instance: UnifiedMapInstance) => {
+    mapInstanceRef.current = instance;
+
+    if (points.length) {
+      const formattedPoints = points.map((p) => ({
+        lat: p.latitude,
+        lng: p.longitude,
+      }));
+      const formattedActive = activePoint
+        ? { lat: activePoint.latitude, lng: activePoint.longitude }
+        : undefined;
+      instance.setRoute(formattedPoints, formattedActive);
+    }
+
+    onMapReady?.();
+  }, []);
+
   return (
     <MapView
       className="gps-google-map"
@@ -46,22 +63,7 @@ export function RouteMap({
       onLocationFound={onLocationFound}
       onMapLoadingChange={onMapLoadingChange}
       onMapError={onMapError}
-      onMapReady={(instance) => {
-        mapInstanceRef.current = instance;
-
-        if (points.length) {
-          const formattedPoints = points.map((p) => ({
-            lat: p.latitude,
-            lng: p.longitude,
-          }));
-          const formattedActive = activePoint
-            ? { lat: activePoint.latitude, lng: activePoint.longitude }
-            : undefined;
-          instance.setRoute(formattedPoints, formattedActive);
-        }
-
-        onMapReady?.();
-      }}
+      onMapReady={handleMapReady}
     />
   );
 }
