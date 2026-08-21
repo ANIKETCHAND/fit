@@ -1,188 +1,594 @@
-/**
- * GOOGLE MAPS FRONTEND INTEGRATION - ESSENTIAL GUIDE
- *
- * USAGE FROM PARENT COMPONENT:
- * ======
- *
- * const mapRef = useRef<google.maps.Map | null>(null);
- *
- * <MapView
- *   initialCenter={{ lat: 40.7128, lng: -74.0060 }}
- *   initialZoom={15}
- *   onMapReady={(map) => {
- *     mapRef.current = map; // Store to control map from parent anytime, google map itself is in charge of the re-rendering, not react state.
- * </MapView>
- *
- * ======
- * Available Libraries and Core Features:
- * -------------------------------
- * 📍 MARKER (from `marker` library)
- * - Attaches to map using { map, position }
- * new google.maps.marker.AdvancedMarkerElement({
- *   map,
- *   position: { lat: 37.7749, lng: -122.4194 },
- *   title: "San Francisco",
- * });
- *
- * -------------------------------
- * 🏢 PLACES (from `places` library)
- * - Does not attach directly to map; use data with your map manually.
- * const place = new google.maps.places.Place({ id: PLACE_ID });
- * await place.fetchFields({ fields: ["displayName", "location"] });
- * map.setCenter(place.location);
- * new google.maps.marker.AdvancedMarkerElement({ map, position: place.location });
- *
- * -------------------------------
- * 🧭 GEOCODER (from `geocoding` library)
- * - Standalone service; manually apply results to map.
- * const geocoder = new google.maps.Geocoder();
- * geocoder.geocode({ address: "New York" }, (results, status) => {
- *   if (status === "OK" && results[0]) {
- *     map.setCenter(results[0].geometry.location);
- *     new google.maps.marker.AdvancedMarkerElement({
- *       map,
- *       position: results[0].geometry.location,
- *     });
- *   }
- * });
- *
- * -------------------------------
- * 📐 GEOMETRY (from `geometry` library)
- * - Pure utility functions; not attached to map.
- * const dist = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
- *
- * -------------------------------
- * 🛣️ ROUTES (from `routes` library)
- * - Combines DirectionsService (standalone) + DirectionsRenderer (map-attached)
- * const directionsService = new google.maps.DirectionsService();
- * const directionsRenderer = new google.maps.DirectionsRenderer({ map });
- * directionsService.route(
- *   { origin, destination, travelMode: "DRIVING" },
- *   (res, status) => status === "OK" && directionsRenderer.setDirections(res)
- * );
- *
- * -------------------------------
- * 🌦️ MAP LAYERS (attach directly to map)
- * - new google.maps.TrafficLayer().setMap(map);
- * - new google.maps.TransitLayer().setMap(map);
- * - new google.maps.BicyclingLayer().setMap(map);
- *
- * -------------------------------
- * ✅ SUMMARY
- * - “map-attached” → AdvancedMarkerElement, DirectionsRenderer, Layers.
- * - “standalone” → Geocoder, DirectionsService, DistanceMatrixService, ElevationService.
- * - “data-only” → Place, Geometry utilities.
- */
-
 /// <reference types="@types/google.maps" />
 
-import { useEffect, useRef, useState } from "react";
-import { usePersistFn } from "@/hooks/usePersistFn";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Crosshair, Loader2, Navigation, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
     google?: typeof google;
+    L?: any;
+    __mapsScriptLoading?: Promise<void>;
+    __leafletScriptLoading?: Promise<void>;
   }
 }
 
-const API_KEY = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-const FORGE_BASE_URL =
-  import.meta.env.VITE_FRONTEND_FORGE_API_URL ||
-  "https://forge.butterfly-effect.dev";
-const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
+export type MapEngine = "google" | "leaflet";
 
-function loadMapScript(): Promise<void> {
+export interface UnifiedMapInstance {
+  engine: MapEngine;
+  googleMap?: google.maps.Map;
+  leafletMap?: any;
+  setCenter: (lat: number, lng: number, zoom?: number) => void;
+  setRoute: (points: { lat: number; lng: number }[], activePoint?: { lat: number; lng: number }) => void;
+  setUserLocation: (lat: number, lng: number, accuracy?: number) => void;
+  clearLocation: () => void;
+}
+
+export interface MapViewProps {
+  className?: string;
+  initialCenter?: { lat: number; lng: number };
+  initialZoom?: number;
+  onMapReady?: (mapInstance: UnifiedMapInstance) => void;
+  onMapError?: (error?: string) => void;
+  onMapLoadingChange?: (isLoading: boolean) => void;
+  showMyLocation?: boolean;
+  onLocationFound?: (lat: number, lng: number, accuracy: number) => void;
+}
+
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+
+function loadGoogleMaps(): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
+  if (!GOOGLE_API_KEY) return Promise.reject(new Error("No Google Maps API Key configured"));
+  if (window.__mapsScriptLoading) return window.__mapsScriptLoading;
 
-  return new Promise((resolve, reject) => {
+  window.__mapsScriptLoading = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&v=weekly&libraries=marker,places,geometry`;
     script.async = true;
-    script.crossOrigin = "anonymous";
-    script.onload = () => {
-      resolve();
-    };
+    script.defer = true;
+    script.onload = () => resolve();
     script.onerror = () => {
       script.remove();
-      reject(new Error("Google Maps could not be loaded"));
+      window.__mapsScriptLoading = undefined;
+      reject(new Error("Failed to load Google Maps script"));
     };
     document.head.appendChild(script);
   });
+
+  return window.__mapsScriptLoading;
 }
 
-interface MapViewProps {
-  className?: string;
-  initialCenter?: google.maps.LatLngLiteral;
-  initialZoom?: number;
-  onMapReady?: (map: google.maps.Map) => void;
-  onMapError?: () => void;
-  onMapLoadingChange?: (isLoading: boolean) => void;
+function loadLeaflet(): Promise<void> {
+  if (window.L) return Promise.resolve();
+  if (window.__leafletScriptLoading) return window.__leafletScriptLoading;
+
+  window.__leafletScriptLoading = new Promise((resolve, reject) => {
+    // Load Leaflet CSS
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+
+    // Load Leaflet JS
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      script.remove();
+      window.__leafletScriptLoading = undefined;
+      reject(new Error("Failed to load Leaflet script"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return window.__leafletScriptLoading;
 }
 
 export function MapView({
   className,
-  initialCenter = { lat: 37.7749, lng: -122.4194 },
-  initialZoom = 12,
+  initialCenter = { lat: 28.6139, lng: 77.209 },
+  initialZoom = 14,
   onMapReady,
   onMapError,
   onMapLoadingChange,
+  showMyLocation = true,
+  onLocationFound,
 }: MapViewProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<google.maps.Map | null>(null);
-  const [mapError, setMapError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<UnifiedMapInstance | null>(null);
 
-  const init = usePersistFn(async () => {
-    setMapError(false);
+  // Google references
+  const googleMapRef = useRef<google.maps.Map | null>(null);
+  const googleLocMarkerRef = useRef<google.maps.Marker | null>(null);
+  const googleLocCircleRef = useRef<google.maps.Circle | null>(null);
+  const googleRouteLineRef = useRef<google.maps.Polyline | null>(null);
+  const googleRouteHaloRef = useRef<google.maps.Polyline | null>(null);
+  const googleMarkersRef = useRef<google.maps.Marker[]>([]);
+
+  // Leaflet references
+  const leafletMapRef = useRef<any>(null);
+  const leafletLocMarkerRef = useRef<any>(null);
+  const leafletLocCircleRef = useRef<any>(null);
+  const leafletRouteLineRef = useRef<any>(null);
+  const leafletRouteHaloRef = useRef<any>(null);
+  const leafletMarkersRef = useRef<any[]>([]);
+
+  const [engine, setEngine] = useState<MapEngine>("leaflet");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+
+  const initGoogleMap = useCallback((container: HTMLDivElement) => {
+    const maps = window.google!.maps;
+    const gmap = new maps.Map(container, {
+      zoom: initialZoom,
+      center: initialCenter,
+      disableDefaultUI: false,
+      zoomControl: true,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: true,
+      gestureHandling: "greedy",
+      styles: [
+        { elementType: "geometry", stylers: [{ color: "#0d1310" }] },
+        { elementType: "labels.text.stroke", stylers: [{ color: "#0d1310" }] },
+        { elementType: "labels.text.fill", stylers: [{ color: "#8b9c8a" }] },
+        { featureType: "road", elementType: "geometry", stylers: [{ color: "#1b2620" }] },
+        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#121b16" }] },
+        { featureType: "water", elementType: "geometry", stylers: [{ color: "#081014" }] },
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+      ],
+    });
+    googleMapRef.current = gmap;
+
+    const instance: UnifiedMapInstance = {
+      engine: "google",
+      googleMap: gmap,
+      setCenter: (lat, lng, zoom) => {
+        gmap.setCenter({ lat, lng });
+        if (zoom) gmap.setZoom(zoom);
+      },
+      setUserLocation: (lat, lng, accuracy) => {
+        if (googleLocMarkerRef.current) googleLocMarkerRef.current.setMap(null);
+        if (googleLocCircleRef.current) googleLocCircleRef.current.setMap(null);
+
+        googleLocMarkerRef.current = new maps.Marker({
+          position: { lat, lng },
+          map: gmap,
+          title: "Your Location",
+          zIndex: 1000,
+          icon: {
+            path: maps.SymbolPath.CIRCLE,
+            fillColor: "#c6ff3d",
+            fillOpacity: 1,
+            strokeColor: "#080c0a",
+            strokeWeight: 3,
+            scale: 9,
+          },
+        });
+
+        if (accuracy && accuracy < 5000) {
+          googleLocCircleRef.current = new maps.Circle({
+            map: gmap,
+            center: { lat, lng },
+            radius: accuracy,
+            fillColor: "#c6ff3d",
+            fillOpacity: 0.12,
+            strokeColor: "#c6ff3d",
+            strokeOpacity: 0.4,
+            strokeWeight: 1,
+          });
+        }
+      },
+      clearLocation: () => {
+        if (googleLocMarkerRef.current) googleLocMarkerRef.current.setMap(null);
+        if (googleLocCircleRef.current) googleLocCircleRef.current.setMap(null);
+      },
+      setRoute: (points, activePoint) => {
+        if (googleRouteLineRef.current) googleRouteLineRef.current.setMap(null);
+        if (googleRouteHaloRef.current) googleRouteHaloRef.current.setMap(null);
+        googleMarkersRef.current.forEach((m) => m.setMap(null));
+        googleMarkersRef.current = [];
+
+        if (!points.length) return;
+
+        const path = points.map((p) => ({ lat: p.lat, lng: p.lng }));
+
+        if (path.length > 1) {
+          googleRouteHaloRef.current = new maps.Polyline({
+            path,
+            strokeColor: "#a6d9ff",
+            strokeOpacity: 0.25,
+            strokeWeight: 8,
+            map: gmap,
+          });
+
+          googleRouteLineRef.current = new maps.Polyline({
+            path,
+            strokeColor: "#c6ff3d",
+            strokeOpacity: 0.95,
+            strokeWeight: 4,
+            map: gmap,
+          });
+
+          const bounds = new maps.LatLngBounds();
+          path.forEach((pos) => bounds.extend(pos));
+          gmap.fitBounds(bounds, 50);
+        } else {
+          gmap.setCenter(path[0]);
+          gmap.setZoom(16);
+        }
+
+        // Start marker
+        const startMarker = new maps.Marker({
+          position: path[0],
+          map: gmap,
+          label: { text: "S", color: "#080a09", fontWeight: "700" },
+          icon: {
+            path: maps.SymbolPath.CIRCLE,
+            fillColor: "#c6ff3d",
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeWeight: 1.5,
+            scale: 8,
+          },
+        });
+        googleMarkersRef.current.push(startMarker);
+
+        // End marker
+        if (path.length > 1) {
+          const endMarker = new maps.Marker({
+            position: path[path.length - 1],
+            map: gmap,
+            label: { text: "E", color: "#071116", fontWeight: "700" },
+            icon: {
+              path: maps.SymbolPath.CIRCLE,
+              fillColor: "#a6d9ff",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 1.5,
+              scale: 8,
+            },
+          });
+          googleMarkersRef.current.push(endMarker);
+        }
+
+        // Active point
+        if (activePoint) {
+          const activeMarker = new maps.Marker({
+            position: { lat: activePoint.lat, lng: activePoint.lng },
+            map: gmap,
+            icon: {
+              path: maps.SymbolPath.CIRCLE,
+              fillColor: "#c6ff3d",
+              fillOpacity: 1,
+              strokeColor: "#080c0a",
+              strokeWeight: 4,
+              scale: 11,
+            },
+          });
+          googleMarkersRef.current.push(activeMarker);
+        }
+      },
+    };
+
+    mapInstanceRef.current = instance;
+    onMapReady?.(instance);
+  }, [initialCenter, initialZoom, onMapReady]);
+
+  const initLeafletMap = useCallback((container: HTMLDivElement) => {
+    const L = window.L!;
+    if (leafletMapRef.current) {
+      leafletMapRef.current.remove();
+    }
+
+    const lmap = L.map(container, {
+      center: [initialCenter.lat, initialCenter.lng],
+      zoom: initialZoom,
+      zoomControl: true,
+      attributionControl: false,
+    });
+
+    // Dark-themed tiles (CartoDB Dark Matter)
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19,
+      subdomains: "abcd",
+    }).addTo(lmap);
+
+    leafletMapRef.current = lmap;
+
+    const instance: UnifiedMapInstance = {
+      engine: "leaflet",
+      leafletMap: lmap,
+      setCenter: (lat, lng, zoom) => {
+        lmap.setView([lat, lng], zoom || lmap.getZoom());
+      },
+      setUserLocation: (lat, lng, accuracy) => {
+        if (leafletLocMarkerRef.current) lmap.removeLayer(leafletLocMarkerRef.current);
+        if (leafletLocCircleRef.current) lmap.removeLayer(leafletLocCircleRef.current);
+
+        const customIcon = L.divIcon({
+          className: "gps-user-loc-beacon",
+          html: `<div style="width:18px;height:18px;background:#c6ff3d;border:3px solid #080c0a;border-radius:50%;box-shadow:0 0 14px #c6ff3d, 0 0 0 4px rgba(198,255,61,0.25);"></div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+        });
+
+        leafletLocMarkerRef.current = L.marker([lat, lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(lmap);
+
+        if (accuracy && accuracy < 5000) {
+          leafletLocCircleRef.current = L.circle([lat, lng], {
+            radius: accuracy,
+            color: "#c6ff3d",
+            weight: 1,
+            fillColor: "#c6ff3d",
+            fillOpacity: 0.12,
+          }).addTo(lmap);
+        }
+      },
+      clearLocation: () => {
+        if (leafletLocMarkerRef.current) lmap.removeLayer(leafletLocMarkerRef.current);
+        if (leafletLocCircleRef.current) lmap.removeLayer(leafletLocCircleRef.current);
+      },
+      setRoute: (points, activePoint) => {
+        if (leafletRouteLineRef.current) lmap.removeLayer(leafletRouteLineRef.current);
+        if (leafletRouteHaloRef.current) lmap.removeLayer(leafletRouteHaloRef.current);
+        leafletMarkersRef.current.forEach((m) => lmap.removeLayer(m));
+        leafletMarkersRef.current = [];
+
+        if (!points.length) return;
+
+        const latlngs = points.map((p) => [p.lat, p.lng] as [number, number]);
+
+        if (latlngs.length > 1) {
+          leafletRouteHaloRef.current = L.polyline(latlngs, {
+            color: "#a6d9ff",
+            weight: 8,
+            opacity: 0.25,
+          }).addTo(lmap);
+
+          leafletRouteLineRef.current = L.polyline(latlngs, {
+            color: "#c6ff3d",
+            weight: 4,
+            opacity: 0.95,
+          }).addTo(lmap);
+
+          lmap.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] });
+        } else {
+          lmap.setView(latlngs[0], 16);
+        }
+
+        // Start Icon
+        const startIcon = L.divIcon({
+          className: "gps-start-node",
+          html: `<div style="width:20px;height:20px;background:#c6ff3d;color:#080c0a;font-weight:700;font-size:11px;line-height:20px;text-align:center;border-radius:50%;border:2px solid #ffffff;">S</div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+        const startMarker = L.marker(latlngs[0], { icon: startIcon }).addTo(lmap);
+        leafletMarkersRef.current.push(startMarker);
+
+        // End Icon
+        if (latlngs.length > 1) {
+          const endIcon = L.divIcon({
+            className: "gps-end-node",
+            html: `<div style="width:20px;height:20px;background:#a6d9ff;color:#080c0a;font-weight:700;font-size:11px;line-height:20px;text-align:center;border-radius:50%;border:2px solid #ffffff;">E</div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+          });
+          const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(lmap);
+          leafletMarkersRef.current.push(endMarker);
+        }
+
+        // Active Icon
+        if (activePoint) {
+          const activeIcon = L.divIcon({
+            className: "gps-active-node",
+            html: `<div style="width:22px;height:22px;background:#c6ff3d;border:4px solid #080c0a;border-radius:50%;box-shadow:0 0 16px #c6ff3d;"></div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+          });
+          const activeMarker = L.marker([activePoint.lat, activePoint.lng], { icon: activeIcon, zIndexOffset: 500 }).addTo(lmap);
+          leafletMarkersRef.current.push(activeMarker);
+        }
+      },
+    };
+
+    mapInstanceRef.current = instance;
+    onMapReady?.(instance);
+  }, [initialCenter, initialZoom, onMapReady]);
+
+  // Load Map Engine
+  useEffect(() => {
+    let isMounted = true;
     setIsLoading(true);
     onMapLoadingChange?.(true);
-    let didFail = false;
-    try {
-      await loadMapScript();
-      if (!mapContainer.current || !window.google?.maps) {
-        throw new Error("Map container or Maps SDK was unavailable");
+
+    async function setup() {
+      if (!containerRef.current) return;
+
+      // Try Google Maps if API key is provided
+      if (GOOGLE_API_KEY) {
+        try {
+          await loadGoogleMaps();
+          if (isMounted && containerRef.current) {
+            setEngine("google");
+            initGoogleMap(containerRef.current);
+            setIsLoading(false);
+            onMapLoadingChange?.(false);
+            return;
+          }
+        } catch (e) {
+          console.warn("Google Maps failed to load, falling back to OpenStreetMap / Leaflet:", e);
+        }
       }
-      map.current = new window.google.maps.Map(mapContainer.current, {
-        zoom: initialZoom,
-        center: initialCenter,
-        mapTypeControl: true,
-        fullscreenControl: true,
-        zoomControl: true,
-        streetViewControl: true,
-        mapId: "DEMO_MAP_ID",
-      });
-      onMapReady?.(map.current);
-    } catch {
-      didFail = true;
-      setMapError(true);
-      onMapError?.();
-    } finally {
-      setIsLoading(false);
-      if (!didFail) onMapLoadingChange?.(false);
+
+      // Fallback: Leaflet + OpenStreetMap
+      try {
+        await loadLeaflet();
+        if (isMounted && containerRef.current) {
+          setEngine("leaflet");
+          initLeafletMap(containerRef.current);
+          setIsLoading(false);
+          onMapLoadingChange?.(false);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setErrorMessage(err.message || "Failed to initialize map");
+          setIsLoading(false);
+          onMapLoadingChange?.(false);
+          onMapError?.(err.message);
+        }
+      }
     }
-  });
 
+    setup();
+
+    return () => {
+      isMounted = false;
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
+      }
+    };
+  }, [initGoogleMap, initLeafletMap, onMapError, onMapLoadingChange]);
+
+  // Handle Location Detection
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        setCurrentCoords({ lat, lng, accuracy });
+        setIsLocating(false);
+
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter(lat, lng, 16);
+          mapInstanceRef.current.setUserLocation(lat, lng, accuracy);
+        }
+
+        onLocationFound?.(lat, lng, accuracy);
+      },
+      (err) => {
+        setIsLocating(false);
+        let msg = "Could not retrieve GPS location.";
+        if (err.code === err.PERMISSION_DENIED) {
+          msg = "Location permission denied. Please enable location access in your browser.";
+        } else if (err.code === err.TIMEOUT) {
+          msg = "GPS request timed out. Please try again.";
+        }
+        alert(msg);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  }, [onLocationFound]);
+
+  // Auto-locate once on first load if permitted
   useEffect(() => {
-    init();
-  }, [init]);
+    if (showMyLocation && !isLoading && !errorMessage) {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => {
+          const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+          setCurrentCoords({ lat, lng, accuracy });
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setCenter(lat, lng, 15);
+            mapInstanceRef.current.setUserLocation(lat, lng, accuracy);
+          }
+          onLocationFound?.(lat, lng, accuracy);
+        },
+        () => {}, // ignore silent failure
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+  }, [isLoading, errorMessage, showMyLocation, onLocationFound]);
 
-  return <div ref={mapContainer} className={cn("relative w-full h-[500px] overflow-hidden", className)}>
-    {!mapError && isLoading && <div className="map-service-loading absolute inset-0 z-10 grid place-items-center bg-[#090d0b]/96 px-6 text-center text-[#edf4e9]" role="status" aria-live="polite">
-      <div className="max-w-xs border border-[#a6d9ff]/25 bg-[#0d1511]/90 px-6 py-5 shadow-[0_0_42px_rgba(166,217,255,0.08)]">
-        <span className="mb-3 inline-block font-mono text-[10px] tracking-[0.22em] text-[#a6d9ff]">MAP LINK / INITIALIZING</span>
-        <div className="mx-auto mb-3 flex w-16 gap-1.5" aria-hidden="true"><i className="h-1 flex-1 animate-pulse bg-[#a6d9ff]" /><i className="h-1 flex-1 animate-pulse bg-[#a6d9ff] [animation-delay:120ms]" /><i className="h-1 flex-1 animate-pulse bg-[#a6d9ff] [animation-delay:240ms]" /></div>
-        <strong className="block font-semibold tracking-wide">Calibrating field telemetry</strong>
-        <p className="mt-2 text-sm leading-6 text-[#9eab9c]">Secure map tiles and route controls are being prepared.</p>
-      </div>
-    </div>}
-    {mapError && <div className="map-service-unavailable absolute inset-0 z-10 grid place-items-center bg-[#090d0b] px-6 text-center text-[#edf4e9]">
-      <div className="max-w-xs border border-[#c6ff3d]/25 bg-[#0d1511]/90 px-6 py-5 shadow-[0_0_42px_rgba(198,255,61,0.08)]">
-        <span className="mb-3 inline-block font-mono text-[10px] tracking-[0.22em] text-[#c6ff3d]">MAP SIGNAL / DEGRADED</span>
-        <strong className="block font-semibold tracking-wide">Route telemetry remains available</strong>
-        <p className="mt-2 text-sm leading-6 text-[#9eab9c]">The live map layer is temporarily unavailable. Your capture controls and saved route telemetry remain intact.</p>
-        <button type="button" onClick={() => void init()} className="mt-4 border border-[#c6ff3d]/35 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#c6ff3d] transition hover:bg-[#c6ff3d]/10 active:scale-[0.97]">Retry map link</button>
-      </div>
-    </div>}
-  </div>;
+  return (
+    <div className={cn("relative w-full h-[460px] overflow-hidden bg-[#080c0a] rounded-lg", className)}>
+      <div ref={containerRef} className="absolute inset-0 w-full h-full z-0" />
+
+      {/* Floating My Location Button & Radar */}
+      {showMyLocation && !isLoading && !errorMessage && (
+        <div className="absolute bottom-5 right-4 z-20 flex flex-col items-end gap-2">
+          {currentCoords && (
+            <div className="bg-[#080c0a]/90 border border-[#c6ff3d]/30 px-3 py-1.5 rounded text-[10px] font-mono text-[#c6ff3d] shadow-lg backdrop-blur-sm">
+              LAT: {currentCoords.lat.toFixed(5)} | LON: {currentCoords.lng.toFixed(5)} (±{Math.round(currentCoords.accuracy)}m)
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleLocateMe}
+            disabled={isLocating}
+            className="flex items-center gap-2 bg-[#c6ff3d] hover:bg-[#d8ff6b] active:scale-95 text-[#080c0a] font-bold font-mono text-xs px-3.5 py-2.5 rounded shadow-[0_0_18px_rgba(198,255,61,0.4)] transition-all cursor-pointer disabled:opacity-60"
+            title="Pinpoint your current location on map"
+          >
+            {isLocating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-[#080c0a]" />
+                <span>Locating GPS...</span>
+              </>
+            ) : (
+              <>
+                <Crosshair className="w-4 h-4 text-[#080c0a]" />
+                <span>Locate Me</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Map Badge */}
+      {!isLoading && !errorMessage && (
+        <div className="absolute top-3 left-3 z-10 bg-[#080c0a]/85 border border-[#a6d9ff]/25 px-2.5 py-1 rounded text-[9px] font-mono text-[#a6d9ff] uppercase tracking-wider backdrop-blur-sm pointer-events-none">
+          {engine === "google" ? "⚡ Google Maps Live" : "🛰️ High-Precision Field Map"}
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-[#080c0a]/95 text-center px-6">
+          <div className="max-w-xs border border-[#a6d9ff]/25 bg-[#0d1511]/90 p-5 shadow-[0_0_42px_rgba(166,217,255,0.08)]">
+            <div className="flex justify-center mb-3">
+              <Navigation className="w-6 h-6 text-[#a6d9ff] animate-pulse" />
+            </div>
+            <span className="font-mono text-[10px] tracking-widest text-[#a6d9ff] block mb-2">CALIBRATING MAP LINK</span>
+            <strong className="block text-sm text-[#edf4e9] mb-1">Loading Interactive Map</strong>
+            <p className="text-xs text-[#9eab9c]">Connecting GPS telemetry and cartographic tiles...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Overlay */}
+      {errorMessage && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-[#080c0a] text-center px-6">
+          <div className="max-w-sm border border-[#ff6b6b]/30 bg-[#140d0d] p-5 shadow-lg">
+            <div className="flex justify-center mb-3 text-[#ff6b6b]">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+            <strong className="block text-sm text-[#edf4e9] mb-1">Map Loading Issue</strong>
+            <p className="text-xs text-[#ff9e9e] mb-4">{errorMessage}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="border border-[#c6ff3d]/40 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-[#c6ff3d] hover:bg-[#c6ff3d]/10 transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

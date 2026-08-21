@@ -32,9 +32,9 @@ function buildDemoRoute(): RoutePoint[] {
 }
 
 function locationMessage(error: GeolocationPositionError) {
-  if (error.code === error.PERMISSION_DENIED) return "Location permission is required to begin a live trace. Allow it in your browser, then retry.";
-  if (error.code === error.POSITION_UNAVAILABLE) return "GPS cannot find a reliable position yet. Move to an open area and retry the trace.";
-  return "GPS signal was interrupted. GPS took too long to respond; check your signal, then try the trace again.";
+  if (error.code === error.PERMISSION_DENIED) return "Location permission is required. Please allow location access in your browser, then retry.";
+  if (error.code === error.POSITION_UNAVAILABLE) return "GPS cannot find a reliable position yet. Please ensure GPS is enabled on your device.";
+  return "GPS signal was interrupted or took too long to respond. Please check your signal and retry.";
 }
 
 export default function GpsTracker() {
@@ -51,6 +51,8 @@ export default function GpsTracker() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [failedRemovalId, setFailedRemovalId] = useState<number | null>(null);
+  const [userLocationInfo, setUserLocationInfo] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [isLocatingOnly, setIsLocatingOnly] = useState(false);
   const watchIdRef = useRef<number | null>(null);
 
   const createSession = trpc.gps.create.useMutation({
@@ -75,69 +77,270 @@ export default function GpsTracker() {
   const selectedSession = savedSessions.find((session) => session.id === selectedId) ?? savedSessions[0];
   const displayedPoints = isTracking || livePoints.length ? livePoints : (selectedSession?.points ?? []);
   const activePoint = isTracking ? livePoints[livePoints.length - 1] : undefined;
-  const mapLabel = mapState === "loading" ? "Initializing map link" : mapState === "error" ? "Telemetry fallback active" : isTracking ? "Live capture active" : displayedPoints.length ? "Saved route replay" : "Awaiting field signal";
+  const mapLabel = mapState === "loading" ? "Initializing map link" : isTracking ? "Live capture active" : displayedPoints.length ? "Saved route replay" : userLocationInfo ? "GPS Location Locked" : "Awaiting field signal";
 
-  const addPoint = (position: GeolocationPosition) => setLivePoints((current) => [...current, {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-    timestampMs: position.timestamp,
-    accuracyMeters: position.coords.accuracy,
-    speedMetersPerSecond: position.coords.speed,
-  }]);
+  const addPoint = (position: GeolocationPosition) => {
+    const pt: RoutePoint = {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      timestampMs: position.timestamp,
+      accuracyMeters: position.coords.accuracy,
+      speedMetersPerSecond: position.coords.speed,
+    };
+    setUserLocationInfo({
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      accuracy: position.coords.accuracy,
+    });
+    setLivePoints((current) => [...current, pt]);
+  };
+
   const endTraceOnError = (error: GeolocationPositionError) => {
     if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     watchIdRef.current = null;
     setIsTracking(false);
     setCaptureError(locationMessage(error));
   };
+
   const beginTracking = () => {
-    if (!navigator.geolocation) { setCaptureError("This browser does not expose GPS location services. Use a supported browser or load the route simulation."); return; }
-    setCaptureError(null); setLivePoints([]); setElapsedSeconds(0); setStartedAt(Date.now()); setIsTracking(true);
+    if (!navigator.geolocation) {
+      setCaptureError("This browser does not expose GPS location services. Use a supported browser or load the route simulation.");
+      return;
+    }
+    setCaptureError(null);
+    setLivePoints([]);
+    setElapsedSeconds(0);
+    setStartedAt(Date.now());
+    setIsTracking(true);
+    toast.success("Starting GPS live tracking...");
     navigator.geolocation.getCurrentPosition(addPoint, endTraceOnError, { enableHighAccuracy: true, timeout: 12_000 });
     watchIdRef.current = navigator.geolocation.watchPosition(addPoint, endTraceOnError, { enableHighAccuracy: true, maximumAge: 3_000, timeout: 20_000 });
   };
+
   const stopTracking = () => {
     if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
-    watchIdRef.current = null; setIsTracking(false);
-  };
-  const previewSignal = () => { setCaptureError(null); setLivePoints(buildDemoRoute()); setElapsedSeconds(378); setStartedAt(Date.now() - 378_000); setIsTracking(false); toast("Simulation loaded — this route has not been saved."); };
-  const saveRoute = () => {
-    if (livePoints.length < 2 || !startedAt) { setSaveError("Capture at least two GPS points before storing a route."); return; }
-    const endedAt = new Date(livePoints[livePoints.length - 1].timestampMs);
-    const duration = Math.max(1, Math.round((endedAt.getTime() - startedAt) / 1000));
-    createSession.mutate({ label: "Movement calibration route", startedAt: new Date(startedAt), endedAt, durationSeconds: duration, distanceMeters: liveDistance, averageSpeedKph: liveDistance / duration * 3.6, points: livePoints });
+    watchIdRef.current = null;
+    setIsTracking(false);
+    toast.info("GPS tracking paused.");
   };
 
-  return <WorkflowLayout kicker="GPS / movement trace" title="Route your training signal" detail="Capture an outdoor movement route, inspect the telemetry, and save the completed trace to your athlete history.">
-    <motion.section className="gps-command-deck" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
-      <div className="gps-route-stage">
-        <div className="gps-map-head"><div><span className="panel-label">Route telemetry</span><b>{mapLabel}</b></div><span className={isTracking ? "gps-live-state active" : "gps-live-state"}><i />{isTracking ? "GPS locked" : mapState === "loading" ? "Connecting" : mapState === "error" ? "Fallback" : "Standby"}</span></div>
-        <div className="gps-map-frame">
-          <RouteMap points={displayedPoints} activePoint={activePoint} onMapLoadingChange={(loading) => setMapState(loading ? "loading" : "ready")} onMapReady={() => setMapState("ready")} onMapError={() => setMapState("error")} />
-          <div className="gps-map-corners"><span>LAT / LON</span><span>FIELD TRACE</span></div>
-          {!displayedPoints.length && mapState === "ready" && <div className="gps-map-empty"><MapPinned size={26} /><b>Position a field trace</b><span>Allow GPS access or load a labelled simulation to inspect the route console.</span></div>}
+  const checkSingleLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+    setIsLocatingOnly(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocatingOnly(false);
+        setUserLocationInfo({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        });
+        toast.success(`Location found! Precision: ±${Math.round(pos.coords.accuracy)}m`);
+      },
+      (err) => {
+        setIsLocatingOnly(false);
+        toast.error(locationMessage(err));
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const previewSignal = () => {
+    setCaptureError(null);
+    setLivePoints(buildDemoRoute());
+    setElapsedSeconds(378);
+    setStartedAt(Date.now() - 378_000);
+    setIsTracking(false);
+    toast("Simulation loaded — this route has not been saved.");
+  };
+
+  const saveRoute = () => {
+    if (livePoints.length < 2 || !startedAt) {
+      setSaveError("Capture at least two GPS points before storing a route.");
+      return;
+    }
+    const endedAt = new Date(livePoints[livePoints.length - 1].timestampMs);
+    const duration = Math.max(1, Math.round((endedAt.getTime() - startedAt) / 1000));
+    createSession.mutate({
+      label: "Movement calibration route",
+      startedAt: new Date(startedAt),
+      endedAt,
+      durationSeconds: duration,
+      distanceMeters: liveDistance,
+      averageSpeedKph: liveDistance / duration * 3.6,
+      points: livePoints,
+    });
+  };
+
+  return (
+    <WorkflowLayout kicker="GPS / movement trace" title="Route your training signal" detail="Capture an outdoor movement route, inspect the telemetry, and save the completed trace to your athlete history.">
+      <motion.section className="gps-command-deck" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
+        <div className="gps-route-stage">
+          <div className="gps-map-head">
+            <div>
+              <span className="panel-label">Route telemetry</span>
+              <b>{mapLabel}</b>
+            </div>
+            <span className={isTracking ? "gps-live-state active" : "gps-live-state"}>
+              <i />
+              {isTracking ? "GPS locked" : mapState === "loading" ? "Connecting" : userLocationInfo ? "GPS Ready" : "Standby"}
+            </span>
+          </div>
+
+          <div className="gps-map-frame">
+            <RouteMap
+              points={displayedPoints}
+              activePoint={activePoint}
+              onMapLoadingChange={(loading) => setMapState(loading ? "loading" : "ready")}
+              onMapReady={() => setMapState("ready")}
+              onMapError={() => setMapState("error")}
+              onLocationFound={(lat, lng, accuracy) => setUserLocationInfo({ lat, lng, accuracy })}
+            />
+            <div className="gps-map-corners">
+              <span>LAT / LON</span>
+              <span>FIELD TRACE</span>
+            </div>
+            {!displayedPoints.length && mapState === "ready" && !userLocationInfo && (
+              <div className="gps-map-empty">
+                <MapPinned size={26} />
+                <b>Position a field trace</b>
+                <span>Click "Check My Location" or "Start field trace" to lock GPS coordinates.</span>
+              </div>
+            )}
+          </div>
+
+          <div className="gps-metrics-strip">
+            <div>
+              <Route size={16} />
+              <span>Distance</span>
+              <b>{formatDistance(isTracking || livePoints.length ? liveDistance : selectedSession?.distanceMeters ?? 0)}</b>
+            </div>
+            <div>
+              <Timer size={16} />
+              <span>Duration</span>
+              <b>{formatDuration(isTracking || livePoints.length ? elapsedSeconds : selectedSession?.durationSeconds ?? 0)}</b>
+            </div>
+            <div>
+              <Waves size={16} />
+              <span>Avg. speed</span>
+              <b>{(isTracking || livePoints.length ? elapsedSeconds ? liveDistance / elapsedSeconds * 3.6 : 0 : selectedSession?.averageSpeedKph ?? 0).toFixed(1)} km/h</b>
+            </div>
+          </div>
         </div>
-        <div className="gps-metrics-strip"><div><Route size={16} /><span>Distance</span><b>{formatDistance(isTracking || livePoints.length ? liveDistance : selectedSession?.distanceMeters ?? 0)}</b></div><div><Timer size={16} /><span>Duration</span><b>{formatDuration(isTracking || livePoints.length ? elapsedSeconds : selectedSession?.durationSeconds ?? 0)}</b></div><div><Waves size={16} /><span>Avg. speed</span><b>{(isTracking || livePoints.length ? elapsedSeconds ? liveDistance / elapsedSeconds * 3.6 : 0 : selectedSession?.averageSpeedKph ?? 0).toFixed(1)} km/h</b></div></div>
-      </div>
-      <aside className="gps-control-bay">
-        <div className="gps-control-heading"><div className="gps-signal-orb"><Navigation size={19} /></div><div><span className="panel-label">Capture control</span><b>{isTracking ? "Movement in progress" : "Ready for route capture"}</b></div></div>
-        <p>FitTrack requests your location only while a live trace is deliberately running.</p>
-        <div className="gps-control-actions">{isTracking ? <button className="gps-primary-control stop" onClick={stopTracking}><Pause size={16} />Pause capture</button> : <button className="gps-primary-control" onClick={beginTracking}><Play size={16} />Start field trace</button>}<button className="gps-secondary-control" onClick={previewSignal}><Radio size={15} />Preview simulation</button></div>
-        {captureError && <BackendFeedback tone="error" title="GPS trace paused" detail={captureError} onRetry={beginTracking} />}
-        <div className="gps-quality"><div><Crosshair size={15} /><span>Position precision</span><b>{activePoint?.accuracyMeters ? `±${Math.round(activePoint.accuracyMeters)} m` : "Awaiting lock"}</b></div><div><Navigation size={15} /><span>Trace points</span><b>{livePoints.length || displayedPoints.length}</b></div></div>
-        <button className="gps-save-route" disabled={createSession.isPending || livePoints.length < 2} onClick={saveRoute}>{createSession.isPending ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}{createSession.isPending ? "Storing route" : "Store completed route"}</button>
-        {createSession.isPending && <BackendFeedback tone="loading" title="Secure route commit" detail="Encrypting and saving this route to your movement ledger." />}
-        {saveError && <BackendFeedback tone="error" title="Route not saved" detail={saveError} onRetry={saveRoute} />}
-        <small className="gps-privacy-note">Route coordinates are saved only after you choose to store the completed session.</small>
-      </aside>
-    </motion.section>
-    <section className="gps-history-section">
-      <div className="gps-history-title"><div><span className="panel-label">History / saved traces</span><h2>Recent movement routes</h2></div><span>{historyQuery.isLoading ? "Loading" : historyQuery.isFetching ? "Refreshing" : historyQuery.isError ? "Link interrupted" : `${savedSessions.length} secured`}</span></div>
-      <div className="gps-history-grid">
-        {historyQuery.isLoading ? <div className="gps-history-empty"><LoaderCircle className="spin" size={18} />Loading your secured routes</div> : historyQuery.isError ? <BackendFeedback tone="error" title="History unavailable" detail="Saved routes could not be synchronized. Your current unsaved trace remains available." onRetry={() => void historyQuery.refetch()} className="gps-history-feedback" /> : savedSessions.length ? savedSessions.map((session) => <article className={selectedSession?.id === session.id ? "gps-history-card selected" : "gps-history-card"} key={session.id}><button className="gps-history-select" onClick={() => setSelectedId(session.id)}><span className="gps-history-mark"><Route size={16} /></span><div><small>{new Date(session.startedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small><b>{session.label}</b><span>{formatDistance(session.distanceMeters)} · {formatDuration(session.durationSeconds)}</span></div><Navigation size={16} /></button><button className="gps-remove-route" disabled={removeSession.isPending} aria-label={`Remove ${session.label}`} onClick={() => removeSession.mutate({ id: session.id })}><Trash2 size={15} /></button></article>) : <div className="gps-history-empty"><Route size={19} />No stored routes yet. Start a field trace to build your movement ledger.</div>}
-      </div>
-      {removeSession.isPending && <BackendFeedback tone="loading" title="Route removal in progress" detail="Updating your secured movement ledger." />}
-      {removeError && <BackendFeedback tone="error" title="Route still saved" detail={removeError} onRetry={() => { if (failedRemovalId !== null) removeSession.mutate({ id: failedRemovalId }); }} />}
-    </section>
-  </WorkflowLayout>;
+
+        <aside className="gps-control-bay">
+          <div className="gps-control-heading">
+            <div className="gps-signal-orb"><Navigation size={19} /></div>
+            <div>
+              <span className="panel-label">Capture control</span>
+              <b>{isTracking ? "Movement in progress" : "Ready for route capture"}</b>
+            </div>
+          </div>
+          <p>FitTrack pinpoints your position in real-time. Use Locate Me to test GPS or Start Field Trace to record a workout.</p>
+
+          <div className="gps-control-actions">
+            {isTracking ? (
+              <button className="gps-primary-control stop" onClick={stopTracking}>
+                <Pause size={16} />Pause capture
+              </button>
+            ) : (
+              <button className="gps-primary-control" onClick={beginTracking}>
+                <Play size={16} />Start field trace
+              </button>
+            )}
+
+            <button
+              className="gps-secondary-control"
+              onClick={checkSingleLocation}
+              disabled={isLocatingOnly}
+            >
+              {isLocatingOnly ? <LoaderCircle className="animate-spin" size={15} /> : <Crosshair size={15} />}
+              {isLocatingOnly ? "Locating..." : "Check My Location"}
+            </button>
+
+            <button className="gps-secondary-control" onClick={previewSignal}>
+              <Radio size={15} />Preview simulation
+            </button>
+          </div>
+
+          {captureError && <BackendFeedback tone="error" title="GPS trace paused" detail={captureError} onRetry={beginTracking} />}
+
+          <div className="gps-quality">
+            <div>
+              <Crosshair size={15} />
+              <span>Position precision</span>
+              <b>
+                {activePoint?.accuracyMeters
+                  ? `±${Math.round(activePoint.accuracyMeters)} m`
+                  : userLocationInfo?.accuracy
+                  ? `±${Math.round(userLocationInfo.accuracy)} m`
+                  : "Awaiting lock"}
+              </b>
+            </div>
+            <div>
+              <Navigation size={15} />
+              <span>Trace points</span>
+              <b>{livePoints.length || displayedPoints.length}</b>
+            </div>
+            {userLocationInfo && (
+              <div>
+                <MapPinned size={15} />
+                <span>Coordinates</span>
+                <b className="text-[9px]">{userLocationInfo.lat.toFixed(4)}, {userLocationInfo.lng.toFixed(4)}</b>
+              </div>
+            )}
+          </div>
+
+          <button className="gps-save-route" disabled={createSession.isPending || livePoints.length < 2} onClick={saveRoute}>
+            {createSession.isPending ? <LoaderCircle className="spin" size={16} /> : <Save size={16} />}
+            {createSession.isPending ? "Storing route" : "Store completed route"}
+          </button>
+          {createSession.isPending && <BackendFeedback tone="loading" title="Secure route commit" detail="Encrypting and saving this route to your movement ledger." />}
+          {saveError && <BackendFeedback tone="error" title="Route not saved" detail={saveError} onRetry={saveRoute} />}
+          <small className="gps-privacy-note">Route coordinates are saved only after you choose to store the completed session.</small>
+        </aside>
+      </motion.section>
+
+      <section className="gps-history-section">
+        <div className="gps-history-title">
+          <div>
+            <span className="panel-label">History / saved traces</span>
+            <h2>Recent movement routes</h2>
+          </div>
+          <span>{historyQuery.isLoading ? "Loading" : historyQuery.isFetching ? "Refreshing" : historyQuery.isError ? "Link interrupted" : `${savedSessions.length} secured`}</span>
+        </div>
+        <div className="gps-history-grid">
+          {historyQuery.isLoading ? (
+            <div className="gps-history-empty"><LoaderCircle className="spin" size={18} />Loading your secured routes</div>
+          ) : historyQuery.isError ? (
+            <BackendFeedback tone="error" title="History unavailable" detail="Saved routes could not be synchronized. Your current unsaved trace remains available." onRetry={() => void historyQuery.refetch()} className="gps-history-feedback" />
+          ) : savedSessions.length ? (
+            savedSessions.map((session) => (
+              <article className={selectedSession?.id === session.id ? "gps-history-card selected" : "gps-history-card"} key={session.id}>
+                <button className="gps-history-select" onClick={() => setSelectedId(session.id)}>
+                  <span className="gps-history-mark"><Route size={16} /></span>
+                  <div>
+                    <small>{new Date(session.startedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</small>
+                    <b>{session.label}</b>
+                    <span>{formatDistance(session.distanceMeters)} · {formatDuration(session.durationSeconds)}</span>
+                  </div>
+                  <Navigation size={16} />
+                </button>
+                <button className="gps-remove-route" disabled={removeSession.isPending} aria-label={`Remove ${session.label}`} onClick={() => removeSession.mutate({ id: session.id })}>
+                  <Trash2 size={15} />
+                </button>
+              </article>
+            ))
+          ) : (
+            <div className="gps-history-empty"><Route size={19} />No stored routes yet. Start a field trace to build your movement ledger.</div>
+          )}
+        </div>
+        {removeSession.isPending && <BackendFeedback tone="loading" title="Route removal in progress" detail="Updating your secured movement ledger." />}
+        {removeError && <BackendFeedback tone="error" title="Route still saved" detail={removeError} onRetry={() => { if (failedRemovalId !== null) removeSession.mutate({ id: failedRemovalId }); }} />}
+      </section>
+    </WorkflowLayout>
+  );
 }
