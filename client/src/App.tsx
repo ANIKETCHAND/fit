@@ -7,7 +7,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
 import Home from "./pages/Home";
-import Glowinn from "./pages/Glowinn";
 import LogFood from "./pages/LogFood";
 import LogWorkout from "./pages/LogWorkout";
 import LogWeight from "./pages/LogWeight";
@@ -24,7 +23,6 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/glowinn"} component={Glowinn} />
       <Route path={"/log-food"} component={LogFood} />
       <Route path={"/log-workout"} component={LogWorkout} />
       <Route path={"/log-weight"} component={LogWeight} />
