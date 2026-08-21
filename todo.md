@@ -1,0 +1,98 @@
+- [x] Audit all dashboard actions and define destinations for logging and session flows.
+- [x] Build dedicated Log Food, Log Workout, Log Weight, and Start Session pages with working navigation.
+- [x] Add purposeful page transitions and dynamic anatomy/dashboard motion with reduced-motion support.
+- [x] Verify desktop and mobile action flows, TypeScript, and production build output.
+- [x] Audit dashboard and workflow screens for hierarchy, realism, and interaction gaps.
+- [x] Add realistic athlete context, anatomy detail, and clearer high-priority training cues.
+- [x] Improve UI controls, hover states, and motion choreography with reduced-motion support.
+- [x] Validate refined desktop and mobile experiences before release.
+- [x] Define the pixel-art palette, density, and fitness-specific visual motifs.
+- [x] Add pixel anatomy accents, training-console details, and retro fitness navigation states.
+- [x] Add a more clinical segmented-muscle scan and physiology-specific anchors to workflow pages.
+- [x] Add restrained pixel-style motion while retaining reduced-motion safeguards.
+- [x] Verify desktop and mobile composition, TypeScript, and production output.
+- [x] Define the achievement unlock rules, progress values, and pixel-badge visual states.
+- [x] Add an interactive achievements panel with unlock feedback and personal-record signals.
+- [x] Build animated pixel-art exercise thumbnails and connect them to the workout-library flow.
+- [x] Validate the new fitness-console features on desktop and mobile before release.
+- [x] Define social-share copy, fallback behavior, coaching cues, and achievement celebration states.
+- [x] Add a custom share panel for unlocked pixel achievement badges.
+- [x] Add click-to-flip exercise cards with concise coaching cues and tips.
+- [x] Add a reduced-motion-safe celebratory pixel-art overlay for newly unlocked badges.
+- [x] Verify sharing, card interaction, overlay states, and responsive output before release.
+- [x] Define local storage schemas for exercise preferences, coaching-view history, milestones, and reminder settings.
+- [x] Add persisted favorite/hidden exercise preferences and viewed coaching-cue states.
+- [x] Build a visual badge-certificate export workflow for unlocked achievements.
+- [x] Build a notification inbox with milestone history, read states, and workout reminder configuration.
+- [x] Verify persistence, exports, inbox states, reminder UX, responsiveness, and production output.
+- [x] Define daily streak date rules and local persistence fields for workout completion.
+- [x] Add a dashboard streak instrument with current count and next-session guidance.
+- [x] Trigger an accessible pixel-fire celebration when a workout advances the streak.
+- [x] Verify streak behavior, celebration flow, responsive layout, and production output.
+- [x] Inspect the original GitHub repository and identify its application architecture.
+- [x] Map the completed FitTrack frontend into the original project's structure and dependencies.
+- [x] Integrate the FitTrack features while preserving the original project requirements.
+- [x] Validate the integrated project and review the final source changes.
+- [x] Supersede the repository push in favor of the user's requested complete downloadable archive.
+- [x] Identify overview panels duplicated by detailed sidebar routes.
+- [x] Reduce the overview to essential daily status, streak, and anatomy controls.
+- [x] Verify the simplified dashboard at desktop and mobile sizes.
+- [x] Package and deliver the simplified project update.
+- [x] Define FitTrack profile analytics metrics, activity contribution data, and chart behavior from the supplied reference.
+- [x] Build the profile analytics page and link it to dashboard and sidebar profile controls.
+- [x] Verify the profile page at desktop and mobile sizes, then refresh the project archive.
+- [x] Define local persistence for athlete profile details, custom photo, and simulated connected devices.
+- [x] Add editable athlete profile controls and a custom photo upload flow.
+- [x] Add an interactive date-range filter that updates the activity contribution ledger.
+- [x] Add an accessible device-sync modal for simulated tracker and smartwatch connections.
+- [x] Verify profile interaction flows, responsiveness, and production output.
+- [x] Inspect the earlier workout-card layout and identify the compact arrangement to restore.
+- [x] Restore the compact exercise-library presentation without removing favorite, hide, coaching, or workout-start interactions.
+- [x] Verify the restored workout area across desktop and mobile and validate the production build.
+- [x] Remove decorative pixel exercise scenes and grid visuals from workout cards while retaining the movement data and actions.
+- [x] Verify the simplified information-only workout cards on desktop and mobile and validate the production build.
+- [x] Define local persistence for custom exercise set-and-rep targets and completed movement status.
+- [x] Add editable sets and reps controls to each workout card.
+- [x] Add a one-tap completed exercise control with clear completed-state feedback.
+- [x] Verify workout target editing, completion tracking, responsive layout, and production output.
+- [x] Audit the current Settings and Support pages against the requested futuristic fitness visual direction.
+- [x] Define a refined global typography and material system inspired by the supplied reference while preserving FitTrack branding.
+- [x] Redesign Settings and Support with polished, realistic controls and clear help workflows.
+- [x] Apply the upgraded typography and visual system throughout the app, then validate responsive production output.
+- [x] Inspect the linked GitHub project’s backend endpoints, data model, and existing GPS map behavior.
+- [x] Define a compatible FitTrack API integration contract and route-specific GPS map experience.
+- [x] Connect the frontend workflows to the backend and implement the redesigned GPS map interface.
+- [x] Validate the backend-connected flows, map interactions, responsive layouts, and production build.
+- [x] Exercise the typed nutrition, biometric, workout, and GPS session flows end-to-end and record their results.
+- [x] Verify GPS permission, no-signal, save/remove failure, and empty-history states before release.
+- [x] Restore the FitTrack route shell after the full-stack upgrade so all existing destinations, including GPS Tracker, render correctly.
+- [x] Exercise every restored FitTrack destination and confirm it renders without runtime errors after the full-stack upgrade.
+- [x] Verify sidebar navigation links resolve to each restored FitTrack destination.
+- [x] Add automated coverage for the FitTrack sidebar route inventory and frontend-backed activity mutation affordances.
+- [x] Exercise real backend persistence without mocked API responses; verify deterministic GPS edge-state interfaces with controlled browser fault conditions; then re-run release validation.
+- [x] Verify a complete authenticated frontend-to-backend-to-persistence success path without API interception, then re-run final release validation.
+- [x] Confirm live nutrition, biometric, workout, and GPS submissions persist through the authenticated frontend; confirm the GPS trace appears after its route-history refresh.
+- [x] Run an independently authenticated browser probe against the live FitTrack UI and database without API interception.
+- [x] Map the verified full-stack FitTrack source into the current linked GitHub repository structure.
+- [x] Merge the frontend, typed backend, database schema, and GPS workflow into the linked repository.
+- [x] Validate the linked repository build and tests after the source integration.
+- [x] Prepare the linked repository update for the user’s review and delivery.
+- [x] Verify that the validated frontend source is unchanged before packaging the backend-connected project.
+- [x] Create a complete archive containing source, database migration, and current production build while excluding repository metadata and dependencies.
+- [x] Integrity-check the archive.
+- [x] Deliver the verified backend-connected project archive to the user as an attachment.
+- [x] Audit the linked repository’s original pages, API endpoints, and GPS workflows against the merged implementation.
+- [x] Document which original repository behaviors are retained, replaced, or intentionally superseded before delivery.
+- [x] Review the local linked repository state and commit any remaining verified source changes.
+- [x] Push the backend-connected FitTrack integration to the user’s GitHub repository.
+- [x] Verify the remote GitHub branch contains the pushed integration commit.
+- [x] Audit current GPS map initialization and backend query/mutation feedback states.
+- [x] Add animated loading states and clear retryable error messages for GPS map rendering.
+- [x] Add consistent loading and error feedback for backend data queries and save actions.
+- [x] Validate feedback states on desktop and mobile, then publish the update.
+- [x] Preserve GPS map error state through the parent map lifecycle callback.
+- [x] Revalidate the corrected map lifecycle, then save and publish the verified update.
+- [x] Correct workout library card-grid alignment and equalize row presentation across breakpoints.
+- [x] Validate and publish the corrected workout library layout.
+- [x] Package the latest FitTrack source, schema, and production build into a complete ZIP archive.
+- [x] Integrity-check and deliver the updated ZIP archive.
