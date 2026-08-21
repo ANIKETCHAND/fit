@@ -1,30 +1,272 @@
 /* Kinetic Anatomy Lab: information-only workout cards with editable targets and clear completion state. */
-.exercise-library-grid{grid-auto-flow:row;grid-auto-rows:minmax(264px,1fr);grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch;gap:12px!important}
-.exercise-card.exercise-card--compact,.exercise-card.exercise-card--compact:first-child{grid-column:auto!important;min-height:264px!important;height:100%;display:grid;grid-template-rows:30px minmax(0,1fr) 40px;overflow:hidden;border:1px solid rgba(226,245,225,.11);background:#101610}
-.exercise-card--compact.is-complete{border-color:rgba(198,255,61,.42);box-shadow:inset 3px 0 0 #c6ff3d}
-.exercise-card--compact .exercise-preference-row{position:relative;z-index:6;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(226,245,225,.1);border-bottom:1px solid rgba(226,245,225,.1)}
-.exercise-card--compact .exercise-preference-row button{min-height:30px;display:flex;align-items:center;justify-content:center;gap:5px;color:#aab6a8;background:#111811;border:0;font:700 7px "Space Mono";text-transform:uppercase}
-.exercise-card--compact .exercise-preference-row button:hover{color:#f6e59a;background:#172016}
-.exercise-card--compact .exercise-card-face{position:relative;inset:auto;display:grid;min-height:0;padding:10px 11px;background:#101610!important;background-image:none!important;transform:none!important;backface-visibility:visible!important}
-.exercise-card--compact .exercise-card-face::before,.exercise-card--compact .exercise-card-face::after,.exercise-card--compact .exercise-card-front::before,.exercise-card--compact .exercise-card-front::after{content:none!important;display:none!important;background-image:none!important}
-.exercise-card--compact .exercise-card-front{grid-template-rows:auto auto 1fr auto;gap:5px}
-.exercise-card--compact .exercise-card-copy h2{margin:2px 0 3px;font-size:24px;line-height:.88}
-.exercise-card--compact .exercise-prescription{display:grid;grid-template-columns:.55fr .8fr 1.25fr .65fr;gap:5px;margin-top:3px;padding:7px 0;border-top:1px solid rgba(226,245,225,.09);border-bottom:1px solid rgba(226,245,225,.09)}
-.exercise-card--compact .exercise-prescription span,.exercise-card--compact .exercise-prescription label{display:grid;gap:2px;min-width:0}
-.exercise-card--compact .exercise-prescription small{color:#788376;font:700 6px "Space Mono";letter-spacing:.08em;text-transform:uppercase}
-.exercise-card--compact .exercise-prescription b{overflow:hidden;color:#e2f5e1;font:700 9px "Space Mono";text-overflow:ellipsis;white-space:nowrap}
-.exercise-card--compact .exercise-prescription input{min-width:0;width:100%;padding:2px 0;border:0;border-bottom:1px solid rgba(226,245,225,.32);border-radius:0;color:#e2f5e1;background:transparent;font:700 10px "Space Mono";outline:none}
-.exercise-card--compact .exercise-prescription input:focus{border-color:#c6ff3d;color:#c6ff3d}
-.exercise-card--compact .coaching-toggle{justify-self:start;padding:0;border:0;color:#98a395;background:transparent;font:700 7px "Space Mono";letter-spacing:.05em;text-transform:uppercase}
-.exercise-card--compact .coaching-toggle:hover{color:#c6ff3d}
-.exercise-card--compact .exercise-coaching-panel{grid-template-rows:auto 1fr auto;gap:5px}
-.exercise-card--compact .coaching-copy{display:grid;gap:3px;margin:auto 0 4px}
-.exercise-card--compact .coaching-copy b,.exercise-card--compact .coaching-copy strong{font:700 14px "Barlow Condensed"}
-.exercise-card--compact .coaching-copy p{margin:0;color:#aab6a8;font-size:9px}
-.exercise-card--compact .exercise-card-actions{display:grid;grid-template-columns:1fr 1.2fr;border-top:1px solid rgba(226,245,225,.11)}
-.exercise-card--compact .exercise-completion{display:flex;align-items:center;gap:7px;padding:0 11px;border-right:1px solid rgba(226,245,225,.11);color:#9eab9c;font:700 7px "Space Mono";letter-spacing:.04em;text-transform:uppercase}
-.exercise-card--compact .exercise-completion [data-slot="checkbox"]{width:14px;height:14px;border-color:rgba(226,245,225,.45);border-radius:2px;background:#111811}
-.exercise-card--compact .exercise-completion [data-state="checked"]{border-color:#c6ff3d;background:#c6ff3d;color:#101610}
-.exercise-card--compact.is-complete .exercise-completion label{color:#c6ff3d}
-.exercise-card--compact .stage-movement{min-height:40px;padding:0 11px;border:0;background:#101610;font-size:8px}
-@media(max-width:1180px){.exercise-library-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:800px){.exercise-library-grid{grid-auto-rows:auto;grid-template-columns:1fr!important;gap:10px!important}.exercise-card.exercise-card--compact,.exercise-card.exercise-card--compact:first-child{min-height:244px!important}.exercise-card--compact .exercise-card-copy h2{font-size:23px}.exercise-card--compact .exercise-prescription{grid-template-columns:.55fr .8fr 1.15fr .62fr}.exercise-card--compact .exercise-prescription b{font-size:8px}}
+.exercise-library-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  align-items: stretch !important;
+  gap: 16px !important;
+}
+
+.exercise-card,
+.exercise-card.exercise-card--compact,
+.exercise-card.exercise-card--compact:first-child,
+.exercise-card:nth-child(n) {
+  grid-column: auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  transform: none !important;
+  min-height: 280px !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden;
+  border: 1px solid rgba(226, 245, 225, 0.12);
+  background: #101610;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+}
+
+.exercise-card--compact.is-complete {
+  border-color: rgba(198, 255, 61, 0.42);
+  box-shadow: inset 3px 0 0 #c6ff3d, 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.exercise-card--compact .exercise-preference-row {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(226, 245, 225, 0.1);
+  border-bottom: 1px solid rgba(226, 245, 225, 0.1);
+}
+
+.exercise-card--compact .exercise-preference-row button {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #aab6a8;
+  background: #111811;
+  border: 0;
+  font: 700 7px "Space Mono", monospace;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exercise-card--compact .exercise-preference-row button:hover {
+  color: #f6e59a;
+  background: #172016;
+}
+
+.exercise-card--compact .exercise-card-face {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 12px 14px;
+  background: #101610 !important;
+  background-image: none !important;
+  transform: none !important;
+  backface-visibility: visible !important;
+}
+
+.exercise-card--compact .exercise-card-face::before,
+.exercise-card--compact .exercise-card-face::after,
+.exercise-card--compact .exercise-card-front::before,
+.exercise-card--compact .exercise-card-front::after {
+  content: none !important;
+  display: none !important;
+  background-image: none !important;
+}
+
+.exercise-card--compact .exercise-card-front {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exercise-card--compact .exercise-card-copy h2 {
+  margin: 2px 0 4px;
+  font-size: 22px;
+  line-height: 1;
+  color: #edf5e9;
+}
+
+.exercise-card--compact .exercise-prescription {
+  display: grid;
+  grid-template-columns: 0.55fr 0.8fr 1.25fr 0.65fr;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(226, 245, 225, 0.09);
+  border-bottom: 1px solid rgba(226, 245, 225, 0.09);
+}
+
+.exercise-card--compact .exercise-prescription span,
+.exercise-card--compact .exercise-prescription label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.exercise-card--compact .exercise-prescription small {
+  color: #788376;
+  font: 700 6px "Space Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.exercise-card--compact .exercise-prescription b {
+  overflow: hidden;
+  color: #e2f5e1;
+  font: 700 9px "Space Mono", monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exercise-card--compact .exercise-prescription input {
+  min-width: 0;
+  width: 100%;
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px solid rgba(226, 245, 225, 0.32);
+  border-radius: 0;
+  color: #e2f5e1;
+  background: transparent;
+  font: 700 10px "Space Mono", monospace;
+  outline: none;
+}
+
+.exercise-card--compact .exercise-prescription input:focus {
+  border-color: #c6ff3d;
+  color: #c6ff3d;
+}
+
+.exercise-card--compact .coaching-toggle {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  color: #98a395;
+  background: transparent;
+  font: 700 7px "Space Mono", monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.exercise-card--compact .coaching-toggle:hover {
+  color: #c6ff3d;
+}
+
+.exercise-card--compact .exercise-coaching-panel {
+  grid-template-rows: auto 1fr auto;
+  gap: 5px;
+}
+
+.exercise-card--compact .coaching-copy {
+  display: grid;
+  gap: 3px;
+  margin: auto 0 4px;
+}
+
+.exercise-card--compact .coaching-copy b,
+.exercise-card--compact .coaching-copy strong {
+  font: 700 14px "Barlow Condensed", sans-serif;
+}
+
+.exercise-card--compact .coaching-copy p {
+  margin: 0;
+  color: #aab6a8;
+  font-size: 9px;
+}
+
+.exercise-card--compact .exercise-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  border-top: 1px solid rgba(226, 245, 225, 0.11);
+  margin-top: auto;
+}
+
+.exercise-card--compact .exercise-completion {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border-right: 1px solid rgba(226, 245, 225, 0.11);
+  color: #9eab9c;
+  font: 700 7px "Space Mono", monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.exercise-card--compact .exercise-completion [data-slot="checkbox"] {
+  width: 14px;
+  height: 14px;
+  border-color: rgba(226, 245, 225, 0.45);
+  border-radius: 2px;
+  background: #111811;
+}
+
+.exercise-card--compact .exercise-completion [data-state="checked"] {
+  border-color: #c6ff3d;
+  background: #c6ff3d;
+  color: #101610;
+}
+
+.exercise-card--compact.is-complete .exercise-completion label {
+  color: #c6ff3d;
+}
+
+.exercise-card--compact .stage-movement {
+  min-height: 40px;
+  padding: 0 11px;
+  border: 0;
+  background: #101610;
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #d7e4d4;
+  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.exercise-card--compact .stage-movement:hover {
+  background: #172016;
+  color: #fff;
+}
+
+@media (max-width: 1180px) {
+  .exercise-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .exercise-library-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .exercise-card.exercise-card--compact,
+  .exercise-card.exercise-card--compact:first-child {
+    min-height: 250px !important;
+  }
+  .exercise-card--compact .exercise-card-copy h2 {
+    font-size: 21px;
+  }
+  .exercise-card--compact .exercise-prescription {
+    grid-template-columns: 0.55fr 0.8fr 1.15fr 0.62fr;
+  }
+  .exercise-card--compact .exercise-prescription b {
+    font-size: 8px;
+  }
+}
