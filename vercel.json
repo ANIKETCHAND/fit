@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install --frozen-lockfile && pnpm run build",
+  "buildCommand": "pnpm install && pnpm run build",
   "outputDirectory": "dist/public",
   "rewrites": [
     { "source": "/api/trpc/:path*", "destination": "/api/index" },

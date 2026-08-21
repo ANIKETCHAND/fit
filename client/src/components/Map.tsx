@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Crosshair, Loader2, Navigation, AlertCircle } from "lucide-react";
+import { Crosshair, Loader2, Navigation, AlertCircle, Compass, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -23,6 +23,7 @@ export interface UnifiedMapInstance {
   setRoute: (points: { lat: number; lng: number }[], activePoint?: { lat: number; lng: number }) => void;
   setUserLocation: (lat: number, lng: number, accuracy?: number) => void;
   clearLocation: () => void;
+  invalidateSize: () => void;
 }
 
 export interface MapViewProps {
@@ -65,15 +66,6 @@ function loadLeaflet(): Promise<void> {
   if (window.__leafletScriptLoading) return window.__leafletScriptLoading;
 
   window.__leafletScriptLoading = new Promise((resolve, reject) => {
-    // Load Leaflet CSS
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
     // Load Leaflet JS
     const script = document.createElement("script");
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
@@ -82,7 +74,7 @@ function loadLeaflet(): Promise<void> {
     script.onerror = () => {
       script.remove();
       window.__leafletScriptLoading = undefined;
-      reject(new Error("Failed to load Leaflet script"));
+      reject(new Error("Failed to load Leaflet cartography engine"));
     };
     document.head.appendChild(script);
   });
@@ -124,6 +116,7 @@ export function MapView({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
 
   const initGoogleMap = useCallback((container: HTMLDivElement) => {
     const maps = window.google!.maps;
@@ -132,7 +125,7 @@ export function MapView({
       center: initialCenter,
       disableDefaultUI: false,
       zoomControl: true,
-      mapTypeControl: false,
+      mapTypeControl: true,
       streetViewControl: false,
       fullscreenControl: true,
       gestureHandling: "greedy",
@@ -180,16 +173,19 @@ export function MapView({
             center: { lat, lng },
             radius: accuracy,
             fillColor: "#c6ff3d",
-            fillOpacity: 0.12,
+            fillOpacity: 0.15,
             strokeColor: "#c6ff3d",
-            strokeOpacity: 0.4,
-            strokeWeight: 1,
+            strokeOpacity: 0.5,
+            strokeWeight: 1.5,
           });
         }
       },
       clearLocation: () => {
         if (googleLocMarkerRef.current) googleLocMarkerRef.current.setMap(null);
         if (googleLocCircleRef.current) googleLocCircleRef.current.setMap(null);
+      },
+      invalidateSize: () => {
+        maps.event.trigger(gmap, "resize");
       },
       setRoute: (points, activePoint) => {
         if (googleRouteLineRef.current) googleRouteLineRef.current.setMap(null);
@@ -205,7 +201,7 @@ export function MapView({
           googleRouteHaloRef.current = new maps.Polyline({
             path,
             strokeColor: "#a6d9ff",
-            strokeOpacity: 0.25,
+            strokeOpacity: 0.3,
             strokeWeight: 8,
             map: gmap,
           });
@@ -213,7 +209,7 @@ export function MapView({
           googleRouteLineRef.current = new maps.Polyline({
             path,
             strokeColor: "#c6ff3d",
-            strokeOpacity: 0.95,
+            strokeOpacity: 0.98,
             strokeWeight: 4,
             map: gmap,
           });
@@ -286,7 +282,10 @@ export function MapView({
   const initLeafletMap = useCallback((container: HTMLDivElement) => {
     const L = window.L!;
     if (leafletMapRef.current) {
-      leafletMapRef.current.remove();
+      try {
+        leafletMapRef.current.remove();
+      } catch (_) {}
+      leafletMapRef.current = null;
     }
 
     const lmap = L.map(container, {
@@ -296,19 +295,32 @@ export function MapView({
       attributionControl: false,
     });
 
-    // Dark-themed tiles (CartoDB Dark Matter)
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    // Dark-themed tiles with fallback to standard OSM
+    const darkTileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 19,
       subdomains: "abcd",
+      errorTileUrl: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     }).addTo(lmap);
 
     leafletMapRef.current = lmap;
 
+    // Trigger resize recalculation to prevent gray tiles
+    setTimeout(() => {
+      lmap.invalidateSize();
+    }, 150);
+    setTimeout(() => {
+      lmap.invalidateSize();
+    }, 600);
+
     const instance: UnifiedMapInstance = {
       engine: "leaflet",
       leafletMap: lmap,
+      invalidateSize: () => {
+        lmap.invalidateSize();
+      },
       setCenter: (lat, lng, zoom) => {
-        lmap.setView([lat, lng], zoom || lmap.getZoom());
+        lmap.setView([lat, lng], zoom || lmap.getZoom(), { animate: true });
+        lmap.invalidateSize();
       },
       setUserLocation: (lat, lng, accuracy) => {
         if (leafletLocMarkerRef.current) lmap.removeLayer(leafletLocMarkerRef.current);
@@ -316,9 +328,12 @@ export function MapView({
 
         const customIcon = L.divIcon({
           className: "gps-user-loc-beacon",
-          html: `<div style="width:18px;height:18px;background:#c6ff3d;border:3px solid #080c0a;border-radius:50%;box-shadow:0 0 14px #c6ff3d, 0 0 0 4px rgba(198,255,61,0.25);"></div>`,
-          iconSize: [18, 18],
-          iconAnchor: [9, 9],
+          html: `<div style="position:relative;width:22px;height:22px;">
+            <div style="position:absolute;inset:0;background:rgba(198,255,61,0.4);border-radius:50%;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+            <div style="position:absolute;top:3px;left:3px;width:16px;height:16px;background:#c6ff3d;border:3px solid #080c0a;border-radius:50%;box-shadow:0 0 16px #c6ff3d;"></div>
+          </div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
         });
 
         leafletLocMarkerRef.current = L.marker([lat, lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(lmap);
@@ -327,11 +342,13 @@ export function MapView({
           leafletLocCircleRef.current = L.circle([lat, lng], {
             radius: accuracy,
             color: "#c6ff3d",
-            weight: 1,
+            weight: 1.5,
             fillColor: "#c6ff3d",
-            fillOpacity: 0.12,
+            fillOpacity: 0.15,
           }).addTo(lmap);
         }
+
+        lmap.invalidateSize();
       },
       clearLocation: () => {
         if (leafletLocMarkerRef.current) lmap.removeLayer(leafletLocMarkerRef.current);
@@ -351,13 +368,13 @@ export function MapView({
           leafletRouteHaloRef.current = L.polyline(latlngs, {
             color: "#a6d9ff",
             weight: 8,
-            opacity: 0.25,
+            opacity: 0.3,
           }).addTo(lmap);
 
           leafletRouteLineRef.current = L.polyline(latlngs, {
             color: "#c6ff3d",
             weight: 4,
-            opacity: 0.95,
+            opacity: 0.98,
           }).addTo(lmap);
 
           lmap.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] });
@@ -368,9 +385,9 @@ export function MapView({
         // Start Icon
         const startIcon = L.divIcon({
           className: "gps-start-node",
-          html: `<div style="width:20px;height:20px;background:#c6ff3d;color:#080c0a;font-weight:700;font-size:11px;line-height:20px;text-align:center;border-radius:50%;border:2px solid #ffffff;">S</div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10],
+          html: `<div style="width:22px;height:22px;background:#c6ff3d;color:#080c0a;font-weight:700;font-size:11px;line-height:22px;text-align:center;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 10px rgba(0,0,0,0.5);">S</div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
         });
         const startMarker = L.marker(latlngs[0], { icon: startIcon }).addTo(lmap);
         leafletMarkersRef.current.push(startMarker);
@@ -379,9 +396,9 @@ export function MapView({
         if (latlngs.length > 1) {
           const endIcon = L.divIcon({
             className: "gps-end-node",
-            html: `<div style="width:20px;height:20px;background:#a6d9ff;color:#080c0a;font-weight:700;font-size:11px;line-height:20px;text-align:center;border-radius:50%;border:2px solid #ffffff;">E</div>`,
-            iconSize: [20, 20],
-            iconAnchor: [10, 10],
+            html: `<div style="width:22px;height:22px;background:#a6d9ff;color:#080c0a;font-weight:700;font-size:11px;line-height:22px;text-align:center;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 10px rgba(0,0,0,0.5);">E</div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
           });
           const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(lmap);
           leafletMarkersRef.current.push(endMarker);
@@ -391,13 +408,15 @@ export function MapView({
         if (activePoint) {
           const activeIcon = L.divIcon({
             className: "gps-active-node",
-            html: `<div style="width:22px;height:22px;background:#c6ff3d;border:4px solid #080c0a;border-radius:50%;box-shadow:0 0 16px #c6ff3d;"></div>`,
-            iconSize: [22, 22],
-            iconAnchor: [11, 11],
+            html: `<div style="width:24px;height:24px;background:#c6ff3d;border:4px solid #080c0a;border-radius:50%;box-shadow:0 0 18px #c6ff3d;"></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
           });
           const activeMarker = L.marker([activePoint.lat, activePoint.lng], { icon: activeIcon, zIndexOffset: 500 }).addTo(lmap);
           leafletMarkersRef.current.push(activeMarker);
         }
+
+        lmap.invalidateSize();
       },
     };
 
@@ -426,11 +445,11 @@ export function MapView({
             return;
           }
         } catch (e) {
-          console.warn("Google Maps failed to load, falling back to OpenStreetMap / Leaflet:", e);
+          console.warn("Google Maps failed to load, falling back to Leaflet:", e);
         }
       }
 
-      // Fallback: Leaflet + OpenStreetMap
+      // Fallback: Leaflet + Dark Cartography Tiles
       try {
         await loadLeaflet();
         if (isMounted && containerRef.current) {
@@ -451,10 +470,20 @@ export function MapView({
 
     setup();
 
+    const handleResize = () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    };
+    window.addEventListener("resize", handleResize);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("resize", handleResize);
       if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
+        try {
+          leafletMapRef.current.remove();
+        } catch (_) {}
         leafletMapRef.current = null;
       }
     };
@@ -476,6 +505,7 @@ export function MapView({
         setIsLocating(false);
 
         if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
           mapInstanceRef.current.setCenter(lat, lng, 16);
           mapInstanceRef.current.setUserLocation(lat, lng, accuracy);
         }
@@ -486,7 +516,7 @@ export function MapView({
         setIsLocating(false);
         let msg = "Could not retrieve GPS location.";
         if (err.code === err.PERMISSION_DENIED) {
-          msg = "Location permission denied. Please enable location access in your browser.";
+          msg = "Location permission denied. Please allow location access in your browser settings.";
         } else if (err.code === err.TIMEOUT) {
           msg = "GPS request timed out. Please try again.";
         }
@@ -496,7 +526,7 @@ export function MapView({
     );
   }, [onLocationFound]);
 
-  // Auto-locate once on first load if permitted
+  // Auto-locate once on first load
   useEffect(() => {
     if (showMyLocation && !isLoading && !errorMessage) {
       navigator.geolocation?.getCurrentPosition(
@@ -504,6 +534,7 @@ export function MapView({
           const { latitude: lat, longitude: lng, accuracy } = pos.coords;
           setCurrentCoords({ lat, lng, accuracy });
           if (mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize();
             mapInstanceRef.current.setCenter(lat, lng, 15);
             mapInstanceRef.current.setUserLocation(lat, lng, accuracy);
           }
@@ -516,23 +547,25 @@ export function MapView({
   }, [isLoading, errorMessage, showMyLocation, onLocationFound]);
 
   return (
-    <div className={cn("relative w-full h-[460px] overflow-hidden bg-[#080c0a] rounded-lg", className)}>
-      <div ref={containerRef} className="absolute inset-0 w-full h-full z-0" />
+    <div className={cn("relative w-full h-[460px] overflow-hidden bg-[#080c0a]", className)}>
+      <div ref={containerRef} className="absolute inset-0 w-full h-full z-[1]" />
 
       {/* Floating My Location Button & Radar */}
       {showMyLocation && !isLoading && !errorMessage && (
-        <div className="absolute bottom-5 right-4 z-20 flex flex-col items-end gap-2">
+        <div className="absolute bottom-4 right-4 z-[20] flex flex-col items-end gap-2">
           {currentCoords && (
-            <div className="bg-[#080c0a]/90 border border-[#c6ff3d]/30 px-3 py-1.5 rounded text-[10px] font-mono text-[#c6ff3d] shadow-lg backdrop-blur-sm">
-              LAT: {currentCoords.lat.toFixed(5)} | LON: {currentCoords.lng.toFixed(5)} (±{Math.round(currentCoords.accuracy)}m)
+            <div className="bg-[#080c0a]/95 border border-[#c6ff3d]/40 px-3 py-1.5 rounded-md text-[11px] font-mono text-[#c6ff3d] shadow-2xl backdrop-blur-md">
+              <span className="text-[#a6d9ff] font-bold">GPS: </span>
+              {currentCoords.lat.toFixed(5)}, {currentCoords.lng.toFixed(5)}
+              <span className="text-[#9eab9c] text-[10px] ml-1.5">(±{Math.round(currentCoords.accuracy)}m)</span>
             </div>
           )}
           <button
             type="button"
             onClick={handleLocateMe}
             disabled={isLocating}
-            className="flex items-center gap-2 bg-[#c6ff3d] hover:bg-[#d8ff6b] active:scale-95 text-[#080c0a] font-bold font-mono text-xs px-3.5 py-2.5 rounded shadow-[0_0_18px_rgba(198,255,61,0.4)] transition-all cursor-pointer disabled:opacity-60"
-            title="Pinpoint your current location on map"
+            className="flex items-center gap-2 bg-[#c6ff3d] hover:bg-[#d8ff6b] active:scale-95 text-[#080c0a] font-bold font-mono text-xs px-4 py-2.5 rounded-md shadow-[0_0_20px_rgba(198,255,61,0.45)] transition-all cursor-pointer disabled:opacity-60"
+            title="Check and pinpoint your exact GPS location on map"
           >
             {isLocating ? (
               <>
@@ -542,7 +575,7 @@ export function MapView({
             ) : (
               <>
                 <Crosshair className="w-4 h-4 text-[#080c0a]" />
-                <span>Locate Me</span>
+                <span>Check My Location</span>
               </>
             )}
           </button>
@@ -551,14 +584,15 @@ export function MapView({
 
       {/* Map Badge */}
       {!isLoading && !errorMessage && (
-        <div className="absolute top-3 left-3 z-10 bg-[#080c0a]/85 border border-[#a6d9ff]/25 px-2.5 py-1 rounded text-[9px] font-mono text-[#a6d9ff] uppercase tracking-wider backdrop-blur-sm pointer-events-none">
-          {engine === "google" ? "⚡ Google Maps Live" : "🛰️ High-Precision Field Map"}
+        <div className="absolute top-3 left-3 z-[20] bg-[#080c0a]/90 border border-[#a6d9ff]/30 px-3 py-1.5 rounded-md text-[10px] font-mono text-[#a6d9ff] uppercase tracking-wider backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
+          <Compass className="w-3.5 h-3.5 text-[#c6ff3d]" />
+          <span>{engine === "google" ? "Google Maps" : "Interactive GPS Field Map"}</span>
         </div>
       )}
 
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="absolute inset-0 z-30 grid place-items-center bg-[#080c0a]/95 text-center px-6">
+        <div className="absolute inset-0 z-[30] grid place-items-center bg-[#080c0a]/95 text-center px-6">
           <div className="max-w-xs border border-[#a6d9ff]/25 bg-[#0d1511]/90 p-5 shadow-[0_0_42px_rgba(166,217,255,0.08)]">
             <div className="flex justify-center mb-3">
               <Navigation className="w-6 h-6 text-[#a6d9ff] animate-pulse" />
@@ -572,7 +606,7 @@ export function MapView({
 
       {/* Error Overlay */}
       {errorMessage && (
-        <div className="absolute inset-0 z-30 grid place-items-center bg-[#080c0a] text-center px-6">
+        <div className="absolute inset-0 z-[30] grid place-items-center bg-[#080c0a] text-center px-6">
           <div className="max-w-sm border border-[#ff6b6b]/30 bg-[#140d0d] p-5 shadow-lg">
             <div className="flex justify-center mb-3 text-[#ff6b6b]">
               <AlertCircle className="w-7 h-7" />
