@@ -9,7 +9,6 @@ import { BodyControls, type BodyView } from "./BodyControls";
 import { HumanBody } from "./HumanBody";
 import type { MuscleId } from "@/lib/fitness-data";
 import { useIsMobile } from "@/hooks/useMobile";
-import { PixelAthlete } from "@/components/PixelAthlete";
 
 type SceneInnerProps = { view: BodyView; autoRotate: boolean; reduceMotion: boolean; selected: MuscleId; onSelected: (id: MuscleId) => void; isMobile: boolean; };
 
@@ -54,9 +53,7 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
   const isMobile = useIsMobile();
   const reset = () => { setView("front"); setAutoRotate(false); };
   return <section className="body-stage" aria-label="Interactive 3D anatomy explorer">
-    <img className="body-artwork" src="/manus-storage/fittrack-anatomy-hero_a1489eda.png" alt="" aria-hidden="true" />
     <div className="stage-topline"><span><i />Live anatomy map</span><span className="stage-coordinate">X 31.5 / Y 14.2 / Z 08.7</span></div>
-    <div className="pixel-body-console"><PixelAthlete focus={selected} compact /><span className="pixel-console-copy">PIXEL ATHLETE<br /><b>LIVE FOCUS</b></span></div>
     <div className="scan-grid" aria-hidden="true" /><div className={`anatomy-fiber-map focus-${selected}`} aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="anatomy-ruler ruler-vertical" aria-hidden="true"><i /><i /><i /><i /><i /></div><div className="anatomy-ruler ruler-horizontal" aria-hidden="true"><i /><i /><i /><i /><i /></div><div className="body-crosshair crosshair-x" aria-hidden="true" /><div className="body-crosshair crosshair-y" aria-hidden="true" />
     <div className="body-halo halo-one" aria-hidden="true" /><div className="body-halo halo-two" aria-hidden="true" />
     <div className="anatomy-callout callout-chest" aria-hidden="true"><span>01</span><b>PECTORAL<br />SIGNAL</b><i /></div>

@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Crosshair, Loader2, Navigation, AlertCircle, Compass, Layers } from "lucide-react";
+import { Crosshair, Loader2, Navigation, AlertCircle, Compass, Layers, KeyRound, Check, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -9,11 +9,11 @@ declare global {
     google?: typeof google;
     L?: any;
     __mapsScriptLoading?: Promise<void>;
-    __leafletScriptLoading?: Promise<void>;
   }
 }
 
 export type MapEngine = "google" | "leaflet";
+export type TileStyle = "dark" | "streets" | "satellite";
 
 export interface UnifiedMapInstance {
   engine: MapEngine;
@@ -37,23 +37,22 @@ export interface MapViewProps {
   onLocationFound?: (lat: number, lng: number, accuracy: number) => void;
 }
 
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+const ENV_GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
-function loadGoogleMaps(): Promise<void> {
+function loadGoogleMapsScript(key: string): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
-  if (!GOOGLE_API_KEY) return Promise.reject(new Error("No Google Maps API Key configured"));
   if (window.__mapsScriptLoading) return window.__mapsScriptLoading;
 
   window.__mapsScriptLoading = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&v=weekly&libraries=marker,places,geometry`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&v=weekly&libraries=marker,places,geometry`;
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
     script.onerror = () => {
       script.remove();
       window.__mapsScriptLoading = undefined;
-      reject(new Error("Failed to load Google Maps script"));
+      reject(new Error("Failed to load Google Maps. Please verify your API key."));
     };
     document.head.appendChild(script);
   });
@@ -61,25 +60,32 @@ function loadGoogleMaps(): Promise<void> {
   return window.__mapsScriptLoading;
 }
 
-function loadLeaflet(): Promise<void> {
-  if (window.L) return Promise.resolve();
-  if (window.__leafletScriptLoading) return window.__leafletScriptLoading;
+function ensureLeaflet(): Promise<any> {
+  if (window.L) return Promise.resolve(window.L);
 
-  window.__leafletScriptLoading = new Promise((resolve, reject) => {
-    // Load Leaflet JS
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => {
-      script.remove();
-      window.__leafletScriptLoading = undefined;
-      reject(new Error("Failed to load Leaflet cartography engine"));
-    };
-    document.head.appendChild(script);
+  return new Promise((resolve, reject) => {
+    // Add Leaflet JS if not already loaded
+    if (!document.getElementById("leaflet-script")) {
+      const script = document.createElement("script");
+      script.id = "leaflet-script";
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.crossOrigin = "";
+      script.onload = () => resolve(window.L);
+      script.onerror = () => reject(new Error("Failed to load Leaflet script"));
+      document.head.appendChild(script);
+    } else {
+      const interval = setInterval(() => {
+        if (window.L) {
+          clearInterval(interval);
+          resolve(window.L);
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(interval);
+        if (!window.L) reject(new Error("Leaflet script load timeout"));
+      }, 5000);
+    }
   });
-
-  return window.__leafletScriptLoading;
 }
 
 export function MapView({
@@ -95,7 +101,7 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<UnifiedMapInstance | null>(null);
 
-  // Google references
+  // Google Map refs
   const googleMapRef = useRef<google.maps.Map | null>(null);
   const googleLocMarkerRef = useRef<google.maps.Marker | null>(null);
   const googleLocCircleRef = useRef<google.maps.Circle | null>(null);
@@ -103,22 +109,171 @@ export function MapView({
   const googleRouteHaloRef = useRef<google.maps.Polyline | null>(null);
   const googleMarkersRef = useRef<google.maps.Marker[]>([]);
 
-  // Leaflet references
+  // Leaflet refs
   const leafletMapRef = useRef<any>(null);
+  const leafletTileLayerRef = useRef<any>(null);
   const leafletLocMarkerRef = useRef<any>(null);
   const leafletLocCircleRef = useRef<any>(null);
   const leafletRouteLineRef = useRef<any>(null);
   const leafletRouteHaloRef = useRef<any>(null);
   const leafletMarkersRef = useRef<any[]>([]);
 
-  const [engine, setEngine] = useState<MapEngine>("leaflet");
+  const [activeEngine, setActiveEngine] = useState<MapEngine>("leaflet");
+  const [tileStyle, setTileStyle] = useState<TileStyle>("dark");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
-  const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
+  const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState(localStorage.getItem("fittrack_google_maps_key") || "");
+  const [keySaved, setKeySaved] = useState(false);
 
-  const initGoogleMap = useCallback((container: HTMLDivElement) => {
+  // Initialize Leaflet Map
+  const setupLeaflet = useCallback((container: HTMLDivElement, L: any) => {
+    if (leafletMapRef.current) {
+      try {
+        leafletMapRef.current.remove();
+      } catch (_) {}
+      leafletMapRef.current = null;
+    }
+
+    const map = L.map(container, {
+      center: [initialCenter.lat, initialCenter.lng],
+      zoom: initialZoom,
+      zoomControl: true,
+      attributionControl: false,
+    });
+
+    const tileUrls: Record<TileStyle, string> = {
+      dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    };
+
+    const tileLayer = L.tileLayer(tileUrls[tileStyle], {
+      maxZoom: 19,
+      subdomains: "abcd",
+    }).addTo(map);
+    leafletTileLayerRef.current = tileLayer;
+    leafletMapRef.current = map;
+
+    // Trigger multiple invalidations for flex layouts
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 300);
+    setTimeout(() => map.invalidateSize(), 800);
+
+    const instance: UnifiedMapInstance = {
+      engine: "leaflet",
+      leafletMap: map,
+      invalidateSize: () => map.invalidateSize(),
+      setCenter: (lat, lng, zoom) => {
+        map.setView([lat, lng], zoom || map.getZoom(), { animate: true });
+        map.invalidateSize();
+      },
+      setUserLocation: (lat, lng, accuracy) => {
+        if (leafletLocMarkerRef.current) map.removeLayer(leafletLocMarkerRef.current);
+        if (leafletLocCircleRef.current) map.removeLayer(leafletLocCircleRef.current);
+
+        const customIcon = L.divIcon({
+          className: "gps-user-beacon",
+          html: `<div style="position:relative;width:24px;height:24px;">
+            <div style="position:absolute;inset:0;background:rgba(198,255,61,0.45);border-radius:50%;animation:ping 1.6s cubic-bezier(0,0,0.2,1) infinite;"></div>
+            <div style="position:absolute;top:4px;left:4px;width:16px;height:16px;background:#c6ff3d;border:3px solid #080c0a;border-radius:50%;box-shadow:0 0 16px #c6ff3d;"></div>
+          </div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        });
+
+        leafletLocMarkerRef.current = L.marker([lat, lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(map);
+
+        if (accuracy && accuracy < 5000) {
+          leafletLocCircleRef.current = L.circle([lat, lng], {
+            radius: accuracy,
+            color: "#c6ff3d",
+            weight: 1.5,
+            fillColor: "#c6ff3d",
+            fillOpacity: 0.15,
+          }).addTo(map);
+        }
+
+        map.invalidateSize();
+      },
+      clearLocation: () => {
+        if (leafletLocMarkerRef.current) map.removeLayer(leafletLocMarkerRef.current);
+        if (leafletLocCircleRef.current) map.removeLayer(leafletLocCircleRef.current);
+      },
+      setRoute: (points, activePoint) => {
+        if (leafletRouteLineRef.current) map.removeLayer(leafletRouteLineRef.current);
+        if (leafletRouteHaloRef.current) map.removeLayer(leafletRouteHaloRef.current);
+        leafletMarkersRef.current.forEach((m) => map.removeLayer(m));
+        leafletMarkersRef.current = [];
+
+        if (!points.length) return;
+
+        const latlngs = points.map((p) => [p.lat, p.lng] as [number, number]);
+
+        if (latlngs.length > 1) {
+          leafletRouteHaloRef.current = L.polyline(latlngs, {
+            color: "#a6d9ff",
+            weight: 8,
+            opacity: 0.3,
+          }).addTo(map);
+
+          leafletRouteLineRef.current = L.polyline(latlngs, {
+            color: "#c6ff3d",
+            weight: 4,
+            opacity: 0.98,
+          }).addTo(map);
+
+          map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] });
+        } else {
+          map.setView(latlngs[0], 16);
+        }
+
+        // Start marker
+        const startIcon = L.divIcon({
+          className: "gps-start-node",
+          html: `<div style="width:22px;height:22px;background:#c6ff3d;color:#080c0a;font-weight:700;font-size:11px;line-height:22px;text-align:center;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 10px rgba(0,0,0,0.5);">S</div>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
+        });
+        const startMarker = L.marker(latlngs[0], { icon: startIcon }).addTo(map);
+        leafletMarkersRef.current.push(startMarker);
+
+        // End marker
+        if (latlngs.length > 1) {
+          const endIcon = L.divIcon({
+            className: "gps-end-node",
+            html: `<div style="width:22px;height:22px;background:#a6d9ff;color:#080c0a;font-weight:700;font-size:11px;line-height:22px;text-align:center;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 10px rgba(0,0,0,0.5);">E</div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+          });
+          const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(map);
+          leafletMarkersRef.current.push(endMarker);
+        }
+
+        // Active tracking marker
+        if (activePoint) {
+          const activeIcon = L.divIcon({
+            className: "gps-active-node",
+            html: `<div style="width:24px;height:24px;background:#c6ff3d;border:4px solid #080c0a;border-radius:50%;box-shadow:0 0 18px #c6ff3d;"></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          });
+          const activeMarker = L.marker([activePoint.lat, activePoint.lng], { icon: activeIcon, zIndexOffset: 500 }).addTo(map);
+          leafletMarkersRef.current.push(activeMarker);
+        }
+
+        map.invalidateSize();
+      },
+    };
+
+    mapInstanceRef.current = instance;
+    onMapReady?.(instance);
+  }, [initialCenter, initialZoom, tileStyle, onMapReady]);
+
+  // Initialize Google Map
+  const setupGoogleMap = useCallback((container: HTMLDivElement) => {
     const maps = window.google!.maps;
     const gmap = new maps.Map(container, {
       zoom: initialZoom,
@@ -222,7 +377,6 @@ export function MapView({
           gmap.setZoom(16);
         }
 
-        // Start marker
         const startMarker = new maps.Marker({
           position: path[0],
           map: gmap,
@@ -238,7 +392,6 @@ export function MapView({
         });
         googleMarkersRef.current.push(startMarker);
 
-        // End marker
         if (path.length > 1) {
           const endMarker = new maps.Marker({
             position: path[path.length - 1],
@@ -256,7 +409,6 @@ export function MapView({
           googleMarkersRef.current.push(endMarker);
         }
 
-        // Active point
         if (activePoint) {
           const activeMarker = new maps.Marker({
             position: { lat: activePoint.lat, lng: activePoint.lng },
@@ -279,196 +431,49 @@ export function MapView({
     onMapReady?.(instance);
   }, [initialCenter, initialZoom, onMapReady]);
 
-  const initLeafletMap = useCallback((container: HTMLDivElement) => {
-    const L = window.L!;
-    if (leafletMapRef.current) {
-      try {
-        leafletMapRef.current.remove();
-      } catch (_) {}
-      leafletMapRef.current = null;
-    }
-
-    const lmap = L.map(container, {
-      center: [initialCenter.lat, initialCenter.lng],
-      zoom: initialZoom,
-      zoomControl: true,
-      attributionControl: false,
-    });
-
-    // Dark-themed tiles with fallback to standard OSM
-    const darkTileLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19,
-      subdomains: "abcd",
-      errorTileUrl: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    }).addTo(lmap);
-
-    leafletMapRef.current = lmap;
-
-    // Trigger resize recalculation to prevent gray tiles
-    setTimeout(() => {
-      lmap.invalidateSize();
-    }, 150);
-    setTimeout(() => {
-      lmap.invalidateSize();
-    }, 600);
-
-    const instance: UnifiedMapInstance = {
-      engine: "leaflet",
-      leafletMap: lmap,
-      invalidateSize: () => {
-        lmap.invalidateSize();
-      },
-      setCenter: (lat, lng, zoom) => {
-        lmap.setView([lat, lng], zoom || lmap.getZoom(), { animate: true });
-        lmap.invalidateSize();
-      },
-      setUserLocation: (lat, lng, accuracy) => {
-        if (leafletLocMarkerRef.current) lmap.removeLayer(leafletLocMarkerRef.current);
-        if (leafletLocCircleRef.current) lmap.removeLayer(leafletLocCircleRef.current);
-
-        const customIcon = L.divIcon({
-          className: "gps-user-loc-beacon",
-          html: `<div style="position:relative;width:22px;height:22px;">
-            <div style="position:absolute;inset:0;background:rgba(198,255,61,0.4);border-radius:50%;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
-            <div style="position:absolute;top:3px;left:3px;width:16px;height:16px;background:#c6ff3d;border:3px solid #080c0a;border-radius:50%;box-shadow:0 0 16px #c6ff3d;"></div>
-          </div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11],
-        });
-
-        leafletLocMarkerRef.current = L.marker([lat, lng], { icon: customIcon, zIndexOffset: 1000 }).addTo(lmap);
-
-        if (accuracy && accuracy < 5000) {
-          leafletLocCircleRef.current = L.circle([lat, lng], {
-            radius: accuracy,
-            color: "#c6ff3d",
-            weight: 1.5,
-            fillColor: "#c6ff3d",
-            fillOpacity: 0.15,
-          }).addTo(lmap);
-        }
-
-        lmap.invalidateSize();
-      },
-      clearLocation: () => {
-        if (leafletLocMarkerRef.current) lmap.removeLayer(leafletLocMarkerRef.current);
-        if (leafletLocCircleRef.current) lmap.removeLayer(leafletLocCircleRef.current);
-      },
-      setRoute: (points, activePoint) => {
-        if (leafletRouteLineRef.current) lmap.removeLayer(leafletRouteLineRef.current);
-        if (leafletRouteHaloRef.current) lmap.removeLayer(leafletRouteHaloRef.current);
-        leafletMarkersRef.current.forEach((m) => lmap.removeLayer(m));
-        leafletMarkersRef.current = [];
-
-        if (!points.length) return;
-
-        const latlngs = points.map((p) => [p.lat, p.lng] as [number, number]);
-
-        if (latlngs.length > 1) {
-          leafletRouteHaloRef.current = L.polyline(latlngs, {
-            color: "#a6d9ff",
-            weight: 8,
-            opacity: 0.3,
-          }).addTo(lmap);
-
-          leafletRouteLineRef.current = L.polyline(latlngs, {
-            color: "#c6ff3d",
-            weight: 4,
-            opacity: 0.98,
-          }).addTo(lmap);
-
-          lmap.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] });
-        } else {
-          lmap.setView(latlngs[0], 16);
-        }
-
-        // Start Icon
-        const startIcon = L.divIcon({
-          className: "gps-start-node",
-          html: `<div style="width:22px;height:22px;background:#c6ff3d;color:#080c0a;font-weight:700;font-size:11px;line-height:22px;text-align:center;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 10px rgba(0,0,0,0.5);">S</div>`,
-          iconSize: [22, 22],
-          iconAnchor: [11, 11],
-        });
-        const startMarker = L.marker(latlngs[0], { icon: startIcon }).addTo(lmap);
-        leafletMarkersRef.current.push(startMarker);
-
-        // End Icon
-        if (latlngs.length > 1) {
-          const endIcon = L.divIcon({
-            className: "gps-end-node",
-            html: `<div style="width:22px;height:22px;background:#a6d9ff;color:#080c0a;font-weight:700;font-size:11px;line-height:22px;text-align:center;border-radius:50%;border:2px solid #ffffff;box-shadow:0 0 10px rgba(0,0,0,0.5);">E</div>`,
-            iconSize: [22, 22],
-            iconAnchor: [11, 11],
-          });
-          const endMarker = L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(lmap);
-          leafletMarkersRef.current.push(endMarker);
-        }
-
-        // Active Icon
-        if (activePoint) {
-          const activeIcon = L.divIcon({
-            className: "gps-active-node",
-            html: `<div style="width:24px;height:24px;background:#c6ff3d;border:4px solid #080c0a;border-radius:50%;box-shadow:0 0 18px #c6ff3d;"></div>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-          });
-          const activeMarker = L.marker([activePoint.lat, activePoint.lng], { icon: activeIcon, zIndexOffset: 500 }).addTo(lmap);
-          leafletMarkersRef.current.push(activeMarker);
-        }
-
-        lmap.invalidateSize();
-      },
-    };
-
-    mapInstanceRef.current = instance;
-    onMapReady?.(instance);
-  }, [initialCenter, initialZoom, onMapReady]);
-
-  // Load Map Engine
-  useEffect(() => {
-    let isMounted = true;
+  // Main Loader
+  const initMap = useCallback(async () => {
+    if (!containerRef.current) return;
     setIsLoading(true);
+    setErrorMessage(null);
     onMapLoadingChange?.(true);
 
-    async function setup() {
-      if (!containerRef.current) return;
+    const activeKey = customApiKey || ENV_GOOGLE_KEY;
 
-      // Try Google Maps if API key is provided
-      if (GOOGLE_API_KEY) {
-        try {
-          await loadGoogleMaps();
-          if (isMounted && containerRef.current) {
-            setEngine("google");
-            initGoogleMap(containerRef.current);
-            setIsLoading(false);
-            onMapLoadingChange?.(false);
-            return;
-          }
-        } catch (e) {
-          console.warn("Google Maps failed to load, falling back to Leaflet:", e);
-        }
-      }
-
-      // Fallback: Leaflet + Dark Cartography Tiles
+    if (activeKey) {
       try {
-        await loadLeaflet();
-        if (isMounted && containerRef.current) {
-          setEngine("leaflet");
-          initLeafletMap(containerRef.current);
+        await loadGoogleMapsScript(activeKey);
+        if (containerRef.current) {
+          setActiveEngine("google");
+          setupGoogleMap(containerRef.current);
           setIsLoading(false);
           onMapLoadingChange?.(false);
+          return;
         }
       } catch (err: any) {
-        if (isMounted) {
-          setErrorMessage(err.message || "Failed to initialize map");
-          setIsLoading(false);
-          onMapLoadingChange?.(false);
-          onMapError?.(err.message);
-        }
+        console.warn("Google Maps load failed, falling back to Leaflet:", err.message);
       }
     }
 
-    setup();
+    // Default & Fallback: Leaflet
+    try {
+      const L = await ensureLeaflet();
+      if (containerRef.current) {
+        setActiveEngine("leaflet");
+        setupLeaflet(containerRef.current, L);
+        setIsLoading(false);
+        onMapLoadingChange?.(false);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to initialize map");
+      setIsLoading(false);
+      onMapLoadingChange?.(false);
+      onMapError?.(err.message);
+    }
+  }, [customApiKey, setupGoogleMap, setupLeaflet, onMapError, onMapLoadingChange]);
+
+  useEffect(() => {
+    initMap();
 
     const handleResize = () => {
       if (mapInstanceRef.current) {
@@ -478,7 +483,6 @@ export function MapView({
     window.addEventListener("resize", handleResize);
 
     return () => {
-      isMounted = false;
       window.removeEventListener("resize", handleResize);
       if (leafletMapRef.current) {
         try {
@@ -487,7 +491,7 @@ export function MapView({
         leafletMapRef.current = null;
       }
     };
-  }, [initGoogleMap, initLeafletMap, onMapError, onMapLoadingChange]);
+  }, [initMap]);
 
   // Handle Location Detection
   const handleLocateMe = useCallback(() => {
@@ -501,7 +505,7 @@ export function MapView({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-        setCurrentCoords({ lat, lng, accuracy });
+        setCoords({ lat, lng, accuracy });
         setIsLocating(false);
 
         if (mapInstanceRef.current) {
@@ -526,13 +530,13 @@ export function MapView({
     );
   }, [onLocationFound]);
 
-  // Auto-locate once on first load
+  // Auto-locate once on initial mount
   useEffect(() => {
     if (showMyLocation && !isLoading && !errorMessage) {
       navigator.geolocation?.getCurrentPosition(
         (pos) => {
           const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-          setCurrentCoords({ lat, lng, accuracy });
+          setCoords({ lat, lng, accuracy });
           if (mapInstanceRef.current) {
             mapInstanceRef.current.invalidateSize();
             mapInstanceRef.current.setCenter(lat, lng, 15);
@@ -540,31 +544,106 @@ export function MapView({
           }
           onLocationFound?.(lat, lng, accuracy);
         },
-        () => {}, // ignore silent failure
+        () => {},
         { enableHighAccuracy: true, timeout: 6000 }
       );
     }
   }, [isLoading, errorMessage, showMyLocation, onLocationFound]);
 
+  // Change Tile Style for Leaflet
+  const changeTile = (style: TileStyle) => {
+    setTileStyle(style);
+    if (activeEngine === "leaflet" && leafletMapRef.current && window.L) {
+      const tileUrls: Record<TileStyle, string> = {
+        dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      };
+      if (leafletTileLayerRef.current) {
+        leafletMapRef.current.removeLayer(leafletTileLayerRef.current);
+      }
+      leafletTileLayerRef.current = window.L.tileLayer(tileUrls[style], {
+        maxZoom: 19,
+        subdomains: "abcd",
+      }).addTo(leafletMapRef.current);
+    }
+  };
+
+  const handleSaveApiKey = () => {
+    if (customApiKey.trim()) {
+      localStorage.setItem("fittrack_google_maps_key", customApiKey.trim());
+    } else {
+      localStorage.removeItem("fittrack_google_maps_key");
+    }
+    setKeySaved(true);
+    setTimeout(() => {
+      setKeySaved(false);
+      setShowKeyModal(false);
+      window.location.reload();
+    }, 800);
+  };
+
   return (
-    <div className={cn("relative w-full h-[460px] overflow-hidden bg-[#080c0a]", className)}>
+    <div className={cn("relative w-full h-[480px] overflow-hidden bg-[#080c0a] rounded-lg", className)}>
       <div ref={containerRef} className="absolute inset-0 w-full h-full z-[1]" />
+
+      {/* Top Map Controls */}
+      {!isLoading && !errorMessage && (
+        <div className="absolute top-3 left-3 right-3 z-[20] flex items-center justify-between pointer-events-none">
+          <div className="flex items-center gap-2 pointer-events-auto">
+            <div className="bg-[#080c0a]/90 border border-[#a6d9ff]/30 px-3 py-1.5 rounded-md text-[10px] font-mono text-[#a6d9ff] uppercase tracking-wider backdrop-blur-md flex items-center gap-1.5 shadow-lg">
+              <Compass className="w-3.5 h-3.5 text-[#c6ff3d]" />
+              <span>{activeEngine === "google" ? "Google Maps" : "Interactive Field Map"}</span>
+            </div>
+
+            {/* Tile Layer Selector */}
+            {activeEngine === "leaflet" && (
+              <div className="flex bg-[#080c0a]/90 border border-white/10 rounded-md p-0.5 backdrop-blur-md">
+                {(["dark", "streets", "satellite"] as TileStyle[]).map((style) => (
+                  <button
+                    key={style}
+                    type="button"
+                    onClick={() => changeTile(style)}
+                    className={cn(
+                      "px-2 py-1 text-[9px] font-mono uppercase tracking-wider rounded transition-all",
+                      tileStyle === style ? "bg-[#c6ff3d] text-[#080c0a] font-bold" : "text-[#9eab9c] hover:text-white"
+                    )}
+                  >
+                    {style}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Google Maps Key Config Button */}
+          <button
+            type="button"
+            onClick={() => setShowKeyModal(true)}
+            className="pointer-events-auto bg-[#080c0a]/90 hover:bg-[#121a14] border border-white/15 px-2.5 py-1.5 rounded-md text-[10px] font-mono text-[#9eab9c] hover:text-[#c6ff3d] flex items-center gap-1.5 transition backdrop-blur-md shadow-lg"
+            title="Configure Google Maps API Key"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-[#c6ff3d]" />
+            <span>Maps Key</span>
+          </button>
+        </div>
+      )}
 
       {/* Floating My Location Button & Radar */}
       {showMyLocation && !isLoading && !errorMessage && (
         <div className="absolute bottom-4 right-4 z-[20] flex flex-col items-end gap-2">
-          {currentCoords && (
-            <div className="bg-[#080c0a]/95 border border-[#c6ff3d]/40 px-3 py-1.5 rounded-md text-[11px] font-mono text-[#c6ff3d] shadow-2xl backdrop-blur-md">
-              <span className="text-[#a6d9ff] font-bold">GPS: </span>
-              {currentCoords.lat.toFixed(5)}, {currentCoords.lng.toFixed(5)}
-              <span className="text-[#9eab9c] text-[10px] ml-1.5">(±{Math.round(currentCoords.accuracy)}m)</span>
+          {coords && (
+            <div className="bg-[#080c0a]/95 border border-[#c6ff3d]/40 px-3.5 py-1.5 rounded-md text-[11px] font-mono text-[#c6ff3d] shadow-2xl backdrop-blur-md">
+              <span className="text-[#a6d9ff] font-bold">LIVE GPS: </span>
+              {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+              <span className="text-[#9eab9c] text-[10px] ml-1.5">(±{Math.round(coords.accuracy)}m)</span>
             </div>
           )}
           <button
             type="button"
             onClick={handleLocateMe}
             disabled={isLocating}
-            className="flex items-center gap-2 bg-[#c6ff3d] hover:bg-[#d8ff6b] active:scale-95 text-[#080c0a] font-bold font-mono text-xs px-4 py-2.5 rounded-md shadow-[0_0_20px_rgba(198,255,61,0.45)] transition-all cursor-pointer disabled:opacity-60"
+            className="flex items-center gap-2 bg-[#c6ff3d] hover:bg-[#d8ff6b] active:scale-95 text-[#080c0a] font-bold font-mono text-xs px-4 py-2.5 rounded-md shadow-[0_0_24px_rgba(198,255,61,0.5)] transition-all cursor-pointer disabled:opacity-60"
             title="Check and pinpoint your exact GPS location on map"
           >
             {isLocating ? (
@@ -582,11 +661,61 @@ export function MapView({
         </div>
       )}
 
-      {/* Map Badge */}
-      {!isLoading && !errorMessage && (
-        <div className="absolute top-3 left-3 z-[20] bg-[#080c0a]/90 border border-[#a6d9ff]/30 px-3 py-1.5 rounded-md text-[10px] font-mono text-[#a6d9ff] uppercase tracking-wider backdrop-blur-md pointer-events-none flex items-center gap-1.5 shadow-lg">
-          <Compass className="w-3.5 h-3.5 text-[#c6ff3d]" />
-          <span>{engine === "google" ? "Google Maps" : "Interactive GPS Field Map"}</span>
+      {/* Google Maps API Key Modal */}
+      {showKeyModal && (
+        <div className="absolute inset-0 z-[40] bg-[#080c0a]/90 backdrop-blur-sm grid place-items-center p-6">
+          <div className="bg-[#0f1712] border border-[#c6ff3d]/30 rounded-lg p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2 text-[#c6ff3d] font-mono font-bold text-sm">
+                <KeyRound className="w-4 h-4" />
+                <span>Google Maps Configuration</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKeyModal(false)}
+                className="text-[#9eab9c] hover:text-white text-xs font-mono"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <p className="text-xs text-[#9eab9c] mb-4 leading-relaxed">
+              OpenStreetMap / Leaflet is currently active and works out of the box with zero keys. To switch to official Google Maps, paste your Google Maps API Key below:
+            </p>
+            <div className="mb-4">
+              <label className="block text-[10px] font-mono text-[#a6d9ff] uppercase tracking-wider mb-1.5">
+                Google Maps API Key (Browser)
+              </label>
+              <input
+                type="text"
+                value={customApiKey}
+                onChange={(e) => setCustomApiKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className="w-full bg-[#080c0a] border border-white/20 rounded px-3 py-2 text-xs font-mono text-white placeholder:text-white/30 focus:outline-none focus:border-[#c6ff3d]"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomApiKey("");
+                  localStorage.removeItem("fittrack_google_maps_key");
+                  setShowKeyModal(false);
+                  window.location.reload();
+                }}
+                className="text-[11px] font-mono text-red-400 hover:underline"
+              >
+                Reset to OpenStreetMap
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                className="flex items-center gap-1.5 bg-[#c6ff3d] hover:bg-[#d8ff6b] text-[#080c0a] font-mono font-bold text-xs px-4 py-2 rounded transition"
+              >
+                {keySaved ? <Check className="w-3.5 h-3.5" /> : null}
+                <span>{keySaved ? "Saved!" : "Save & Reload"}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

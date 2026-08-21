@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, LoaderCircle, MapPinned, Navigation, Pause, Play, Radio, Route, Save, Timer, Trash2, Waves } from "lucide-react";
+import { Crosshair, LoaderCircle, MapPinned, Navigation, Pause, Play, Radio, Route, Save, Timer, Trash2, Waves, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
@@ -33,8 +33,8 @@ function buildDemoRoute(): RoutePoint[] {
 
 function locationMessage(error: GeolocationPositionError) {
   if (error.code === error.PERMISSION_DENIED) return "Location permission is required. Please allow location access in your browser, then retry.";
-  if (error.code === error.POSITION_UNAVAILABLE) return "GPS cannot find a reliable position yet. Please ensure GPS is enabled on your device.";
-  return "GPS signal was interrupted or took too long to respond. Please check your signal and retry.";
+  if (error.code === error.POSITION_UNAVAILABLE) return "GPS cannot find a reliable position yet. Please ensure GPS/location is enabled on your device.";
+  return "GPS signal was interrupted or took too long to respond. Please check your connection and retry.";
 }
 
 export default function GpsTracker() {
@@ -77,7 +77,7 @@ export default function GpsTracker() {
   const selectedSession = savedSessions.find((session) => session.id === selectedId) ?? savedSessions[0];
   const displayedPoints = isTracking || livePoints.length ? livePoints : (selectedSession?.points ?? []);
   const activePoint = isTracking ? livePoints[livePoints.length - 1] : undefined;
-  const mapLabel = mapState === "loading" ? "Initializing map link" : isTracking ? "Live capture active" : displayedPoints.length ? "Saved route replay" : userLocationInfo ? "GPS Location Locked" : "Awaiting field signal";
+  const mapLabel = mapState === "loading" ? "Initializing map" : isTracking ? "Live GPS capture active" : displayedPoints.length ? "Saved route replay" : userLocationInfo ? "GPS Position Locked" : "Ready for field capture";
 
   const addPoint = (position: GeolocationPosition) => {
     const pt: RoutePoint = {
@@ -138,7 +138,7 @@ export default function GpsTracker() {
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
         });
-        toast.success(`Location found! Precision: ±${Math.round(pos.coords.accuracy)}m`);
+        toast.success(`Location locked: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (±${Math.round(pos.coords.accuracy)}m)`);
       },
       (err) => {
         setIsLocatingOnly(false);
@@ -154,7 +154,7 @@ export default function GpsTracker() {
     setElapsedSeconds(378);
     setStartedAt(Date.now() - 378_000);
     setIsTracking(false);
-    toast("Simulation loaded — this route has not been saved.");
+    toast("Simulation route loaded.");
   };
 
   const saveRoute = () => {
@@ -165,7 +165,7 @@ export default function GpsTracker() {
     const endedAt = new Date(livePoints[livePoints.length - 1].timestampMs);
     const duration = Math.max(1, Math.round((endedAt.getTime() - startedAt) / 1000));
     createSession.mutate({
-      label: "Movement calibration route",
+      label: "Outdoor Movement Route",
       startedAt: new Date(startedAt),
       endedAt,
       durationSeconds: duration,
@@ -203,13 +203,6 @@ export default function GpsTracker() {
               <span>LAT / LON</span>
               <span>FIELD TRACE</span>
             </div>
-            {!displayedPoints.length && mapState === "ready" && !userLocationInfo && (
-              <div className="gps-map-empty">
-                <MapPinned size={26} />
-                <b>Position a field trace</b>
-                <span>Click "Check My Location" or "Start field trace" to lock GPS coordinates.</span>
-              </div>
-            )}
           </div>
 
           <div className="gps-metrics-strip">
@@ -239,7 +232,7 @@ export default function GpsTracker() {
               <b>{isTracking ? "Movement in progress" : "Ready for route capture"}</b>
             </div>
           </div>
-          <p>FitTrack pinpoints your position in real-time. Use Locate Me to test GPS or Start Field Trace to record a workout.</p>
+          <p>FitTrack pinpoints your position in real-time. Use Locate Me to check GPS or Start Field Trace to record a workout.</p>
 
           <div className="gps-control-actions">
             {isTracking ? (
@@ -289,7 +282,7 @@ export default function GpsTracker() {
               <div>
                 <MapPinned size={15} />
                 <span>Coordinates</span>
-                <b className="text-[9px]">{userLocationInfo.lat.toFixed(4)}, {userLocationInfo.lng.toFixed(4)}</b>
+                <b className="text-[10px] text-[#c6ff3d]">{userLocationInfo.lat.toFixed(4)}, {userLocationInfo.lng.toFixed(4)}</b>
               </div>
             )}
           </div>
