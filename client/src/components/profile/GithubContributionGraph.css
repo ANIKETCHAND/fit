@@ -87,30 +87,29 @@
 }
 
 .gh-month-label {
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: #79897a;
   font-family: "Space Mono", monospace;
+  letter-spacing: 0.04em;
 }
 
-.gh-grid-wrapper {
+.gh-heatmap-row {
   display: flex;
-  gap: 10px;
-  min-width: 680px;
+  gap: 6px;
+  align-items: flex-start;
 }
 
-.gh-days-column {
+.gh-days-sidebar {
   display: grid;
   grid-template-rows: repeat(7, 10px);
   gap: 3px;
-  width: 24px;
-  flex-shrink: 0;
+  padding-top: 1px;
 }
 
 .gh-day-label {
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   color: #79897a;
@@ -179,24 +178,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 15px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(226, 245, 225, 0.08);
-  min-width: 680px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(226, 245, 225, 0.07);
 }
 
-.gh-learn-link {
-  color: #a6d9ff;
-  font-size: 8.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.gh-learn-more {
+  color: #7f9180;
+  font-size: 11px;
   text-decoration: none;
-  font-family: "Space Mono", monospace;
+  font-family: "DM Sans", -apple-system, sans-serif;
   transition: color 0.15s ease;
 }
 
-.gh-learn-link:hover {
+.gh-learn-more:hover {
   color: #c6ff3d;
   text-decoration: underline;
 }
@@ -204,11 +199,11 @@
 .gh-legend {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .gh-legend-label {
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   color: #79897a;
@@ -238,7 +233,7 @@
   min-width: 78px;
   padding: 8px 12px;
   border-radius: 2px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
