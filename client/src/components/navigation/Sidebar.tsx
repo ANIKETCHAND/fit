@@ -1,4 +1,4 @@
-/** Kinetic Anatomy Lab: an accessible, toggleable navigation drawer with three dots trigger */
+/** Kinetic Anatomy Lab: an accessible, toggleable navigation drawer with three dots trigger and click-outside dismissal */
 import {
   Award,
   Bell,
@@ -12,8 +12,8 @@ import {
   Settings,
   UserRound,
   Utensils,
-  X,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useSidebar } from "@/lib/sidebar-store";
 
@@ -30,6 +30,26 @@ const nav = [
 export function Sidebar() {
   const { open, toggleSidebar, setSidebarOpen } = useSidebar();
   const [location, setLocation] = useLocation();
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement)?.closest(".sidebar-trigger-btn")
+      ) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [open, setSidebarOpen]);
 
   const route = (path: string) => {
     setLocation(path);
@@ -47,20 +67,17 @@ export function Sidebar() {
         <MoreVertical size={20} />
       </button>
 
-      <aside className={`sidebar ${open ? "open" : ""}`} aria-hidden={!open}>
+      <aside
+        ref={sidebarRef}
+        className={`sidebar ${open ? "open" : ""}`}
+        aria-hidden={!open}
+      >
         <div className="brand-row">
           <img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="FitTrack mark" />
           <div>
             <strong>FIT<span>TRACK</span></strong>
             <small>PERFORMANCE OS</small>
           </div>
-          <button
-            className="close-menu"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close navigation"
-          >
-            <X size={20} />
-          </button>
         </div>
 
         <nav>
