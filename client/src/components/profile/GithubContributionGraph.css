@@ -1,7 +1,7 @@
-/* GitHub-Exact Contribution Heatmap styling */
+/* FitTrack Theme Contribution Heatmap styling */
 .gh-contribution-section {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   align-items: flex-start;
   width: 100%;
   margin: 16px 0 20px;
@@ -18,63 +18,86 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
   padding: 0 2px;
 }
 
 .gh-contribution-title {
-  color: #e6edf3;
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  color: #edf4e9;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: "Barlow Condensed", -apple-system, sans-serif;
 }
 
 .gh-contribution-settings-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   background: transparent;
-  border: none;
-  color: #7d8590;
-  font-size: 12px;
+  border: 1px solid rgba(226, 245, 225, 0.12);
+  color: #9ab09a;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: color 0.15s ease;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  padding: 5px 9px;
+  border-radius: 2px;
+  background: rgba(16, 22, 17, 0.65);
+  transition: all 0.15s ease;
+  font-family: "Space Mono", monospace;
 }
 
 .gh-contribution-settings-btn:hover {
-  color: #58a6ff;
+  color: #c6ff3d;
+  border-color: rgba(198, 255, 61, 0.4);
+  background: #18241a;
 }
 
 .gh-contribution-box {
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  padding: 16px 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  position: relative;
+  background: linear-gradient(150deg, rgba(20, 28, 21, 0.97), rgba(10, 14, 11, 0.98));
+  border: 1px solid rgba(226, 245, 225, 0.12);
+  border-radius: 3px;
+  padding: 18px 20px 16px;
+  box-shadow: inset 0 0 0 1px rgba(198, 255, 61, 0.04), 0 14px 38px rgba(0, 0, 0, 0.55);
   overflow-x: auto;
+}
+
+.gh-contribution-box::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 72px;
+  height: 2px;
+  background: #c6ff3d;
+  box-shadow: 0 0 12px rgba(198, 255, 61, 0.65);
 }
 
 .gh-months-header {
   display: flex;
   justify-content: space-between;
-  padding-left: 32px;
-  margin-bottom: 6px;
+  padding-left: 34px;
+  margin-bottom: 8px;
   min-width: 680px;
 }
 
 .gh-month-label {
-  font-size: 10px;
-  color: #7d8590;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #79897a;
+  font-family: "Space Mono", monospace;
 }
 
 .gh-grid-wrapper {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   min-width: 680px;
 }
 
@@ -87,10 +110,12 @@
 }
 
 .gh-day-label {
-  font-size: 9px;
-  color: #7d8590;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #79897a;
   line-height: 10px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family: "Space Mono", monospace;
 }
 
 .gh-cells-grid {
@@ -108,63 +133,71 @@
 .gh-cell {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 1.5px;
   transition: transform 0.1s ease, filter 0.1s ease;
   cursor: pointer;
 }
 
 .gh-cell:hover {
-  transform: scale(1.25);
-  filter: brightness(1.2);
+  transform: scale(1.3);
+  filter: brightness(1.25);
   z-index: 2;
 }
 
-/* GitHub Heatmap Green Levels */
+/* FitTrack Neon Lime / Obsidian Theme Palette */
 .gh-cell.level-0,
 .gh-legend-cell.level-0 {
-  background-color: #161b22;
-  outline: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: #141c15;
+  border: 1px solid rgba(226, 245, 225, 0.07);
 }
 
 .gh-cell.level-1,
 .gh-legend-cell.level-1 {
-  background-color: #0e4429;
+  background-color: #1f3d24;
+  border: 1px solid rgba(198, 255, 61, 0.18);
 }
 
 .gh-cell.level-2,
 .gh-legend-cell.level-2 {
-  background-color: #006d32;
+  background-color: #387032;
+  border: 1px solid rgba(198, 255, 61, 0.3);
 }
 
 .gh-cell.level-3,
 .gh-legend-cell.level-3 {
-  background-color: #26a641;
+  background-color: #6fb833;
+  border: 1px solid rgba(198, 255, 61, 0.45);
 }
 
 .gh-cell.level-4,
 .gh-legend-cell.level-4 {
-  background-color: #39d353;
-  box-shadow: 0 0 6px rgba(57, 211, 83, 0.35);
+  background-color: #c6ff3d;
+  box-shadow: 0 0 8px rgba(198, 255, 61, 0.6);
 }
 
 .gh-contribution-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 6px;
+  margin-top: 15px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 245, 225, 0.08);
   min-width: 680px;
 }
 
 .gh-learn-link {
-  color: #58a6ff;
-  font-size: 11px;
+  color: #a6d9ff;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   text-decoration: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  transition: text-decoration 0.15s ease;
+  font-family: "Space Mono", monospace;
+  transition: color 0.15s ease;
 }
 
 .gh-learn-link:hover {
+  color: #c6ff3d;
   text-decoration: underline;
 }
 
@@ -175,24 +208,26 @@
 }
 
 .gh-legend-label {
-  font-size: 11px;
-  color: #7d8590;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #79897a;
   margin: 0 3px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family: "Space Mono", monospace;
 }
 
 .gh-legend-cell {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 1.5px;
 }
 
-/* Right Year Nav Buttons */
+/* Right Year Nav Buttons (FitTrack Theme) */
 .gh-years-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-top: 28px;
+  gap: 7px;
+  padding-top: 29px;
   flex-shrink: 0;
 }
 
@@ -200,45 +235,52 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 76px;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  border: none;
+  min-width: 78px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(226, 245, 225, 0.12);
   cursor: pointer;
-  background: transparent;
-  color: #8b949e;
+  background: rgba(16, 22, 17, 0.7);
+  color: #8fa18f;
   transition: all 0.15s ease;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-family: "Space Mono", monospace;
 }
 
 .gh-year-btn:hover:not(.active) {
-  color: #e6edf3;
-  background: #21262d;
+  color: #dce6d8;
+  border-color: rgba(166, 217, 255, 0.4);
+  background: #18241a;
 }
 
 .gh-year-btn.active {
-  background: #0969da;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(9, 105, 218, 0.4);
+  background: #c6ff3d;
+  color: #10160e;
+  border-color: #c6ff3d;
+  box-shadow: 0 0 16px rgba(198, 255, 61, 0.35);
 }
 
-/* Tooltip */
+/* Telemetry Tooltip */
 .gh-tooltip {
   position: fixed;
   transform: translate(-50%, -100%);
-  background: #24292f;
-  color: #f0f6fc;
-  border: 1px solid #30363d;
-  border-radius: 4px;
+  background: #142016;
+  color: #edf4e9;
+  border: 1px solid rgba(198, 255, 61, 0.45);
+  border-radius: 2px;
   padding: 5px 9px;
-  font-size: 11px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   pointer-events: none;
   z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  font-family: "Space Mono", monospace;
 }
 
 @media (max-width: 1000px) {
