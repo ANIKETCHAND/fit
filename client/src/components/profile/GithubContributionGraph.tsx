@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
 import "./GithubContributionGraph.css";
 
 type Year = 2026 | 2025 | 2024;
@@ -102,9 +101,6 @@ export function GithubContributionGraph() {
           <span className="gh-contribution-title">
             {YEAR_STATS[selectedYear].text}
           </span>
-          <button className="gh-contribution-settings-btn" type="button">
-            Contribution settings <ChevronDown size={13} />
-          </button>
         </div>
 
         {/* Boxed Heatmap Canvas */}
