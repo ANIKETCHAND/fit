@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices } from "@/lib/user-store";
+import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
 const summaryMetrics = [
@@ -88,22 +89,24 @@ export default function Profile() {
 
       <motion.section className="profile-metric-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: .035 } } }}>{summaryMetrics.map(({ label, value, unit, detail, icon: Icon, tone, size }, index) => <motion.article key={label} className={`profile-metric metric-${tone} metric-${size}`} variants={{ hidden: { opacity: 0, y: 9 }, visible: { opacity: 1, y: 0 } }}><Icon size={16} /><span>{label}</span><strong>{index === 0 ? rangeData.sessions : value}{unit && <small>{unit}</small>}</strong><p>{index === 0 ? `${rangeData.label.toLowerCase()}` : detail}</p></motion.article>)}<motion.article className="profile-scan-instrument" variants={{ hidden: { opacity: 0, y: 9 }, visible: { opacity: 1, y: 0 } }}><div className="scan-instrument-head"><span className="panel-label">Anterior recovery scan</span><img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="" /></div><div className="profile-scan-body" aria-hidden="true"><i className="scan-head" /><i className="scan-chest scan-left" /><i className="scan-chest scan-right" /><i className="scan-core core-a" /><i className="scan-core core-b" /><i className="scan-leg leg-left" /><i className="scan-leg leg-right" /><b className="scan-axis axis-x" /><b className="scan-axis axis-y" /></div><div className="scan-instrument-readout"><span>Chest / anterior</span><b>READY <i /></b><small>X 31.6 · Y 14.2 · Z 08.7</small></div></motion.article></motion.section>
 
-      <section className="profile-analysis-grid">
-        <motion.article className="profile-panel contribution-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .12 }}>
-          <div className="profile-panel-head"><div><span className="panel-label">Signal ledger</span><h2>Activity contributions</h2></div><span>{rangeData.period}</span></div>
-          <div className="contribution-chart" aria-label={`Activity contribution calendar for ${rangeData.label.toLowerCase()}`}><div className="contribution-days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div className="contribution-grid" style={{ gridTemplateColumns: `repeat(${rangeData.weeks}, 9px)` }}>{Array.from({ length: rangeData.weeks * 7 }, (_, index) => { const week = Math.floor(index / 7); const day = index % 7; return <i key={index} className={contributionLevel(week, day, range)} title={`Week ${week + 1}, training signal`} />; })}</div></div>
-          <div className="contribution-footer"><div><span>Less</span><i className="zero" /><i className="low" /><i className="mid" /><i className="high" /><span>More</span></div><p><CircleCheck size={13} /> {rangeData.continuous} training weeks completed without a gap.</p></div>
-        </motion.article>
+      <motion.section className="profile-contribution-wrapper" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .12 }}>
+        <GithubContributionGraph />
+      </motion.section>
 
+      <section className="profile-analysis-grid">
         <motion.article className="profile-panel types-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .18 }}>
           <div className="profile-panel-head"><div><span className="panel-label">Movement mix</span><h2>Activity types</h2></div><Sparkles size={16} /></div>
           <div className="activity-donut"><svg viewBox="0 0 42 42" role="img" aria-label="Activity type breakdown">{activityTypes.map((type) => { const currentOffset = offset; offset += type.value; return <circle key={type.label} cx="21" cy="21" r="15.9155" fill="transparent" stroke={type.color} strokeWidth="5" strokeDasharray={`${type.value} ${100 - type.value}`} strokeDashoffset={-currentOffset} />; })}</svg><div><strong>{rangeData.sessions}</strong><span>activities</span></div></div>
           <div className="type-legend">{activityTypes.map((type) => <div key={type.label}><i style={{ background: type.color }} /><span>{type.label}</span><b>{type.value}%</b></div>)}</div>
         </motion.article>
+
+        <motion.article className="profile-panel device-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .22 }}>
+          <div className="profile-panel-head"><div><span className="panel-label">Input sources</span><h2>Device sync</h2></div><button onClick={() => setDeviceOpen(true)}><ArrowUpRight size={15} /> Manage</button></div>
+          {devices.map((device) => { const Icon = deviceIcon(device.kind); return <div className="device-row" key={device.id}><div className="device-symbol"><Icon size={18} /></div><div><strong>{device.name}</strong><span>{device.detail}</span></div><b><i /> {device.kind === "log" ? "synced" : "live"}</b></div>; })}
+        </motion.article>
       </section>
 
       <section className="profile-bottom-grid">
-        <article className="profile-panel device-panel"><div className="profile-panel-head"><div><span className="panel-label">Input sources</span><h2>Device sync</h2></div><button onClick={() => setDeviceOpen(true)}><ArrowUpRight size={15} /> Manage</button></div>{devices.map((device) => { const Icon = deviceIcon(device.kind); return <div className="device-row" key={device.id}><div className="device-symbol"><Icon size={18} /></div><div><strong>{device.name}</strong><span>{device.detail}</span></div><b><i /> {device.kind === "log" ? "synced" : "live"}</b></div>; })}</article>
         <article className="profile-panel profile-guidance"><span className="panel-label">Next analysis</span><h2>Strength volume is your dominant signal.</h2><p>Strength leads the ledger at 38%. Hold the current loading pattern for four sessions, then recalibrate against recovery signal and session cadence.</p><button onClick={() => setLocation("/start-session")}>Open next protocol <ArrowUpRight size={15} /></button></article>
       </section>
     </main>
