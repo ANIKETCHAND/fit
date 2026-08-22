@@ -45,6 +45,7 @@ export default function ExerciseLibrary() {
   const [, setLocation] = useLocation();
   const [focus, setFocus] = useState("All signals");
   const [query, setQuery] = useState("");
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<Record<string, ExercisePreference>>(getExercisePreferences);
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress>(getExerciseProgress);
 
@@ -108,6 +109,50 @@ export default function ExerciseLibrary() {
     });
   }, [focus, query, preferences]);
 
+  // Determine active exercise dynamically
+  const activeExercise = useMemo(() => {
+    if (selectedExerciseId) {
+      const found = filtered.find((e) => e.id === selectedExerciseId);
+      if (found) return found;
+    }
+    if (filtered.length > 0) {
+      return filtered[0];
+    }
+    return null;
+  }, [selectedExerciseId, filtered]);
+
+  // Target muscle label to display in banner
+  const targetMuscleLabel = useMemo(() => {
+    if (activeExercise) {
+      return activeExercise.focus.toUpperCase();
+    }
+    if (focus !== "All signals" && focus !== "Favorites" && focus !== "Coached") {
+      return focus.toUpperCase();
+    }
+    return "ALL MUSCLE GROUPS";
+  }, [activeExercise, focus]);
+
+  // Active muscle group for visual anatomy highlight
+  const activeMuscleFocus = useMemo(() => {
+    if (activeExercise) {
+      const f = activeExercise.focus.toLowerCase();
+      if (f.includes("pectoral") || f.includes("chest")) return "pecs";
+      if (f.includes("lat") || f.includes("back") || f.includes("rhomboid")) return "lats";
+      if (f.includes("deltoid") || f.includes("shoulder") || f.includes("trap")) return "shoulders";
+      if (f.includes("bicep") || f.includes("tricep") || f.includes("arm") || f.includes("forearm")) return "arms";
+      if (f.includes("core") || f.includes("ab") || f.includes("oblique")) return "core";
+      if (f.includes("quad") || f.includes("hamstring") || f.includes("glute") || f.includes("leg") || f.includes("calf")) return "legs";
+    }
+    const foc = focus.toLowerCase();
+    if (foc === "pectorals") return "pecs";
+    if (foc === "lats") return "lats";
+    if (foc === "deltoids") return "shoulders";
+    if (foc === "biceps" || foc === "triceps") return "arms";
+    if (foc === "core") return "core";
+    if (foc === "quadriceps" || foc === "hamstrings") return "legs";
+    return "all";
+  }, [activeExercise, focus]);
+
   const stage = (exercise: LibraryExercise) => {
     localStorage.setItem("fittrack-staged-exercise", exercise.name);
     toast(`${exercise.name} staged in your active protocol`);
@@ -148,13 +193,19 @@ export default function ExerciseLibrary() {
           <Search size={16} />
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search movement, muscle, or equipment (e.g. bench, quads, pull)"
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setSelectedExerciseId(null);
+            }}
+            placeholder="Search movement, muscle, or equipment (e.g. lat, bench, quad)"
           />
           {query && (
             <button
               className="search-clear-btn"
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                setSelectedExerciseId(null);
+              }}
               aria-label="Clear search"
             >
               <X size={14} />
@@ -167,7 +218,10 @@ export default function ExerciseLibrary() {
             <button
               key={item}
               className={focus === item ? "selected" : ""}
-              onClick={() => setFocus(item)}
+              onClick={() => {
+                setFocus(item);
+                setSelectedExerciseId(null);
+              }}
             >
               {item}
             </button>
@@ -178,6 +232,7 @@ export default function ExerciseLibrary() {
           onClick={() => {
             setFocus("All signals");
             setQuery("");
+            setSelectedExerciseId(null);
             toast("Showing all movement library exercises");
           }}
         >
@@ -187,29 +242,63 @@ export default function ExerciseLibrary() {
       </section>
 
       <section className="library-scan-anchor" aria-label="Movement scan reference">
-        <div className="anchor-body">
-          <i className="anchor-head" onClick={() => setFocus("Deltoids")} title="Select Shoulders / Deltoids" style={{ cursor: "pointer" }} />
-          <i className="anchor-torso" onClick={() => setFocus("Lats")} title="Select Back / Lats" style={{ cursor: "pointer" }} />
-          <i className="anchor-pec left" onClick={() => setFocus("Pectorals")} title="Select Chest / Pectorals" style={{ cursor: "pointer" }} />
-          <i className="anchor-pec right" onClick={() => setFocus("Pectorals")} title="Select Chest / Pectorals" style={{ cursor: "pointer" }} />
-          <i className="anchor-core" onClick={() => setFocus("Core")} title="Select Core / Abs" style={{ cursor: "pointer" }} />
+        <div className={`anchor-body highlight-${activeMuscleFocus}`}>
+          <i
+            className={`anchor-head ${activeMuscleFocus === "shoulders" ? "active-glow" : ""}`}
+            onClick={() => {
+              setFocus("Deltoids");
+              setSelectedExerciseId(null);
+            }}
+            title="Select Shoulders / Deltoids"
+            style={{ cursor: "pointer" }}
+          />
+          <i
+            className={`anchor-torso ${activeMuscleFocus === "lats" ? "active-glow" : ""}`}
+            onClick={() => {
+              setFocus("Lats");
+              setSelectedExerciseId(null);
+            }}
+            title="Select Back / Lats"
+            style={{ cursor: "pointer" }}
+          />
+          <i
+            className={`anchor-pec left ${activeMuscleFocus === "pecs" || activeMuscleFocus === "arms" ? "active-glow" : ""}`}
+            onClick={() => {
+              setFocus("Pectorals");
+              setSelectedExerciseId(null);
+            }}
+            title="Select Chest / Pectorals"
+            style={{ cursor: "pointer" }}
+          />
+          <i
+            className={`anchor-pec right ${activeMuscleFocus === "pecs" || activeMuscleFocus === "arms" ? "active-glow" : ""}`}
+            onClick={() => {
+              setFocus("Pectorals");
+              setSelectedExerciseId(null);
+            }}
+            title="Select Chest / Pectorals"
+            style={{ cursor: "pointer" }}
+          />
+          <i
+            className={`anchor-core ${activeMuscleFocus === "core" || activeMuscleFocus === "legs" ? "active-glow" : ""}`}
+            onClick={() => {
+              setFocus("Core");
+              setSelectedExerciseId(null);
+            }}
+            title="Select Core / Abs"
+            style={{ cursor: "pointer" }}
+          />
         </div>
         <div>
-          <span className="panel-label">Target muscle</span>
-          <b>
-            <em>
-              {focus === "All signals"
-                ? "All Muscle Groups"
-                : focus === "Favorites"
-                ? "Saved Favorites"
-                : focus === "Coached"
-                ? "Reviewed Movements"
-                : focus}
-            </em>
+          <span className="panel-label">
+            {activeExercise ? `Selected movement: ${activeExercise.name}` : "Target muscle"}
+          </span>
+          <b style={{ color: "#c6ff3d", letterSpacing: "0.04em" }}>
+            <em>{targetMuscleLabel}</em>
           </b>
         </div>
         <div className="anchor-readouts">
-          <span><i />{filtered.length} Exercises found</span>
+          <span><i />{filtered.length} {filtered.length === 1 ? "Movement" : "Movements"} found</span>
           <span><i />Joint line stable</span>
           <span><i />Load ready</span>
         </div>
@@ -221,6 +310,8 @@ export default function ExerciseLibrary() {
             key={exercise.id}
             exercise={exercise}
             index={index}
+            isActive={activeExercise?.id === exercise.id}
+            onSelect={() => setSelectedExerciseId(exercise.id)}
             onStage={stage}
             favorite={Boolean(preferenceFor(exercise.id).favorite)}
             viewed={Boolean(preferenceFor(exercise.id).viewedAt)}
@@ -244,6 +335,7 @@ export default function ExerciseLibrary() {
             onClick={() => {
               setFocus("All signals");
               setQuery("");
+              setSelectedExerciseId(null);
             }}
           >
             Show All Movements ({libraryExercises.length} available)
