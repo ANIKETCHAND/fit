@@ -57,11 +57,10 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
     <div className="scan-grid" aria-hidden="true" /><div className={`anatomy-fiber-map focus-${selected}`} aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="anatomy-ruler ruler-vertical" aria-hidden="true"><i /><i /><i /><i /><i /></div><div className="anatomy-ruler ruler-horizontal" aria-hidden="true"><i /><i /><i /><i /><i /></div><div className="body-crosshair crosshair-x" aria-hidden="true" /><div className="body-crosshair crosshair-y" aria-hidden="true" />
     <div className="body-halo halo-one" aria-hidden="true" /><div className="body-halo halo-two" aria-hidden="true" />
     <div className="anatomy-callout callout-chest" aria-hidden="true"><span>01</span><b>PECTORAL<br />SIGNAL</b><i /></div>
-    <div className="anatomy-callout callout-core" aria-hidden="true"><span>02</span><b>CORE<br />LOAD</b><i /></div><div className="selected-signal-path" aria-hidden="true"><span>SEL / {selected.toUpperCase()}</span><i /><b>DEPTH 04 · FIBER MAP · R:82</b></div><div className="anatomy-coordinate-tag tag-one" aria-hidden="true">F-18.03</div><div className="anatomy-coordinate-tag tag-two" aria-hidden="true">T-06.21</div>
+    <div className="anatomy-callout callout-core" aria-hidden="true"><span>02</span><b>CORE<br />LOAD</b><i /></div><div className="anatomy-coordinate-tag tag-one" aria-hidden="true">F-18.03</div><div className="anatomy-coordinate-tag tag-two" aria-hidden="true">T-06.21</div>
     <Canvas dpr={[1, 1.45]} shadows camera={{ position: [0, 0.35, isMobile ? 13.2 : 9.5], fov: isMobile ? 45 : 36 }} gl={{ antialias: true, powerPreference: "high-performance" }}>
       <SceneInner view={view} autoRotate={autoRotate} reduceMotion={reduceMotion} selected={selected} onSelected={onSelected} isMobile={isMobile} />
     </Canvas>
-    <div className="stage-caption"><span className="caption-rule" /><p>Touch a muscle to inspect training readiness.<br /><strong>Drag to orbit · Scroll to zoom</strong></p></div>
     <BodyControls view={view} autoRotate={autoRotate} onView={setView} onReset={reset} onToggleRotate={() => setAutoRotate((state) => !state)} />
   </section>;
 }
