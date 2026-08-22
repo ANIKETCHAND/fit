@@ -92,7 +92,7 @@ export default function Achievements() {
                         achievement.id === "bench-breaker"
                           ? unlock(achievement)
                           : toast(
-                              `${achievement.title} advances through your next live training signal`
+                              `${achievement.title} advances through your next training signal`
                             )
                       }
                     >

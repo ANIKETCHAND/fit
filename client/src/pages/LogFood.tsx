@@ -148,7 +148,7 @@ export default function LogFood() {
 
   return (
     <WorkflowLayout
-      kicker="Nutrition / live entry"
+      kicker="Nutrition / entry"
       title="Log your fuel"
       detail="Record the meal, then let FitTrack update today’s performance targets."
     >

@@ -17,7 +17,7 @@ const summaryMetrics = [
   { label: "Movement classes", value: "5", detail: "disciplines detected", icon: Layers3, tone: "bone", size: "standard" },
   { label: "Distance per entry", value: "2.0", unit: "km", detail: "rolling average", icon: Footprints, tone: "blue", size: "standard" },
   { label: "Session cadence", value: "42m", detail: "average load window", icon: Timer, tone: "lime", size: "standard" },
-  { label: "Live sources", value: "2", detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
+  { label: "Active sources", value: "2", detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
 ];
 
 const activityTypes = [
@@ -100,7 +100,7 @@ export default function Profile() {
 
         <motion.article className="profile-panel device-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .22 }}>
           <div className="profile-panel-head"><div><span className="panel-label">Input sources</span><h2>Device sync</h2></div><button onClick={() => setDeviceOpen(true)}><ArrowUpRight size={15} /> Manage</button></div>
-          {devices.map((device) => { const Icon = deviceIcon(device.kind); return <div className="device-row" key={device.id}><div className="device-symbol"><Icon size={18} /></div><div><strong>{device.name}</strong><span>{device.detail}</span></div><b><i /> {device.kind === "log" ? "synced" : "live"}</b></div>; })}
+          {devices.map((device) => { const Icon = deviceIcon(device.kind); return <div className="device-row" key={device.id}><div className="device-symbol"><Icon size={18} /></div><div><strong>{device.name}</strong><span>{device.detail}</span></div><b><i /> {device.kind === "log" ? "synced" : "active"}</b></div>; })}
         </motion.article>
       </section>
 
