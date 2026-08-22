@@ -1,8 +1,21 @@
-/** Kinetic Anatomy Lab: a slim navigation rail that keeps the body stage visually dominant. */
-/* Carbon Command Deck: the persistent rail uses precise routing and quiet utility controls within the anatomy-first shell. */
-import { Award, Bell, ChartNoAxesCombined, ChevronRight, CircleHelp, Dumbbell, Gauge, MapPinned, Menu, Settings, UserRound, Utensils, X } from "lucide-react";
-import { useState } from "react";
+/** Kinetic Anatomy Lab: an accessible, toggleable navigation drawer with three dots trigger */
+import {
+  Award,
+  Bell,
+  ChartNoAxesCombined,
+  ChevronRight,
+  CircleHelp,
+  Dumbbell,
+  Gauge,
+  MapPinned,
+  MoreVertical,
+  Settings,
+  UserRound,
+  Utensils,
+  X,
+} from "lucide-react";
 import { useLocation } from "wouter";
+import { useSidebar } from "@/lib/sidebar-store";
 
 const nav = [
   { label: "Overview", icon: Gauge, path: "/" },
@@ -15,29 +28,41 @@ const nav = [
 ];
 
 export function Sidebar() {
-  const [open, setOpen] = useState(false);
+  const { open, toggleSidebar, setSidebarOpen } = useSidebar();
   const [location, setLocation] = useLocation();
+
   const route = (path: string) => {
     setLocation(path);
-    setOpen(false);
+    setSidebarOpen(false);
   };
 
   return (
     <>
-      <button className="mobile-menu" onClick={() => setOpen(true)} aria-label="Open navigation">
-        <Menu size={21} />
+      <button
+        className="sidebar-trigger-btn"
+        onClick={toggleSidebar}
+        aria-label="Toggle navigation menu"
+        title="Menu"
+      >
+        <MoreVertical size={20} />
       </button>
-      <aside className={`sidebar ${open ? "open" : ""}`}>
+
+      <aside className={`sidebar ${open ? "open" : ""}`} aria-hidden={!open}>
         <div className="brand-row">
           <img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="FitTrack mark" />
           <div>
             <strong>FIT<span>TRACK</span></strong>
             <small>PERFORMANCE OS</small>
           </div>
-          <button className="close-menu" onClick={() => setOpen(false)} aria-label="Close navigation">
+          <button
+            className="close-menu"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close navigation"
+          >
             <X size={20} />
           </button>
         </div>
+
         <nav>
           {nav.map(({ label, icon: Icon, path }) => (
             <button
@@ -51,18 +76,28 @@ export function Sidebar() {
             </button>
           ))}
         </nav>
+
         <div className="sidebar-bottom">
-          <button className={location === "/profile" ? "nav-item active" : "nav-item"} onClick={() => route("/profile")}>
+          <button
+            className={location === "/profile" ? "nav-item active" : "nav-item"}
+            onClick={() => route("/profile")}
+          >
             <UserRound size={18} />
             <span>Profile analytics</span>
             {location === "/profile" && <i />}
           </button>
-          <button className={location === "/settings" ? "nav-item active" : "nav-item"} onClick={() => route("/settings")}>
+          <button
+            className={location === "/settings" ? "nav-item active" : "nav-item"}
+            onClick={() => route("/settings")}
+          >
             <Settings size={18} />
             <span>Settings</span>
             {location === "/settings" && <i />}
           </button>
-          <button className={location === "/support" ? "nav-item active" : "nav-item"} onClick={() => route("/support")}>
+          <button
+            className={location === "/support" ? "nav-item active" : "nav-item"}
+            onClick={() => route("/support")}
+          >
             <CircleHelp size={18} />
             <span>Support</span>
             {location === "/support" && <i />}
@@ -77,7 +112,14 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
-      {open && <button className="nav-scrim" onClick={() => setOpen(false)} aria-label="Close navigation overlay" />}
+
+      {open && (
+        <div
+          className="nav-scrim"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close navigation overlay"
+        />
+      )}
     </>
   );
 }
