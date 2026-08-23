@@ -1,5 +1,5 @@
 /** Kinetic Anatomy Lab: focused right-side diagnostic panel driven by selected muscle data. */
-import { ArrowUpRight, CalendarDays, Dumbbell, Play, Zap } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Dumbbell, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import type { MuscleInfo } from "@/lib/fitness-data";
 import { useLocation } from "wouter";
@@ -20,32 +20,9 @@ export function MuscleInfo({ muscle }: { muscle: MuscleInfo }) {
         <span className={`status-pill ${muscle.status.toLowerCase()}`}>{muscle.status}</span>
       </div>
 
-      <div className="muscle-heading">
+      <div className="muscle-heading" style={{ marginBottom: "16px" }}>
         <p>{muscle.label}</p>
         <h2>{muscle.anatomicalName}</h2>
-      </div>
-
-      <div className="readiness-meter">
-        <div className="readiness-orbit">
-          <svg viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="48" />
-            <circle
-              className="readiness-progress"
-              cx="60"
-              cy="60"
-              r="48"
-              style={{ strokeDashoffset: 302 - (302 * muscle.score) / 100 }}
-            />
-          </svg>
-          <div>
-            <strong>{muscle.score}</strong>
-            <small>Score</small>
-          </div>
-        </div>
-        <div className="readiness-copy">
-          <span><Zap size={14} /> Readiness</span>
-          <b>{muscle.score >= 76 ? "Peak window" : muscle.score >= 68 ? "Good capacity" : "Ease in today"}</b>
-        </div>
       </div>
 
       <div className="training-meta">
