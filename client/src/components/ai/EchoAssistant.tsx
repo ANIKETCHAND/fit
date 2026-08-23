@@ -90,11 +90,6 @@ export function RexiAssistant() {
   const profile = getAthleteProfile();
   const firstName = profile.name.split(" ")[0];
 
-  // Do not show AI assistant on the public landing page
-  if (location === "/" || location === "/landing") {
-    return null;
-  }
-
   // Initialize greeting on first load
   useEffect(() => {
     setMessages([
@@ -148,6 +143,11 @@ export function RexiAssistant() {
       setIsTyping(false);
     }, 550);
   };
+
+  // Do not show AI assistant on the public landing page (evaluated after all hooks)
+  if (location === "/" || location === "/landing") {
+    return null;
+  }
 
   return (
     <div className={`echo-assistant-container ${isSidebarOpen ? "sidebar-open" : ""}`}>
