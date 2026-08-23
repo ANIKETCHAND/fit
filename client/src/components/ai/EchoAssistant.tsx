@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, X, Minus, Sparkles, MessageSquare, Bot } from "lucide-react";
 import { getAthleteProfile } from "@/lib/user-store";
+import { useSidebar } from "@/lib/sidebar-store";
 import "./EchoAssistant.css";
 
 // Vector Mascot SVG matching Rexi's look
@@ -83,6 +84,7 @@ export function RexiAssistant() {
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { open: isSidebarOpen } = useSidebar();
   const profile = getAthleteProfile();
   const firstName = profile.name.split(" ")[0];
 
@@ -141,7 +143,7 @@ export function RexiAssistant() {
   };
 
   return (
-    <div className="echo-assistant-container">
+    <div className={`echo-assistant-container ${isSidebarOpen ? "sidebar-open" : ""}`}>
       {/* Floating Animated Mascot Button */}
       <button
         className="echo-mascot-trigger"

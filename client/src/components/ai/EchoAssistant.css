@@ -4,9 +4,17 @@
   position: fixed;
   bottom: 24px;
   left: 24px;
-  z-index: 9999;
+  z-index: 40;
   font-family: inherit;
   user-select: none;
+}
+
+/* When sidebar opens, smoothly tuck Rexi under / hide mascot so it never covers sidebar items */
+.echo-assistant-container.sidebar-open .echo-mascot-trigger {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8) translateY(12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 /* Floating Mascot Button */
@@ -19,7 +27,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
   outline: none;
 }
 
