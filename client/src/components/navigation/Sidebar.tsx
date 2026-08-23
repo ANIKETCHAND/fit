@@ -141,6 +141,57 @@ export function Sidebar() {
         </div>
       </aside>
 
+      {/* Mobile Touch Bottom Navigation Bar for Smartphones */}
+      <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <button
+          className={location === "/overview" || location === "/home" ? "active" : ""}
+          onClick={() => route("/overview")}
+          aria-label="Overview"
+        >
+          <Gauge size={17} />
+          <span>Overview</span>
+        </button>
+        <button
+          className={location === "/exercise-library" || location === "/log-workout" ? "active" : ""}
+          onClick={() => route("/exercise-library")}
+          aria-label="Workouts"
+        >
+          <Dumbbell size={17} />
+          <span>Workouts</span>
+        </button>
+        <button
+          className={location === "/log-food" ? "active" : ""}
+          onClick={() => route("/log-food")}
+          aria-label="Nutrition"
+        >
+          <Utensils size={17} />
+          <span>Fuel</span>
+        </button>
+        <button
+          className={location === "/gps" ? "active" : ""}
+          onClick={() => route("/gps")}
+          aria-label="GPS trace"
+        >
+          <MapPinned size={17} />
+          <span>GPS</span>
+        </button>
+        <button
+          className={location === "/achievements" ? "active" : ""}
+          onClick={() => route("/achievements")}
+          aria-label="Achievements"
+        >
+          <Award size={17} />
+          <span>Awards</span>
+        </button>
+        <button
+          onClick={toggleSidebar}
+          aria-label="More Menu"
+        >
+          <MoreVertical size={17} />
+          <span>Menu</span>
+        </button>
+      </nav>
+
       {open && (
         <div
           className="nav-scrim"

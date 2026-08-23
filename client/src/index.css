@@ -36,8 +36,113 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 
 @media (max-width:1240px) { .dashboard-main { padding:23px 18px; }.dashboard-grid { grid-template-columns:minmax(210px,.7fr) minmax(390px,1.35fr) minmax(250px,.82fr); gap:12px; }.body-column,.body-stage,.muscle-panel { min-height:635px; }.body-stage { height:635px; }.stage-coordinate,.desktop-only { display:none!important; }.macro-rings { gap:0; }.ring-visual { width:71px; height:71px; }.readiness-meter { gap:8px; }.readiness-orbit { width:76px; height:76px; }.muscle-panel { padding:15px; }.exercise-row { grid-template-columns:18px minmax(0,1fr); }.exercise-row>b { display:none; } }
 @media (max-width:1040px) { .dashboard-grid { grid-template-columns:minmax(245px,.72fr) minmax(430px,1.28fr); }.diagnostic-column { grid-column:1/-1; }.muscle-panel { min-height:0; display:grid; grid-template-columns:1fr 1.2fr 1fr; gap:16px; }.muscle-heading { margin:0; }.readiness-meter { margin:0; }.training-meta { margin:0; align-self:center; }.exercise-title,.exercise-list,.start-workout { grid-column:2/4; }.start-workout { margin-top:0; }.body-column,.body-stage { min-height:625px; }.body-stage { height:625px; }.muscle-panel::before { display:none; } }
-@media (max-width:800px) { .sidebar { transform:translateX(-100%); transition:transform .24s var(--ease-out); box-shadow:20px 0 44px rgba(0,0,0,.35); }.sidebar.open { transform:translateX(0); }.close-menu { display:block; }.nav-scrim { display:block; position:fixed; z-index:14; inset:0; background:rgba(0,0,0,.48); border:0; }.mobile-menu { position:fixed; z-index:12; left:12px; top:15px; width:39px; height:39px; display:grid; place-items:center; background:#141a15; border:1px solid rgba(226,245,225,.12); color:#eaf0e8; }.dashboard-main { margin-left:0; padding:17px 14px 74px; }.topbar { height:auto; min-height:53px; padding-left:47px; margin-bottom:15px; }.header-wordmark { display:none; }.topbar-greeting .eyebrow { font-size:7px; }.topbar-greeting h1 { font-size:29px; }.fitness-score { display:none; }.icon-button { height:37px; min-width:37px; }.avatar-button { font-size:9px; height:37px; min-width:37px; padding:0 7px; }.dashboard-grid { grid-template-columns:1fr; gap:12px; }.body-column { order:-1; min-height:530px; }.body-stage { height:530px; min-height:530px; }.overview-column { display:grid; grid-template-columns:1fr 1fr; gap:12px; }.vital-strip { grid-column:1/-1; grid-template-columns:repeat(3,1fr); }.vital-item { padding:9px; gap:6px; }.vital-icon { width:25px; height:25px; }.vital-item b { font-size:20px; }.vital-item small { display:none; }.weekly-card,.nutrition-card { min-height:226px; }.quick-actions { grid-column:1/-1; }.quick-actions>div { grid-template-columns:repeat(4,1fr); }.quick-actions button { min-height:53px; }.quick-actions button span { display:block; }.diagnostic-column { display:block; }.muscle-panel { display:flex; min-height:0; padding:15px; }.training-meta { margin-bottom:16px; }.readiness-meter { margin:17px 0; }.exercise-title,.exercise-list { display:none; }.start-workout { margin-top:0; }.mobile-bottom-nav { z-index:13; display:grid; grid-template-columns:repeat(4,1fr); position:fixed; bottom:0; left:0; right:0; height:58px; background:rgba(10,13,11,.92); border-top:1px solid rgba(226,245,225,.11); backdrop-filter:blur(14px); }.mobile-bottom-nav button { border:0; background:transparent; color:#89958b; font:7px "Space Mono"; text-transform:uppercase; display:grid; place-content:center; gap:3px; }.mobile-bottom-nav button span { font-size:15px; line-height:1; }.mobile-bottom-nav button.active { color:#c6ff3d; }.body-controls { right:12px; bottom:12px; }.stage-caption { left:13px; bottom:13px; }.stage-topline { top:13px; left:13px; right:13px; }.body-artwork { opacity:.1; }.anatomy-callout { display:none; } }
-@media (max-width:500px) { .topbar-actions { gap:6px; }.avatar-button svg { display:none; }.body-column,.body-stage { min-height:465px; }.body-stage { height:465px; }.view-picker button span { display:none; }.view-picker button { padding:0 8px; }.view-actions button { padding:0 7px; }.stage-caption p { font-size:8px; }.body-float-label { font-size:8px; }.overview-column { display:flex; }.vital-strip { grid-template-columns:repeat(3,1fr); }.vital-item { display:block; min-width:0; }.vital-icon { margin-bottom:5px; }.vital-item b { font-size:19px; }.weekly-card { min-height:210px; }.quick-actions>div { grid-template-columns:repeat(2,1fr); }.quick-actions button { display:flex; align-items:center; gap:6px; min-height:37px; }.quick-actions button span { display:grid; }.nutrition-card { min-height:0; }.macro-rings { margin-inline:-8px; }.ring-visual { width:67px; height:67px; }.muscle-heading h2 { font-size:31px; }.readiness-orbit { width:72px; height:72px; }.readiness-meter { gap:10px; }.training-meta>div { padding:8px 6px; }.topbar-greeting h1 { font-size:27px; } }
+@media (max-width:800px) {
+  .sidebar { transform:translateX(-100%); transition:transform .24s var(--ease-out); box-shadow:20px 0 44px rgba(0,0,0,.85); width: 280px; }.sidebar.open { transform:translateX(0); }
+  .close-menu { display:block; }
+  .nav-scrim { display:block; position:fixed; z-index:997; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); border:0; }
+  .sidebar-trigger-btn { top: 12px; left: 12px; width: 36px; height: 36px; }
+  .dashboard-main { margin-left:0; padding:14px 12px calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .workflow-main { margin-left:0; padding:14px 12px calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .workflow-intro { padding: 20px 0 16px; }
+  .workflow-intro h1 { font-size: clamp(32px, 8vw, 44px) !important; line-height: 0.95; }
+  .workflow-grid { grid-template-columns: 1fr !important; }
+  .topbar { height:auto; min-height:48px; padding-left:44px; margin-bottom:12px; }
+  .header-wordmark { display:none; }
+  .topbar-greeting .eyebrow { font-size:7px; }
+  .hero-greeting { font-size: clamp(18px, 5.2vw, 24px) !important; flex-wrap: wrap; }
+  .topbar-greeting h1 { font-size:22px; }
+  .fitness-score { display:none; }
+  .icon-button { height:36px; min-width:36px; }
+  .avatar-button { font-size:9px; height:36px; min-width:36px; padding:0 7px; }
+  .dashboard-grid { grid-template-columns:1fr; gap:12px; }
+  .body-column { order:-1; min-height:420px; }
+  .body-stage { height:420px; min-height:420px; }
+  .overview-column { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .vital-strip { grid-column:1/-1; grid-template-columns:repeat(3,1fr); }
+  .vital-item { padding:8px 6px; gap:5px; }
+  .vital-icon { width:24px; height:24px; }
+  .vital-item b { font-size:18px; }
+  .vital-item p { font-size:7.5px; }
+  .vital-item small { display:none; }
+  .weekly-card,.nutrition-card { min-height:200px; }
+  .quick-actions { grid-column:1/-1; }
+  .quick-actions>div { grid-template-columns:repeat(4,1fr); }
+  .quick-actions button { min-height:50px; }
+  .quick-actions button span { display:block; }
+  .diagnostic-column { display:block; }
+  .muscle-panel { display:flex; min-height:0; padding:14px; }
+  .training-meta { margin-bottom:14px; }
+  .readiness-meter { margin:14px 0; }
+  .exercise-title,.exercise-list { display:none; }
+  .start-workout { margin-top:0; min-height:42px; }
+  .mobile-bottom-nav {
+    z-index: 998 !important;
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    background: rgba(9, 12, 10, 0.95) !important;
+    border-top: 1px solid rgba(198, 255, 61, 0.2) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7) !important;
+  }
+  .mobile-bottom-nav button {
+    border: 0 !important;
+    background: transparent !important;
+    color: #839284 !important;
+    font: 700 8px "Space Mono", monospace !important;
+    text-transform: uppercase !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    padding: 4px 0 !important;
+    transition: color 0.15s ease !important;
+  }
+  .mobile-bottom-nav button.active {
+    color: #c6ff3d !important;
+    text-shadow: 0 0 10px rgba(198, 255, 61, 0.5) !important;
+  }
+  .body-controls { right:10px; bottom:10px; }
+  .stage-caption { left:10px; bottom:10px; }
+  .stage-topline { top:10px; left:10px; right:10px; }
+  .body-artwork { opacity:.1; }
+  .anatomy-callout { display:none; }
+}
+@media (max-width:500px) {
+  .topbar-actions { gap:6px; }
+  .avatar-button svg { display:none; }
+  .body-column,.body-stage { min-height:360px; }
+  .body-stage { height:360px; }
+  .view-picker button span { display:none; }
+  .view-picker button { padding:0 6px; }
+  .view-actions button { padding:0 6px; }
+  .stage-caption p { font-size:8px; }
+  .body-float-label { font-size:8px; }
+  .overview-column { display:flex; flex-direction:column; gap:10px; }
+  .vital-strip { grid-template-columns:repeat(3,1fr); }
+  .vital-item { display:block; min-width:0; padding:7px 5px; }
+  .vital-icon { margin-bottom:4px; width:22px; height:22px; }
+  .vital-item b { font-size:16px; }
+  .weekly-card { min-height:190px; }
+  .quick-actions>div { grid-template-columns:repeat(2,1fr); }
+  .quick-actions button { display:flex; align-items:center; gap:6px; min-height:36px; }
+  .quick-actions button span { display:grid; }
+  .nutrition-card { min-height:0; }
+  .macro-rings { margin-inline:-6px; }
+  .ring-visual { width:62px; height:62px; }
+  .muscle-heading h2 { font-size:26px; }
+  .readiness-orbit { width:68px; height:68px; }
+  .readiness-meter { gap:8px; }
+  .training-meta>div { padding:6px 5px; }
+  .topbar-greeting h1 { font-size:20px; }
+}
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; scroll-behavior:auto!important; transition-duration:.01ms!important; } }
 
 /* Kinetic Anatomy Lab workflow surfaces: decisive linear tasks, live-signal motion, and deliberately non-generic instrument composition. */
