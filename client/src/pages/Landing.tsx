@@ -180,62 +180,6 @@ export default function Landing() {
     setLocation("/overview");
   };
 
-  const handleStartGoogleAuth = () => {
-    setAuthModalOpen(false);
-    setGoogleStep("email");
-    setGoogleEmail("");
-    setGooglePassword("");
-    setShowGooglePassword(false);
-    setGoogleModalOpen(true);
-  };
-
-  const handleGoogleEmailNext = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = googleEmail.trim();
-    if (!trimmed) {
-      toast.error("Please enter your Google email address or phone number.");
-      return;
-    }
-    let finalEmail = trimmed;
-    if (!trimmed.includes("@") && !/^\+?\d{8,}$/.test(trimmed)) {
-      finalEmail = trimmed + "@gmail.com";
-      setGoogleEmail(finalEmail);
-    }
-    setGoogleStep("password");
-  };
-
-  const handleGooglePasswordNext = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!googlePassword.trim()) {
-      toast.error("Please enter your Google password.");
-      return;
-    }
-    setIsGoogleLoading(true);
-    setTimeout(() => {
-      const email = googleEmail.trim() || "athlete@gmail.com";
-      const usernamePart = email.split("@")[0] || "Athlete";
-      const cleanName = usernamePart
-        .split(/[\._\-]/)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ");
-
-      saveAthleteProfile({
-        name: cleanName || "Google Athlete",
-        email: email,
-        location: "New York, USA",
-        focus: "Hypertrophy & Strength Protocol",
-      });
-
-      localStorage.setItem("fittrack_auth_state", "authenticated");
-      localStorage.setItem("fittrack_auth_provider", "google");
-      localStorage.setItem("fittrack_user_email", email);
-      setIsGoogleLoading(false);
-      setGoogleModalOpen(false);
-      toast.success(`Signed in with Google as ${email}`);
-      setLocation("/overview");
-    }, 650);
-  };
-
   const openAuth = (mode: "signin" | "signup") => {
     setAuthMode(mode);
     setAuthModalOpen(true);
