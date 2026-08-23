@@ -112,7 +112,9 @@ export default function Landing() {
       <header className="landing-topbar">
         <div className="landing-topbar-left">
           <div className="landing-brand" onClick={() => setLocation("/")}>
-            <img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="FitTrack Signal" />
+            <div className="brand-logo-icon">
+              <Activity size={18} />
+            </div>
             <strong>FIT<span>TRACK</span></strong>
           </div>
 

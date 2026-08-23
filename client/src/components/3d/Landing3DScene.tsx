@@ -13,7 +13,7 @@ export function Landing3DScene() {
 
     // 1. Three.js Scene, Camera & Renderer
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x080a09, 0.035);
+    scene.fog = new THREE.FogExp2(0x080a09, 0.022);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.set(0, 0, 14);
@@ -22,26 +22,26 @@ export function Landing3DScene() {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
 
     // 2. Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0x18241b, 1.8);
+    const ambientLight = new THREE.AmbientLight(0x1a2b1f, 2.2);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xc6ff3d, 2.8);
-    dirLight.position.set(5, 8, 7);
+    const dirLight = new THREE.DirectionalLight(0xc6ff3d, 2.4);
+    dirLight.position.set(4, 7, 8);
     scene.add(dirLight);
 
-    const blueLight = new THREE.PointLight(0xa6d9ff, 3.5, 30);
-    blueLight.position.set(-6, -2, 5);
+    const blueLight = new THREE.PointLight(0xa6d9ff, 3.2, 40);
+    blueLight.position.set(-8, -2, 6);
     scene.add(blueLight);
 
-    const limeLight = new THREE.PointLight(0xc6ff3d, 4.0, 25);
-    limeLight.position.set(4, 3, 6);
+    const limeLight = new THREE.PointLight(0xc6ff3d, 3.8, 35);
+    limeLight.position.set(7, 3, 7);
     scene.add(limeLight);
 
-    // 3. Central 3D Muscular Back Anatomy Plane & Wireframe
+    // 3. Fullscreen 3D Translucent Muscular Back Anatomy Plane
     const group = new THREE.Group();
     scene.add(group);
 
@@ -49,37 +49,40 @@ export function Landing3DScene() {
     const backTexture = textureLoader.load("/assets/muscular-back-anatomy.png");
     backTexture.colorSpace = THREE.SRGBColorSpace;
 
-    // Muscular back plane geometry
-    const planeGeo = new THREE.PlaneGeometry(8.2, 5.2, 32, 32);
+    // Function to calculate exact plane dimensions to cover full viewport
+    const calcDimensions = () => {
+      const vFOV = (camera.fov * Math.PI) / 180;
+      const visibleH = 2 * Math.tan(vFOV / 2) * camera.position.z;
+      const visibleW = visibleH * camera.aspect;
+      // Generously cover entire screen with bleed
+      const planeW = Math.max(visibleW * 1.15, 24);
+      const planeH = Math.max(visibleH * 1.15, 14.5);
+      return { planeW, planeH };
+    };
+
+    let { planeW, planeH } = calcDimensions();
+    const planeGeo = new THREE.PlaneGeometry(planeW, planeH, 32, 32);
+
+    // Translucent Material (opacity ~0.35 for subtle cinematic depth)
     const planeMat = new THREE.MeshStandardMaterial({
       map: backTexture,
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.36,
       roughness: 0.35,
-      metalness: 0.25,
-      emissive: 0x07150a,
-      emissiveIntensity: 0.4,
+      metalness: 0.15,
+      emissive: 0x091a0e,
+      emissiveIntensity: 0.3,
       side: THREE.DoubleSide,
+      depthWrite: false,
     });
+
     const backMesh = new THREE.Mesh(planeGeo, planeMat);
-    backMesh.position.set(0, 0.2, 0);
+    backMesh.position.set(0, 0, -0.4);
     group.add(backMesh);
 
-    // Holographic Cybernetic Wireframe Cage around the back anatomy
-    const wireGeo = new THREE.PlaneGeometry(8.4, 5.4, 16, 16);
-    const wireMat = new THREE.MeshBasicMaterial({
-      color: 0xc6ff3d,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.12,
-    });
-    const wireMesh = new THREE.Mesh(wireGeo, wireMat);
-    wireMesh.position.set(0, 0.2, 0.08);
-    group.add(wireMesh);
-
-    // 4. Concentric HUD Targeting Rings
+    // 4. Large Concentric Holographic HUD Target Rings
     const createHudRing = (radius: number, color: number, opacity: number, dashSegments = 64) => {
-      const ringGeo = new THREE.RingGeometry(radius - 0.02, radius, dashSegments);
+      const ringGeo = new THREE.RingGeometry(radius - 0.03, radius, dashSegments);
       const ringMat = new THREE.MeshBasicMaterial({
         color,
         transparent: true,
@@ -89,22 +92,21 @@ export function Landing3DScene() {
       return new THREE.Mesh(ringGeo, ringMat);
     };
 
-    const ring1 = createHudRing(4.8, 0xc6ff3d, 0.28, 48);
-    const ring2 = createHudRing(5.6, 0xa6d9ff, 0.22, 64);
-    const ring3 = createHudRing(6.5, 0x1f4427, 0.4, 32);
-    ring1.position.set(0, 0.2, -0.2);
-    ring2.position.set(0, 0.2, -0.3);
-    ring3.position.set(0, 0.2, -0.4);
+    const ring1 = createHudRing(8.5, 0xc6ff3d, 0.14, 64);
+    const ring2 = createHudRing(11.2, 0xa6d9ff, 0.10, 80);
+    const ring3 = createHudRing(13.8, 0x1f4427, 0.22, 48);
+    ring1.position.set(0, 0, -1);
+    ring2.position.set(0, 0, -1.2);
+    ring3.position.set(0, 0, -1.4);
     group.add(ring1);
     group.add(ring2);
     group.add(ring3);
 
-    // 5. 3D Floating Particle Constellation
-    const particleCount = 750;
+    // 5. 3D Floating Particle Constellation (850 particles)
+    const particleCount = 850;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     const particleColors = new Float32Array(particleCount * 3);
-    const particleScales = new Float32Array(particleCount);
 
     const cLime = new THREE.Color(0xc6ff3d);
     const cCyan = new THREE.Color(0xa6d9ff);
@@ -112,44 +114,41 @@ export function Landing3DScene() {
 
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
-      particlePositions[i3] = (Math.random() - 0.5) * 32;
-      particlePositions[i3 + 1] = (Math.random() - 0.5) * 22;
-      particlePositions[i3 + 2] = (Math.random() - 0.5) * 20;
+      particlePositions[i3] = (Math.random() - 0.5) * 44;
+      particlePositions[i3 + 1] = (Math.random() - 0.5) * 28;
+      particlePositions[i3 + 2] = (Math.random() - 0.5) * 24;
 
       const pick = Math.random();
-      const col = pick > 0.6 ? cLime : pick > 0.3 ? cCyan : cMint;
+      const col = pick > 0.55 ? cLime : pick > 0.3 ? cCyan : cMint;
       particleColors[i3] = col.r;
       particleColors[i3 + 1] = col.g;
       particleColors[i3 + 2] = col.b;
-
-      particleScales[i] = Math.random() * 2.5 + 0.5;
     }
 
     particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
     particleGeo.setAttribute("color", new THREE.BufferAttribute(particleColors, 3));
 
-    // Particle Material
     const particleMat = new THREE.PointsMaterial({
-      size: 0.12,
+      size: 0.14,
       vertexColors: true,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.7,
       blending: THREE.AdditiveBlending,
     });
     const particles = new THREE.Points(particleGeo, particleMat);
     scene.add(particles);
 
     // 6. Perspective Ground Coordinate Grid
-    const gridHelper = new THREE.GridHelper(36, 36, 0xc6ff3d, 0x14281a);
-    gridHelper.position.set(0, -4.5, 0);
+    const gridHelper = new THREE.GridHelper(48, 48, 0xc6ff3d, 0x14281a);
+    gridHelper.position.set(0, -6.5, 0);
     if (Array.isArray(gridHelper.material)) {
       gridHelper.material.forEach((m) => {
         m.transparent = true;
-        m.opacity = 0.22;
+        m.opacity = 0.16;
       });
     } else {
       gridHelper.material.transparent = true;
-      gridHelper.material.opacity = 0.22;
+      gridHelper.material.opacity = 0.16;
     }
     scene.add(gridHelper);
 
@@ -172,6 +171,10 @@ export function Landing3DScene() {
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
+
+      const sz = calcDimensions();
+      backMesh.geometry.dispose();
+      backMesh.geometry = new THREE.PlaneGeometry(sz.planeW, sz.planeH, 32, 32);
     };
     window.addEventListener("resize", handleResize);
 
@@ -184,31 +187,30 @@ export function Landing3DScene() {
       const elapsed = clock.getElapsedTime();
 
       // Smooth camera / object parallax lerp
-      targetX += (mouseX * 0.45 - targetX) * 0.04;
-      targetY += (mouseY * 0.35 - targetY) * 0.04;
+      targetX += (mouseX * 0.35 - targetX) * 0.035;
+      targetY += (mouseY * 0.25 - targetY) * 0.035;
 
-      group.rotation.y = targetX * 0.6 + Math.sin(elapsed * 0.35) * 0.06;
-      group.rotation.x = -targetY * 0.4 + Math.cos(elapsed * 0.25) * 0.04;
-      group.position.y = Math.sin(elapsed * 0.7) * 0.12;
+      group.rotation.y = targetX * 0.4 + Math.sin(elapsed * 0.25) * 0.025;
+      group.rotation.x = -targetY * 0.25 + Math.cos(elapsed * 0.2) * 0.02;
 
-      // Breathing scale motion for back mesh
-      const breath = 1 + Math.sin(elapsed * 0.9) * 0.015;
+      // Subtle breathing pulsation
+      const breath = 1 + Math.sin(elapsed * 0.8) * 0.012;
       backMesh.scale.set(breath, breath, 1);
 
       // HUD Ring dynamic rotation
-      ring1.rotation.z = elapsed * 0.25;
-      ring2.rotation.z = -elapsed * 0.15;
-      ring3.rotation.z = elapsed * 0.08;
+      ring1.rotation.z = elapsed * 0.12;
+      ring2.rotation.z = -elapsed * 0.08;
+      ring3.rotation.z = elapsed * 0.05;
 
       // Pulse lighting orbits
-      limeLight.position.x = Math.sin(elapsed * 0.8) * 5;
-      limeLight.position.y = Math.cos(elapsed * 0.6) * 3 + 1;
-      blueLight.position.x = -Math.sin(elapsed * 0.7) * 6;
-      blueLight.position.y = -Math.cos(elapsed * 0.5) * 3;
+      limeLight.position.x = Math.sin(elapsed * 0.6) * 8;
+      limeLight.position.y = Math.cos(elapsed * 0.5) * 4 + 1;
+      blueLight.position.x = -Math.sin(elapsed * 0.5) * 9;
+      blueLight.position.y = -Math.cos(elapsed * 0.4) * 4;
 
       // Particle subtle drift
-      particles.rotation.y = elapsed * 0.02;
-      particles.rotation.x = Math.sin(elapsed * 0.01) * 0.05;
+      particles.rotation.y = elapsed * 0.015;
+      particles.rotation.x = Math.sin(elapsed * 0.008) * 0.03;
 
       renderer.render(scene, camera);
     };
