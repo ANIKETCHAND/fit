@@ -1,15 +1,135 @@
-/** Kinetic Pixel Fitness data: achievement conditions, social-ready reward details, and movement coaching cues. */
-export type AchievementKind = "streak" | "record" | "volume" | "recovery" | "explorer";
-export type Achievement = { id: string; title: string; description: string; kind: AchievementKind; progress: number; target: number; reward: string; unlocked: boolean };
+export type AchievementKind = "streak" | "record" | "volume" | "recovery" | "explorer" | "fuel" | "distance";
+export type AchievementCategory = "daily" | "monthly";
+
+export type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  category: AchievementCategory;
+  kind: AchievementKind;
+  progress: number;
+  target: number;
+  reward: string;
+  unlocked: boolean;
+};
+
 export type ExerciseVariant = "bench" | "squat" | "curl" | "row" | "fly" | "press" | "deadlift" | "raise" | "pushdown" | "core";
 export type LibraryExercise = { id: string; name: string; focus: string; equipment: string; tempo: string; sets: string; variant: ExerciseVariant; level: "Foundation" | "Build" | "Peak"; coaching: { setup: string; cue: string; tip: string } };
 
 export const achievements: Achievement[] = [
-  { id: "first-signal", title: "First Signal", description: "Logged your first performance session.", kind: "explorer", progress: 1, target: 1, reward: "Profile signal", unlocked: true },
-  { id: "streak-3", title: "Signal Streak", description: "Train on three consecutive scheduled days.", kind: "streak", progress: 3, target: 3, reward: "+3 day chain", unlocked: true },
-  { id: "bench-breaker", title: "Bench Breaker", description: "Complete a chest protocol with a new bench press personal record.", kind: "record", progress: 82.5, target: 85, reward: "PR chip", unlocked: false },
-  { id: "volume-10k", title: "Ten Thousand", description: "Accumulate 10,000 kg of focused weekly volume.", kind: "volume", progress: 5740, target: 10000, reward: "Volume crest", unlocked: false },
-  { id: "recovery-keeper", title: "Recovery Keeper", description: "Hold a readiness score of 80+ for four weeks.", kind: "recovery", progress: 3, target: 4, reward: "Recovery shell", unlocked: false },
+  // --- PART 1: DAILY TASK ACHIEVEMENTS (Small Daily Triumphs) ---
+  {
+    id: "daily-workout",
+    title: "Daily Workout Commit",
+    description: "Complete and log any resistance training or conditioning workout today.",
+    category: "daily",
+    kind: "explorer",
+    progress: 1,
+    target: 1,
+    reward: "Daily Check",
+    unlocked: true,
+  },
+  {
+    id: "daily-weight",
+    title: "Morning Weight Checkpoint",
+    description: "Record your morning body weight in the biometric ledger.",
+    category: "daily",
+    kind: "record",
+    progress: 1,
+    target: 1,
+    reward: "Fasted Pin",
+    unlocked: true,
+  },
+  {
+    id: "daily-nutrition",
+    title: "Precision Fuel Target",
+    description: "Log your daily meals (Breakfast, Lunch, Dinner) to meet your macro target.",
+    category: "daily",
+    kind: "fuel",
+    progress: 2,
+    target: 3,
+    reward: "Macro Shield",
+    unlocked: false,
+  },
+  {
+    id: "daily-gps",
+    title: "1 km Movement Trace",
+    description: "Track an outdoor walk, run, or GPS cardio route of at least 1.0 km.",
+    category: "daily",
+    kind: "distance",
+    progress: 0.8,
+    target: 1.0,
+    reward: "Pathfinder Badge",
+    unlocked: false,
+  },
+  {
+    id: "daily-cues",
+    title: "Coaching Cue Review",
+    description: "Inspect form setup cues for 3 exercises in the exercise library.",
+    category: "daily",
+    kind: "explorer",
+    progress: 2,
+    target: 3,
+    reward: "Form Crest",
+    unlocked: false,
+  },
+
+  // --- PART 2: MONTHLY MILESTONES (Big Monthly Achievements) ---
+  {
+    id: "monthly-streak-20",
+    title: "20-Day Signal Streak",
+    description: "Achieve 20 active logged training days within a single calendar month.",
+    category: "monthly",
+    kind: "streak",
+    progress: 14,
+    target: 20,
+    reward: "Golden Chain",
+    unlocked: false,
+  },
+  {
+    id: "monthly-volume-100k",
+    title: "100K Tonnage Titan",
+    description: "Accumulate 100,000 kg of cumulative resistance training volume this month.",
+    category: "monthly",
+    kind: "volume",
+    progress: 42500,
+    target: 100000,
+    reward: "Titan Crest",
+    unlocked: false,
+  },
+  {
+    id: "monthly-century-100km",
+    title: "Century Runner (100 km)",
+    description: "Cover 100 total kilometers of outdoor routes in the monthly ledger.",
+    category: "monthly",
+    kind: "distance",
+    progress: 38.5,
+    target: 100,
+    reward: "Century Crown",
+    unlocked: false,
+  },
+  {
+    id: "monthly-pr-breaker",
+    title: "Compound PR Breaker",
+    description: "Set a new personal record on Bench Press, Squat, or Deadlift this month.",
+    category: "monthly",
+    kind: "record",
+    progress: 82.5,
+    target: 85,
+    reward: "PR Onyx Trophy",
+    unlocked: false,
+  },
+  {
+    id: "monthly-full-spectrum",
+    title: "Full Spectrum Master",
+    description: "Log training sessions covering all 6 kinetic body regions (Chest, Back, Delts, Arms, Legs, Core).",
+    category: "monthly",
+    kind: "explorer",
+    progress: 5,
+    target: 6,
+    reward: "Master Ring",
+    unlocked: false,
+  },
 ];
 
 export const libraryExercises: LibraryExercise[] = [
