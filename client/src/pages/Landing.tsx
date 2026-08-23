@@ -139,19 +139,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="landing-topbar-right">
-          <div className="landing-telemetry-badge">
-            <i />
-            <span>Telemetry Online · v2.4</span>
-          </div>
-          <button
-            className="landing-auth-btn login-btn"
-            onClick={handleQuickDemo}
-            style={{ borderColor: "rgba(166, 217, 255, 0.4)", color: "#a6d9ff" }}
-          >
-            Launch Overview ↗
-          </button>
-        </div>
+        <div className="landing-topbar-right"></div>
       </header>
 
       {/* 3. Hero Section */}
@@ -177,30 +165,17 @@ export default function Landing() {
           <span className="hero-title-highlight">TRANSCEND YOUR LIMITS.</span>
         </motion.h1>
 
-        <motion.p
-          className="hero-description"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.2 }}
-        >
-          Real-time 3D anatomical load simulation, autonomous precision fueling, and biometric continuity tracking designed for elite athletes and dedicated lifters.
-        </motion.p>
-
         {/* Action Callouts */}
         <motion.div
           className="hero-cta-group"
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
         >
           <button className="hero-primary-cta" onClick={() => openAuth("signin")}>
             <Fingerprint size={18} />
             Enter Platform / Sign In
             <ArrowRight size={16} />
-          </button>
-          <button className="hero-secondary-cta" onClick={handleQuickDemo}>
-            <Zap size={15} />
-            Quick Demo Access ↗
           </button>
         </motion.div>
 
