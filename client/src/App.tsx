@@ -6,6 +6,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
+import { EchoAssistant } from "./components/ai/EchoAssistant";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import LogFood from "./pages/LogFood";
@@ -53,6 +54,7 @@ function App() {
           <AnimatedBackground />
           <Toaster />
           <Router />
+          <EchoAssistant />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
