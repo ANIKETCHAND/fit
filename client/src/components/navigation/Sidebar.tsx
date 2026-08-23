@@ -116,12 +116,23 @@ export function Sidebar() {
             {location === "/settings" && <i />}
           </button>
           <button
-            className={location === "/support" ? "nav-item active" : "nav-item"}
+            className="nav-item"
             onClick={() => route("/support")}
           >
             <CircleHelp size={18} />
             <span>Support</span>
             {location === "/support" && <i />}
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => {
+              localStorage.removeItem("fittrack_auth_state");
+              route("/");
+            }}
+            title="Sign out to landing page"
+          >
+            <LogOut size={18} />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
