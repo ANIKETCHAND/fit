@@ -45,7 +45,7 @@ export default function LogWorkout() {
   const toggle = (index: number) => setComplete((previous) => previous.includes(index) ? previous.filter((item) => item !== index) : [...previous, index]);
   const completion = Math.round((complete.length / lifts.length) * 100);
   const volume = complete.reduce((total, index) => total + (index === 0 ? load * 28 : lifts[index].load * (index === 1 ? 30 : 36)), 0);
-  const finish = () => { try { localStorage.removeItem("fittrack-staged-exercise"); } catch { /* ignore */ } setLocation("/"); };
+  const finish = () => { try { localStorage.removeItem("fittrack-staged-exercise"); } catch { /* ignore */ } setLocation("/overview"); };
   const afterStreak = () => { if (pendingAchievement) { setCelebrating(pendingAchievement); setPendingAchievement(null); } else finish(); };
 
   const commitRewards = () => {

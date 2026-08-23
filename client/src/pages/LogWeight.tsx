@@ -24,7 +24,7 @@ export default function LogWeight() {
     onMutate: () => setSaveError(null),
     onSettled: () => {
       toast.success(`Weight checkpoint ${weight} kg recorded`);
-      setLocation("/");
+      setLocation("/overview");
     },
   });
 

@@ -6,6 +6,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
+import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import LogFood from "./pages/LogFood";
 import LogWorkout from "./pages/LogWorkout";
@@ -22,7 +23,10 @@ import GpsTracker from "./pages/GpsTracker";
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path={"/"} component={Landing} />
+      <Route path={"/landing"} component={Landing} />
+      <Route path={"/overview"} component={Home} />
+      <Route path={"/home"} component={Home} />
       <Route path={"/log-food"} component={LogFood} />
       <Route path={"/log-workout"} component={LogWorkout} />
       <Route path={"/log-weight"} component={LogWeight} />

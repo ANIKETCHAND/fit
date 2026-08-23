@@ -16,10 +16,10 @@ export function WorkflowLayout({ kicker, title, detail, children }: WorkflowLayo
       <main className="workflow-main">
         <header className="workflow-topbar">
           <div className="workflow-topbar-left">
-            <button className="back-button" onClick={() => setLocation("/")}>
+            <button className="back-button" onClick={() => setLocation("/overview")}>
               <ArrowLeft size={17} />Command center
             </button>
-            <div className="workflow-brand" aria-label="FitTrack">
+            <div className="workflow-brand" aria-label="FitTrack" onClick={() => setLocation("/overview")} style={{ cursor: "pointer" }}>
               <img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="" />
               <strong>FIT<span>TRACK</span></strong>
             </div>

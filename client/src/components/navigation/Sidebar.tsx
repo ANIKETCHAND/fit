@@ -7,6 +7,7 @@ import {
   CircleHelp,
   Dumbbell,
   Gauge,
+  LogOut,
   MapPinned,
   MoreVertical,
   Settings,
@@ -18,7 +19,7 @@ import { useLocation } from "wouter";
 import { useSidebar } from "@/lib/sidebar-store";
 
 const nav = [
-  { label: "Overview", icon: Gauge, path: "/" },
+  { label: "Overview", icon: Gauge, path: "/overview" },
   { label: "Workouts", icon: Dumbbell, path: "/exercise-library" },
   { label: "Nutrition", icon: Utensils, path: "/log-food" },
   { label: "Progress", icon: ChartNoAxesCombined, path: "/log-weight" },
@@ -118,6 +119,17 @@ export function Sidebar() {
             <CircleHelp size={18} />
             <span>Support</span>
             {location === "/support" && <i />}
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => {
+              localStorage.removeItem("fittrack_auth_state");
+              route("/");
+            }}
+            title="Return to Landing Page"
+          >
+            <LogOut size={18} />
+            <span>Exit to Landing</span>
           </button>
           <div className="coach-card">
             <div className="coach-orb">A</div>

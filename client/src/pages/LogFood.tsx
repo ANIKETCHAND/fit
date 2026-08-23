@@ -102,7 +102,7 @@ export default function LogFood() {
       {
         onSettled: () => {
           toast.success(`${meal} recorded: ${picked.name} (${picked.kcal} kcal)`);
-          setLocation("/");
+          setLocation("/overview");
         },
       }
     );
