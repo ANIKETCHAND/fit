@@ -49,46 +49,35 @@ export function Landing3DScene() {
     const backTexture = textureLoader.load("/assets/muscular-back-anatomy.png");
     backTexture.colorSpace = THREE.SRGBColorSpace;
 
-    // Function to calculate exact plane dimensions to cover full viewport (adapting for mobile portrait)
+    // Function to calculate exact plane dimensions to cover full viewport
     const calcDimensions = () => {
       const vFOV = (camera.fov * Math.PI) / 180;
       const visibleH = 2 * Math.tan(vFOV / 2) * camera.position.z;
       const visibleW = visibleH * camera.aspect;
-      const isMobile = window.innerWidth < 768;
-
-      let planeW: number;
-      let planeH: number;
-
-      if (isMobile) {
-        // Mobile portrait: scale back anatomy to fit screen width with optimal hero centering
-        planeW = Math.max(visibleW * 1.5, 9.5);
-        planeH = planeW / 1.35;
-      } else {
-        // Desktop wide aspect
-        planeW = Math.max(visibleW * 1.15, 24);
-        planeH = Math.max(visibleH * 1.15, 14.5);
-      }
-      return { planeW, planeH, isMobile };
+      // Generously cover entire screen with bleed
+      const planeW = Math.max(visibleW * 1.15, 24);
+      const planeH = Math.max(visibleH * 1.15, 14.5);
+      return { planeW, planeH };
     };
 
-    let { planeW, planeH, isMobile } = calcDimensions();
+    let { planeW, planeH } = calcDimensions();
     const planeGeo = new THREE.PlaneGeometry(planeW, planeH, 32, 32);
 
-    // Translucent Material tuned for vivid contrast on both mobile OLEDs and desktop screens
+    // Translucent Material (tuned to ~0.54 for clearer silhouette and muscle visibility)
     const planeMat = new THREE.MeshStandardMaterial({
       map: backTexture,
       transparent: true,
-      opacity: isMobile ? 0.72 : 0.58,
-      roughness: 0.25,
-      metalness: 0.2,
-      emissive: 0x122e1a,
-      emissiveIntensity: isMobile ? 0.65 : 0.48,
+      opacity: 0.54,
+      roughness: 0.3,
+      metalness: 0.15,
+      emissive: 0x0d2214,
+      emissiveIntensity: 0.45,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
 
     const backMesh = new THREE.Mesh(planeGeo, planeMat);
-    backMesh.position.set(0, isMobile ? 0.6 : 0, -0.4);
+    backMesh.position.set(0, 0, -0.4);
     group.add(backMesh);
 
     // 4. Large Concentric Holographic HUD Target Rings
@@ -163,7 +152,7 @@ export function Landing3DScene() {
     }
     scene.add(gridHelper);
 
-    // 7. Mouse & Touch Interactivity / Parallax Tracking
+    // 7. Mouse Interactivity / Parallax Tracking
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
@@ -174,14 +163,6 @@ export function Landing3DScene() {
       mouseY = -(e.clientY / window.innerHeight - 0.5) * 2;
     };
     window.addEventListener("mousemove", handleMouseMove);
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        mouseX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
-        mouseY = -(e.touches[0].clientY / window.innerHeight - 0.5) * 2;
-      }
-    };
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
 
     // Window resize handler
     const handleResize = () => {
@@ -194,7 +175,6 @@ export function Landing3DScene() {
       const sz = calcDimensions();
       backMesh.geometry.dispose();
       backMesh.geometry = new THREE.PlaneGeometry(sz.planeW, sz.planeH, 32, 32);
-      backMesh.position.set(0, sz.isMobile ? 0.6 : 0, -0.4);
     };
     window.addEventListener("resize", handleResize);
 
@@ -239,7 +219,6 @@ export function Landing3DScene() {
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animId);
       renderer.dispose();
