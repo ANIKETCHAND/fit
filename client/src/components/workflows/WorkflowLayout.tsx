@@ -1,7 +1,7 @@
 /* Kinetic Anatomy Lab workflow shell: a linear instrument surface that carries a task-specific athlete scan through every routed flow. */
 /* Carbon Command Deck: shared workflow chrome pairs a task-specific diagnostic strip with a quieter operational topbar. */
 import type { ReactNode } from "react";
-import { ArrowLeft, Bell, ChevronDown } from "lucide-react";
+import { Activity, ArrowLeft, Bell, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -19,8 +19,10 @@ export function WorkflowLayout({ kicker, title, detail, children }: WorkflowLayo
             <button className="back-button" onClick={() => setLocation("/overview")}>
               <ArrowLeft size={17} />Command center
             </button>
-            <div className="workflow-brand" aria-label="FitTrack" onClick={() => setLocation("/overview")} style={{ cursor: "pointer" }}>
-              <img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="" />
+            <div className="workflow-brand" aria-label="FitTrack" onClick={() => setLocation("/overview")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="brand-logo-icon" style={{ width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Activity size={14} />
+              </div>
               <strong>FIT<span>TRACK</span></strong>
             </div>
           </div>

@@ -1,5 +1,6 @@
 /** Kinetic Anatomy Lab: an accessible, toggleable navigation drawer with three dots trigger and click-outside dismissal */
 import {
+  Activity,
   Award,
   Bell,
   ChartNoAxesCombined,
@@ -74,7 +75,9 @@ export function Sidebar() {
         aria-hidden={!open}
       >
         <div className="brand-row">
-          <img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="FitTrack mark" />
+          <div className="brand-logo-icon" style={{ width: 34, height: 34, borderRadius: 8, background: "radial-gradient(circle, rgba(186,255,87,0.2) 0%, rgba(13,24,16,0.95) 100%)", border: "1px solid rgba(186,255,87,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#baff57", boxShadow: "0 0 14px rgba(186,255,87,0.25)", flexShrink: 0, marginRight: 10 }}>
+            <Activity size={20} />
+          </div>
           <div>
             <strong>FIT<span>TRACK</span></strong>
             <small>PERFORMANCE OS</small>
