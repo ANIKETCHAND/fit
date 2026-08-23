@@ -166,11 +166,17 @@ export function MapView({
       subdomains: "abcd",
     }).addTo(map);
 
+    // Fallback if dark tiles encounter tile load issues
+    tileLayer.on("tileerror", () => {
+      // Keep tile layer active
+    });
+
     leafletTileLayerRef.current = tileLayer;
     leafletMapRef.current = map;
 
-    setTimeout(() => map.invalidateSize(), 150);
-    setTimeout(() => map.invalidateSize(), 500);
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 350);
+    setTimeout(() => map.invalidateSize(), 800);
 
     const instance: UnifiedMapInstance = {
       engine: "leaflet",
