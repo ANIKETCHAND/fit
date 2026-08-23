@@ -53,6 +53,8 @@ const motivatingQuotes = [
   },
 ];
 
+const GOOGLE_CLIENT_ID = "583335952268-9ibrvhstkajdn9ik9did17ml3pldijuk.apps.googleusercontent.com";
+
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -83,6 +85,146 @@ export default function Landing() {
       return ["caniket2007@gmail.com"];
     }
   });
+
+  // Decode JWT helper for Google One Tap
+  const handleCredentialResponse = (response: any) => {
+    if (response?.credential) {
+      try {
+        const base64Url = response.credential.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          window.atob(base64)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        const payload = JSON.parse(jsonPayload);
+        if (payload && payload.email) {
+          saveAthleteProfile({
+            name: payload.name || "Google Athlete",
+            email: payload.email,
+            avatar: payload.picture || "",
+            location: "New York, USA",
+            focus: "Hypertrophy & Strength Protocol",
+          });
+          localStorage.setItem("fittrack_auth_state", "authenticated");
+          localStorage.setItem("fittrack_auth_provider", "google");
+          localStorage.setItem("fittrack_user_email", payload.email);
+          if (payload.picture) {
+            localStorage.setItem("fittrack_user_avatar", payload.picture);
+          }
+          toast.success(`Welcome, ${payload.name || payload.email}! Authenticated with Google.`);
+          setGoogleModalOpen(false);
+          setAuthModalOpen(false);
+          setLocation("/overview");
+        }
+      } catch (err) {
+        console.error("Failed to decode Google JWT:", err);
+      }
+    }
+  };
+
+  // Trigger Google OAuth2 popup / Token client
+  const handleGoogleOAuthPopup = () => {
+    const g = (window as any).google;
+    if (g?.accounts?.oauth2) {
+      try {
+        const client = g.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: "openid profile email",
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse && tokenResponse.access_token) {
+              try {
+                setIsGoogleLoading(true);
+                const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+                });
+                const userData = await res.json();
+                if (userData && userData.email) {
+                  saveAthleteProfile({
+                    name: userData.name || "Google Athlete",
+                    email: userData.email,
+                    avatar: userData.picture || "",
+                    location: "New York, USA",
+                    focus: "Hypertrophy & Strength Protocol",
+                  });
+                  localStorage.setItem("fittrack_auth_state", "authenticated");
+                  localStorage.setItem("fittrack_auth_provider", "google");
+                  localStorage.setItem("fittrack_user_email", userData.email);
+                  if (userData.picture) {
+                    localStorage.setItem("fittrack_user_avatar", userData.picture);
+                  }
+                  // Save account to remembered list
+                  try {
+                    const updated = Array.from(new Set([userData.email, ...savedGoogleAccounts]));
+                    localStorage.setItem("fittrack_google_accounts", JSON.stringify(updated));
+                    setSavedGoogleAccounts(updated);
+                  } catch {}
+
+                  setIsGoogleLoading(false);
+                  setGoogleModalOpen(false);
+                  setAuthModalOpen(false);
+                  toast.success(`Welcome, ${userData.name || userData.email}! Signed in with Google.`);
+                  setLocation("/overview");
+                  return;
+                }
+              } catch (fetchErr) {
+                console.error("UserInfo fetch error:", fetchErr);
+              } finally {
+                setIsGoogleLoading(false);
+              }
+            }
+          },
+        });
+        client.requestAccessToken();
+        return;
+      } catch (e) {
+        console.warn("OAuth2 init fallback:", e);
+      }
+    }
+    // Fallback to in-app Google modal
+    handleStartGoogleAuth();
+  };
+
+  // Initialize GSI One Tap & Official buttons
+  useEffect(() => {
+    const initGoogleGsi = () => {
+      const g = (window as any).google;
+      if (g?.accounts?.id) {
+        try {
+          g.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleCredentialResponse,
+            auto_select: false,
+          });
+
+          if (googleBtnRef.current) {
+            g.accounts.id.renderButton(googleBtnRef.current, {
+              theme: "outline",
+              size: "large",
+              text: "continue_with",
+              shape: "rectangular",
+              width: "100%",
+            });
+          }
+        } catch (e) {
+          console.warn("GSI init warning:", e);
+        }
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      initGoogleGsi();
+    } else {
+      const interval = setInterval(() => {
+        if ((window as any).google?.accounts?.id) {
+          initGoogleGsi();
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [googleModalOpen]);
 
   const handleStartGoogleAuth = () => {
     setAuthModalOpen(false);
@@ -250,7 +392,7 @@ export default function Landing() {
             Enter Platform / Sign In
             <ArrowRight size={16} />
           </button>
-          <button className="hero-google-cta" onClick={handleStartGoogleAuth}>
+          <button className="hero-google-cta" onClick={handleGoogleOAuthPopup}>
             <svg viewBox="0 0 24 24" width="18" height="18">
               <path
                 fill="#4285F4"
@@ -378,7 +520,7 @@ export default function Landing() {
             <button
               type="button"
               className="google-auth-btn"
-              onClick={handleStartGoogleAuth}
+              onClick={handleGoogleOAuthPopup}
             >
               <svg className="google-icon" viewBox="0 0 24 24" width="18" height="18">
                 <path
