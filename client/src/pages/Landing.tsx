@@ -300,11 +300,13 @@ export default function Landing() {
 
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const activeEmail = (email || "athlete@fittrack.training").trim().toLowerCase();
+    localStorage.setItem("fittrack_user_email", activeEmail);
     if (authMode === "signup") {
       saveAthleteProfile({
-        name: name || "Jordan Mercer",
-        email: email || "jordan@fittrack.training",
-        location: "Brooklyn, NY",
+        name: name || "Athlete",
+        email: activeEmail,
+        location: "New York, USA",
         focus: focus || "Focused strength protocol",
       });
       toast.success(`Welcome to FitTrack, ${name.split(" ")[0]}! Telemetry initialized.`);
@@ -317,6 +319,7 @@ export default function Landing() {
   };
 
   const handleQuickDemo = () => {
+    localStorage.setItem("fittrack_user_email", "demo@fittrack.training");
     localStorage.setItem("fittrack_auth_state", "authenticated");
     toast.success("Welcome, Athlete! Launching overview workspace.");
     setLocation("/overview");

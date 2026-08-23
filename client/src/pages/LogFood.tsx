@@ -9,6 +9,8 @@ import { trpc } from "@/lib/trpc";
 import { BackendFeedback } from "@/components/feedback/BackendFeedback";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+import { getScopedKey } from "@/lib/user-store";
+
 interface FoodItem {
   name: string;
   kcal: number;
@@ -38,7 +40,7 @@ export default function LogFood() {
   // Custom foods saved in localStorage
   const [customFoods, setCustomFoods] = useState<FoodItem[]>(() => {
     try {
-      const saved = localStorage.getItem("fittrack_custom_foods");
+      const saved = localStorage.getItem(getScopedKey("fittrack_custom_foods"));
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -73,7 +75,7 @@ export default function LogFood() {
 
   const save = () => {
     try {
-      const existingEntries = JSON.parse(localStorage.getItem("fittrack_nutrition_logs") || "[]");
+      const existingEntries = JSON.parse(localStorage.getItem(getScopedKey("fittrack_nutrition_logs")) || "[]");
       const newEntry = {
         id: `food-${Date.now()}`,
         mealType: meal,
@@ -84,7 +86,7 @@ export default function LogFood() {
         fatGrams: picked.f,
         consumedAt: new Date().toISOString(),
       };
-      localStorage.setItem("fittrack_nutrition_logs", JSON.stringify([newEntry, ...existingEntries]));
+      localStorage.setItem(getScopedKey("fittrack_nutrition_logs"), JSON.stringify([newEntry, ...existingEntries]));
     } catch {
       // ignore
     }

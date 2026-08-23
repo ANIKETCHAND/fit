@@ -24,10 +24,10 @@ export const achievements: Achievement[] = [
     description: "Complete and log any resistance training or conditioning workout today.",
     category: "daily",
     kind: "explorer",
-    progress: 1,
+    progress: 0,
     target: 1,
     reward: "Daily Check",
-    unlocked: true,
+    unlocked: false,
   },
   {
     id: "daily-weight",
@@ -35,10 +35,10 @@ export const achievements: Achievement[] = [
     description: "Record your morning body weight in the biometric ledger.",
     category: "daily",
     kind: "record",
-    progress: 1,
+    progress: 0,
     target: 1,
     reward: "Fasted Pin",
-    unlocked: true,
+    unlocked: false,
   },
   {
     id: "daily-nutrition",
@@ -46,7 +46,7 @@ export const achievements: Achievement[] = [
     description: "Log your daily meals (Breakfast, Lunch, Dinner) to meet your macro target.",
     category: "daily",
     kind: "fuel",
-    progress: 2,
+    progress: 0,
     target: 3,
     reward: "Macro Shield",
     unlocked: false,
@@ -174,4 +174,6 @@ export const libraryExercises: LibraryExercise[] = [
   { id: "ab-wheel-rollout", name: "Ab Wheel Rollout", focus: "Core · Rectus Abdominis", equipment: "Ab Wheel", tempo: "3–1–1", sets: "3 × 8–12", variant: "core", level: "Peak", coaching: { setup: "Kneel on mat with wheel directly beneath shoulders.", cue: "Roll forward extending hips and arms, maintaining slight pelvic posterior tilt.", tip: "Do not let lower back collapse or sag." } },
 ];
 
-export const achievementStorageKey = (id: string) => `fittrack-achievement-${id}`;
+import { getScopedKey } from "@/lib/user-store";
+
+export const achievementStorageKey = (id: string) => getScopedKey(`fittrack-achievement-${id}`);

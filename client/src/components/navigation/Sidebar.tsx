@@ -127,6 +127,10 @@ export function Sidebar() {
             className="nav-item"
             onClick={() => {
               localStorage.removeItem("fittrack_auth_state");
+              localStorage.removeItem("fittrack_user_email");
+              localStorage.removeItem("fittrack_user_avatar");
+              localStorage.removeItem("manus-runtime-user-info");
+              try { sessionStorage.removeItem("manus-cookie"); } catch {}
               route("/");
             }}
             title="Sign out to landing page"

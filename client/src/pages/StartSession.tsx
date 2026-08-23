@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
-import { advanceStreak } from "@/lib/user-store";
+import { advanceStreak, getScopedKey } from "@/lib/user-store";
 
 const format = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 export default function StartSession() {
@@ -16,9 +16,9 @@ export default function StartSession() {
     setRunning(false);
     advanceStreak();
     try {
-      const sessions = JSON.parse(localStorage.getItem("fittrack_sessions") || "[]");
+      const sessions = JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]");
       sessions.unshift({ mode, durationSeconds: seconds, startedAt: new Date().toISOString() });
-      localStorage.setItem("fittrack_sessions", JSON.stringify(sessions.slice(0, 50)));
+      localStorage.setItem(getScopedKey("fittrack_sessions"), JSON.stringify(sessions.slice(0, 50)));
     } catch { /* ignore */ }
     toast.success(`${mode} session archived · ${format(seconds)}`);
     setSeconds(0);

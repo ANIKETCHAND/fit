@@ -9,6 +9,25 @@ export type ExerciseTarget = { sets: string; reps: string; completed: boolean; c
 export type ExerciseProgress = Record<string, ExerciseTarget>;
 export type CalibrationSettings = { name: string; age: number; heightCm: number; weightKg: number; sex: "male" | "female"; activityLevel: "light" | "moderate" | "active" | "very_active"; goalKcal: number; goalProtein: number; goalCarbs: number; goalFat: number };
 
+export const getActiveUserEmail = (): string => {
+  try {
+    const directEmail = localStorage.getItem("fittrack_user_email");
+    if (directEmail && directEmail.trim()) return directEmail.toLowerCase().trim();
+    const runtimeUser = localStorage.getItem("manus-runtime-user-info");
+    if (runtimeUser) {
+      const parsed = JSON.parse(runtimeUser);
+      if (parsed?.email && typeof parsed.email === "string") return parsed.email.toLowerCase().trim();
+    }
+  } catch {}
+  return "default_athlete";
+};
+
+export const getScopedKey = (baseKey: string): string => {
+  const user = getActiveUserEmail();
+  const cleanScope = user.replace(/[^a-z0-9]/gi, "_");
+  return `${baseKey}__${cleanScope}`;
+};
+
 const preferenceKey = "fittrack-exercise-preferences";
 const notificationKey = "fittrack-notifications";
 const reminderKey = "fittrack-workout-reminders";
@@ -18,18 +37,35 @@ const connectedDevicesKey = "fittrack-connected-devices";
 const exerciseProgressKey = "fittrack-exercise-progress";
 const calibrationSettingsKey = "fittrack-calibration-settings";
 
-const defaultNotifications: NotificationRecord[] = [
-  { id: "system-coaching", title: "Coaching console ready", detail: "Movement cards now retain the cues you have reviewed.", kind: "system", createdAt: "Today · 08:10", read: false },
-  { id: "reminder-preload", title: "Training window opens", detail: "Chest protocol is scheduled for your preferred evening window.", kind: "reminder", createdAt: "Today · 18:30", read: false },
-  { id: "milestone-streak", title: "Signal Streak secured", detail: "Three scheduled training days completed in sequence.", kind: "milestone", createdAt: "Yesterday · 20:18", read: true },
-];
+const defaultNotifications: NotificationRecord[] = [];
 
-const defaultAthleteProfile: AthleteProfile = { name: "Jordan Mercer", email: "jordan@fittrack.training", location: "Brooklyn, NY", focus: "Focused strength protocol" };
+const getDefaultAthleteProfile = (): AthleteProfile => {
+  const email = getActiveUserEmail();
+  if (email && email !== "default_athlete") {
+    const usernamePart = email.split("@")[0] || "Athlete";
+    const cleanName = usernamePart
+      .split(/[\._\-]/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+    return { name: cleanName, email: email, location: "New York, USA", focus: "Hypertrophy & Strength" };
+  }
+  return { name: "Athlete", email: "athlete@fittrack.training", location: "New York, USA", focus: "Hypertrophy & Strength" };
+};
 const defaultConnectedDevices: ConnectedDevice[] = [];
-const defaultCalibrationSettings = (): CalibrationSettings => ({ name: "Jordan Mercer", age: 31, heightCm: 180, weightKg: 78, sex: "male", activityLevel: "moderate", goalKcal: 2840, goalProtein: 172, goalCarbs: 328, goalFat: 79 });
+const defaultCalibrationSettings = (): CalibrationSettings => {
+  const profile = getDefaultAthleteProfile();
+  return { name: profile.name, age: 26, heightCm: 175, weightKg: 70, sex: "male", activityLevel: "moderate", goalKcal: 2400, goalProtein: 150, goalCarbs: 270, goalFat: 65 };
+};
 
-const safeRead = <T,>(key: string, fallback: T): T => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } };
-const write = <T,>(key: string, value: T) => localStorage.setItem(key, JSON.stringify(value));
+const safeRead = <T,>(key: string, fallback: T): T => {
+  try {
+    const raw = localStorage.getItem(getScopedKey(key));
+    return raw ? JSON.parse(raw) as T : fallback;
+  } catch {
+    return fallback;
+  }
+};
+const write = <T,>(key: string, value: T) => localStorage.setItem(getScopedKey(key), JSON.stringify(value));
 export const getExercisePreferences = () => safeRead<Record<string, ExercisePreference>>(preferenceKey, {});
 export const saveExercisePreferences = (value: Record<string, ExercisePreference>) => write(preferenceKey, value);
 export const getNotifications = () => safeRead<NotificationRecord[]>(notificationKey, defaultNotifications);
@@ -37,7 +73,7 @@ export const saveNotifications = (value: NotificationRecord[]) => write(notifica
 export const pushMilestoneNotification = (title: string, detail: string) => { const notifications = getNotifications(); const id = `milestone-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`; if (!notifications.some((item) => item.id === id)) saveNotifications([{ id, title, detail, kind: "milestone", createdAt: new Date().toISOString(), read: false }, ...notifications]); };
 export const getReminderSettings = () => safeRead<ReminderSettings>(reminderKey, { enabled: true, time: "18:30", days: ["Mon", "Wed", "Fri"] });
 export const saveReminderSettings = (value: ReminderSettings) => write(reminderKey, value);
-export const getAthleteProfile = () => safeRead<AthleteProfile>(athleteProfileKey, defaultAthleteProfile);
+export const getAthleteProfile = () => safeRead<AthleteProfile>(athleteProfileKey, getDefaultAthleteProfile());
 export const saveAthleteProfile = (value: AthleteProfile) => write(athleteProfileKey, value);
 export const getConnectedDevices = () => safeRead<ConnectedDevice[]>(connectedDevicesKey, defaultConnectedDevices);
 export const saveConnectedDevices = (value: ConnectedDevice[]) => write(connectedDevicesKey, value);

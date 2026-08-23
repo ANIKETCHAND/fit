@@ -6,18 +6,18 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices } from "@/lib/user-store";
+import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices, getScopedKey } from "@/lib/user-store";
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
 function getWorkoutLogs(): { completedAt: string; focus: string }[] {
-  try { return JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]"); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]"); } catch { return []; }
 }
 function getGpsSessions(): { startedAt: string; distanceMeters: number; durationSeconds: number }[] {
-  try { return JSON.parse(localStorage.getItem("fittrack_gps_sessions") || "[]"); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]"); } catch { return []; }
 }
 function getSessions(): { completedAt?: string; startedAt?: string; durationSeconds?: number }[] {
-  try { return JSON.parse(localStorage.getItem("fittrack_sessions") || "[]"); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]"); } catch { return []; }
 }
 
 const rangeOptions = {

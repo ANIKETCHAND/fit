@@ -9,7 +9,7 @@ import { BadgeUnlockOverlay } from "@/components/achievements/BadgeUnlockOverlay
 import { BadgeShareSheet } from "@/components/achievements/BadgeShareSheet";
 import { StreakFireOverlay } from "@/components/streaks/StreakFireOverlay";
 import { achievementStorageKey, achievements, libraryExercises, type Achievement } from "@/lib/rewards-data";
-import { advanceStreak, pushMilestoneNotification, type DailyStreak } from "@/lib/user-store";
+import { advanceStreak, pushMilestoneNotification, getScopedKey, type DailyStreak } from "@/lib/user-store";
 import { trpc } from "@/lib/trpc";
 
 const defaultLifts = [
@@ -62,9 +62,9 @@ export default function LogWorkout() {
   const save = () => {
     if (complete.length !== lifts.length) { toast("Complete all movements before closing the training protocol"); return; }
     try {
-      const sessions = JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]");
+      const sessions = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]");
       sessions.unshift({ title: `${primaryFocus} protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date().toISOString() });
-      localStorage.setItem("fittrack_workout_logs", JSON.stringify(sessions.slice(0, 50)));
+      localStorage.setItem(getScopedKey("fittrack_workout_logs"), JSON.stringify(sessions.slice(0, 50)));
     } catch { /* ignore */ }
     saveWorkout.mutate({ title: `${primaryFocus} hypertrophy protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date() });
   };

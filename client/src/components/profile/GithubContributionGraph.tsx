@@ -14,6 +14,8 @@ interface MonthMarker {
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+import { getScopedKey } from "@/lib/user-store";
+
 function getRecordedActivities(): Map<string, number> {
   const map = new Map<string, number>();
   const addDate = (raw?: string) => {
@@ -27,15 +29,15 @@ function getRecordedActivities(): Map<string, number> {
   };
 
   try {
-    const workouts: any[] = JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]");
+    const workouts: any[] = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]");
     workouts.forEach((w) => addDate(w.completedAt || w.date || w.startedAt));
   } catch {}
   try {
-    const gps: any[] = JSON.parse(localStorage.getItem("fittrack_gps_sessions") || "[]");
+    const gps: any[] = JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]");
     gps.forEach((g) => addDate(g.startedAt || g.completedAt || g.date));
   } catch {}
   try {
-    const sessions: any[] = JSON.parse(localStorage.getItem("fittrack_sessions") || "[]");
+    const sessions: any[] = JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]");
     sessions.forEach((s) => addDate(s.completedAt || s.startedAt || s.date));
   } catch {}
   return map;

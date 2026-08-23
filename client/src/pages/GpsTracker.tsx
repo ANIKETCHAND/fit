@@ -20,14 +20,16 @@ const distanceBetween = (a: RoutePoint, b: RoutePoint) => {
 const formatDuration = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 const formatDistance = (meters: number) => meters >= 1000 ? `${(meters / 1000).toFixed(2)} km` : `${Math.round(meters)} m`;
 
+import { getScopedKey } from "@/lib/user-store";
+
 const GPS_STORAGE_KEY = "fittrack_gps_sessions";
 let gpsIdCounter = Date.now();
 
 function loadLocalSessions(): LocalGpsSession[] {
-  try { return JSON.parse(localStorage.getItem(GPS_STORAGE_KEY) || "[]"); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(getScopedKey(GPS_STORAGE_KEY)) || "[]"); } catch { return []; }
 }
 function saveLocalSessions(sessions: LocalGpsSession[]) {
-  try { localStorage.setItem(GPS_STORAGE_KEY, JSON.stringify(sessions)); } catch { /* ignore */ }
+  try { localStorage.setItem(getScopedKey(GPS_STORAGE_KEY), JSON.stringify(sessions)); } catch { /* ignore */ }
 }
 
 interface LocalGpsSession {
