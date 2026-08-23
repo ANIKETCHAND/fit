@@ -6,7 +6,7 @@ import { PixelBadge } from "@/components/achievements/PixelBadge";
 import { BadgeShareSheet } from "@/components/achievements/BadgeShareSheet";
 import { BadgeUnlockOverlay } from "@/components/achievements/BadgeUnlockOverlay";
 import { achievementStorageKey, achievements, type Achievement, type AchievementCategory } from "@/lib/rewards-data";
-import { pushMilestoneNotification, getStreak } from "@/lib/user-store";
+import { getExercisePreferences, getScopedKey, getStreak, pushMilestoneNotification } from "@/lib/user-store";
 
 export default function Achievements() {
   const [activeTab, setActiveTab] = useState<"all" | "daily" | "monthly">("all");
@@ -18,13 +18,78 @@ export default function Achievements() {
   const [sharing, setSharing] = useState<Achievement | null>(null);
   const [celebrating, setCelebrating] = useState<Achievement | null>(null);
 
+  // Real dynamic user progress calculation per user account
+  const userProgressMap = useMemo(() => {
+    const workouts = (() => {
+      try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]"); } catch { return []; }
+    })();
+    const gps = (() => {
+      try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]"); } catch { return []; }
+    })();
+    const food = (() => {
+      try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_nutrition_logs")) || "[]"); } catch { return []; }
+    })();
+    const prefs = getExercisePreferences();
+    const streak = getStreak();
+    const today = new Date().toISOString().split("T")[0];
+    const thisMonth = today.slice(0, 7);
+
+    // Today's workouts
+    const workoutsToday = workouts.filter((w: any) => (w.completedAt || w.startedAt || "").startsWith(today)).length;
+    // Today's food meals
+    const mealsToday = food.filter((f: any) => (f.consumedAt || "").startsWith(today)).length;
+    // Today's GPS km
+    const gpsKmToday = gps
+      .filter((g: any) => (g.startedAt || g.createdAt || "").startsWith(today))
+      .reduce((sum: number, g: any) => sum + (Number(g.distanceMeters) ? Number(g.distanceMeters) / 1000 : Number(g.distanceKm) || 0), 0);
+    // Viewed cues count
+    const cuesViewed = Object.values(prefs).filter((p: any) => p?.viewedAt).length;
+
+    // Monthly volume
+    const monthlyVolumeKg = workouts
+      .filter((w: any) => (w.completedAt || w.startedAt || "").startsWith(thisMonth))
+      .reduce((sum: number, w: any) => sum + (Number(w.volumeKg) || 0), 0);
+
+    // Monthly GPS km
+    const monthlyGpsKm = gps
+      .filter((g: any) => (g.startedAt || g.createdAt || "").startsWith(thisMonth))
+      .reduce((sum: number, g: any) => sum + (Number(g.distanceMeters) ? Number(g.distanceMeters) / 1000 : Number(g.distanceKm) || 0), 0);
+
+    // Distinct muscles trained this month
+    const distinctMuscles = new Set(
+      workouts
+        .filter((w: any) => (w.completedAt || w.startedAt || "").startsWith(thisMonth))
+        .map((w: any) => w.focus)
+        .filter(Boolean)
+    ).size;
+
+    return {
+      "daily-workout": workoutsToday,
+      "daily-weight": 0,
+      "daily-nutrition": mealsToday,
+      "daily-gps": Number(gpsKmToday.toFixed(1)),
+      "daily-cues": cuesViewed,
+      "monthly-streak-20": streak.count,
+      "monthly-volume-100k": monthlyVolumeKg,
+      "monthly-century-100km": Number(monthlyGpsKm.toFixed(1)),
+      "monthly-pr-breaker": 0,
+      "monthly-full-spectrum": distinctMuscles,
+    };
+  }, []);
+
   const all = useMemo(
     () =>
-      achievements.map((achievement) => ({
-        ...achievement,
-        unlocked: achievement.unlocked || claimed.includes(achievement.id),
-      })),
-    [claimed]
+      achievements.map((achievement) => {
+        const liveProgress = userProgressMap[achievement.id as keyof typeof userProgressMap] ?? 0;
+        const isManuallyUnlocked = localStorage.getItem(achievementStorageKey(achievement.id)) === "unlocked" || claimed.includes(achievement.id);
+        const isAutoUnlocked = liveProgress >= achievement.target;
+        return {
+          ...achievement,
+          progress: liveProgress,
+          unlocked: isManuallyUnlocked || isAutoUnlocked,
+        };
+      }),
+    [userProgressMap, claimed]
   );
 
   const dailyAchievements = useMemo(
@@ -64,28 +129,22 @@ export default function Achievements() {
               <Share2 size={13} />
               <span>Share badge</span>
             </button>
+          ) : achievement.progress >= achievement.target ? (
+            <button
+              className="achievement-btn achievement-action"
+              onClick={() => unlock(achievement)}
+            >
+              <Sparkles size={13} />
+              <span>Claim badge</span>
+              <ArrowUpRight size={13} />
+            </button>
           ) : (
             <button
               className="achievement-btn achievement-action"
-              onClick={() => {
-                if (achievement.id === "monthly-pr-breaker" || achievement.id === "daily-nutrition" || achievement.id === "daily-gps") {
-                  unlock(achievement);
-                } else {
-                  toast(`${achievement.title} advances through your next training signal`);
-                }
-              }}
+              onClick={() => toast(`${achievement.title}: ${achievement.description}`)}
             >
-              {achievement.id === "monthly-pr-breaker" || achievement.id === "daily-nutrition" || achievement.id === "daily-gps" ? (
-                <>
-                  <Sparkles size={13} />
-                  <span>Claim milestone</span>
-                </>
-              ) : (
-                <>
-                  <LockKeyhole size={13} />
-                  <span>View criteria</span>
-                </>
-              )}
+              <LockKeyhole size={13} />
+              <span>{Math.min(100, Math.round((achievement.progress / achievement.target) * 100))}% signal</span>
               <ArrowUpRight size={13} />
             </button>
           )
