@@ -21,35 +21,18 @@ function getSessions(): { completedAt?: string; startedAt?: string; durationSeco
 }
 
 const rangeOptions = {
-  "12m": { label: "Last 12 months", period: "Aug 2025 — Aug 2026", weeks: 52, sessions: 43, continuous: 11 },
-  "6m": { label: "Last 6 months", period: "Mar 2026 — Aug 2026", weeks: 26, sessions: 27, continuous: 7 },
-  "90d": { label: "Last 90 days", period: "May 2026 — Aug 2026", weeks: 13, sessions: 18, continuous: 4 },
-  "30d": { label: "Last 30 days", period: "Jul 2026 — Aug 2026", weeks: 5, sessions: 9, continuous: 2 },
+  "12m": { label: "Last 12 months", period: "Aug 2025 — Aug 2026", weeks: 52 },
+  "6m": { label: "Last 6 months", period: "Mar 2026 — Aug 2026", weeks: 26 },
+  "90d": { label: "Last 90 days", period: "May 2026 — Aug 2026", weeks: 13 },
+  "30d": { label: "Last 30 days", period: "Jul 2026 — Aug 2026", weeks: 5 },
 } as const;
 type RangeKey = keyof typeof rangeOptions;
-
-// Activity type distribution varies by range
-const activityByRange: Record<RangeKey, { label: string; value: number; color: string }[]> = {
-  "12m": [{ label: "Strength", value: 38, color: "#c6ff3d" }, { label: "Conditioning", value: 24, color: "#a6d9ff" }, { label: "Walking", value: 19, color: "#6a879b" }, { label: "Mobility", value: 12, color: "#c8d2c5" }, { label: "Recovery", value: 7, color: "#536b78" }],
-  "6m": [{ label: "Strength", value: 42, color: "#c6ff3d" }, { label: "Conditioning", value: 27, color: "#a6d9ff" }, { label: "Walking", value: 15, color: "#6a879b" }, { label: "Mobility", value: 10, color: "#c8d2c5" }, { label: "Recovery", value: 6, color: "#536b78" }],
-  "90d": [{ label: "Strength", value: 50, color: "#c6ff3d" }, { label: "Conditioning", value: 22, color: "#a6d9ff" }, { label: "Walking", value: 14, color: "#6a879b" }, { label: "Mobility", value: 9, color: "#c8d2c5" }, { label: "Recovery", value: 5, color: "#536b78" }],
-  "30d": [{ label: "Strength", value: 55, color: "#c6ff3d" }, { label: "Conditioning", value: 20, color: "#a6d9ff" }, { label: "Walking", value: 12, color: "#6a879b" }, { label: "Mobility", value: 8, color: "#c8d2c5" }, { label: "Recovery", value: 5, color: "#536b78" }],
-};
 
 const deviceCandidates: ConnectedDevice[] = [
   { id: "tempo-watch-s", name: "Tempo Watch S", detail: "GPS · recovery · activity capture", kind: "watch" },
   { id: "stride-sense-mini", name: "Stride Sense Mini", detail: "Pace · distance · cadence", kind: "band" },
   { id: "core-hr-strap", name: "Core HR Strap", detail: "Heart rate · training zones", kind: "band" },
 ];
-
-const contributionLevel = (week: number, day: number, range: RangeKey) => {
-  const rangeOffset = { "12m": 2, "6m": 5, "90d": 8, "30d": 11 }[range];
-  const signal = (week * 11 + day * 7 + (week % 5) * 3 + rangeOffset) % 17;
-  if (signal > 13) return "high";
-  if (signal > 9) return "mid";
-  if (signal > 6) return "low";
-  return "zero";
-};
 
 const initials = (name: string) => name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "FT";
 const deviceIcon = (kind: ConnectedDevice["kind"]) => kind === "watch" ? Watch : kind === "log" ? Dumbbell : Smartphone;
@@ -63,8 +46,6 @@ export default function Profile() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
-  const rangeData = rangeOptions[range];
-  const activityTypes = activityByRange[range];
   const availableDevices = useMemo(() => deviceCandidates.filter((candidate) => !devices.some((device) => device.id === candidate.id)), [devices]);
 
   // Real session logs from localStorage
@@ -123,6 +104,40 @@ export default function Profile() {
     { label: "Active sources", value: String(devices.length), detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
   ], [totalSessionCount, totalDistanceKm, totalTimeUnderLoad, movementClassesCount, avgDistancePerEntry, avgSessionCadence, devices]);
 
+  const dynamicActivityTypes = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let total = 0;
+
+    realWorkoutLogs.forEach((w) => {
+      const focusName = w.focus || "Strength";
+      const cat = focusName.toLowerCase().includes("cardio") || focusName.toLowerCase().includes("endurance") ? "Conditioning" : "Strength";
+      counts[cat] = (counts[cat] || 0) + 1;
+      total++;
+    });
+
+    realGpsSessions.forEach(() => {
+      counts["GPS Activity"] = (counts["GPS Activity"] || 0) + 1;
+      total++;
+    });
+
+    realSessions.forEach((s: any) => {
+      const cat = s.category || s.focus || "Training";
+      counts[cat] = (counts[cat] || 0) + 1;
+      total++;
+    });
+
+    if (total === 0) return [];
+
+    const palette = ["#c6ff3d", "#a6d9ff", "#6a879b", "#c8d2c5", "#536b78"];
+    let idx = 0;
+    return Object.entries(counts).map(([label, count]) => {
+      const val = Math.round((count / total) * 100);
+      const color = palette[idx % palette.length];
+      idx++;
+      return { label, value: val, color };
+    });
+  }, [realWorkoutLogs, realGpsSessions, realSessions]);
+
   let offset = 0;
 
   const openProfileEditor = () => { setDraft(athlete); setProfileOpen(true); };
@@ -152,15 +167,15 @@ export default function Profile() {
       <section className="profile-analysis-grid">
         <motion.article className="profile-panel types-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .18 }}>
           <div className="profile-panel-head"><div><span className="panel-label">Movement mix</span><h2>Activity types</h2></div><Sparkles size={16} /></div>
-          {totalSessionCount === 0 ? (
+          {dynamicActivityTypes.length === 0 ? (
             <div style={{ padding: "32px 16px", textAlign: "center", color: "#819084" }}>
               <p style={{ margin: "0 0 8px 0", font: "600 14px 'DM Sans'", color: "#d6ded6" }}>No activities recorded yet</p>
               <span style={{ fontSize: "12px" }}>Complete a workout or GPS session to generate activity breakdown telemetry.</span>
             </div>
           ) : (
             <>
-              <div className="activity-donut"><svg viewBox="0 0 42 42" role="img" aria-label="Activity type breakdown">{activityTypes.map((type) => { const currentOffset = offset; offset += type.value; return <circle key={type.label} cx="21" cy="21" r="15.9155" fill="transparent" stroke={type.color} strokeWidth="5" strokeDasharray={`${type.value} ${100 - type.value}`} strokeDashoffset={-currentOffset} />; })}</svg><div><strong>{totalSessionCount}</strong><span>activities</span></div></div>
-              <div className="type-legend">{activityTypes.map((type) => <div key={type.label}><i style={{ background: type.color }} /><span>{type.label}</span><b>{type.value}%</b></div>)}</div>
+              <div className="activity-donut"><svg viewBox="0 0 42 42" role="img" aria-label="Activity type breakdown">{dynamicActivityTypes.map((type) => { const currentOffset = offset; offset += type.value; return <circle key={type.label} cx="21" cy="21" r="15.9155" fill="transparent" stroke={type.color} strokeWidth="5" strokeDasharray={`${type.value} ${100 - type.value}`} strokeDashoffset={-currentOffset} />; })}</svg><div><strong>{totalSessionCount}</strong><span>activities</span></div></div>
+              <div className="type-legend">{dynamicActivityTypes.map((type) => <div key={type.label}><i style={{ background: type.color }} /><span>{type.label}</span><b>{type.value}%</b></div>)}</div>
             </>
           )}
         </motion.article>
