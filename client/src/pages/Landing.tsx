@@ -109,6 +109,13 @@ export default function Landing() {
         const validEmail = sanitizeEmail(payload.email);
         if (validEmail) {
           const cleanName = sanitizeText(payload.name) || "Google Athlete";
+          localStorage.setItem("fittrack_auth_state", "authenticated");
+          localStorage.setItem("fittrack_auth_provider", "google");
+          localStorage.setItem("fittrack_user_email", validEmail);
+          localStorage.setItem("fittrack_user_name", cleanName);
+          if (payload.picture) {
+            localStorage.setItem("fittrack_user_avatar", payload.picture);
+          }
           saveAthleteProfile({
             name: cleanName,
             email: validEmail,
@@ -116,12 +123,6 @@ export default function Landing() {
             location: "New York, USA",
             focus: "Hypertrophy & Strength Protocol",
           });
-          localStorage.setItem("fittrack_auth_state", "authenticated");
-          localStorage.setItem("fittrack_auth_provider", "google");
-          localStorage.setItem("fittrack_user_email", validEmail);
-          if (payload.picture) {
-            localStorage.setItem("fittrack_user_avatar", payload.picture);
-          }
           toast.success(`Welcome, ${cleanName}! Authenticated with Google.`);
           setGoogleModalOpen(false);
           setAuthModalOpen(false);
@@ -150,22 +151,26 @@ export default function Landing() {
                 });
                 const userData = await res.json();
                 if (userData && userData.email) {
+                  const googleName = sanitizeText(userData.name) || "Google Athlete";
+                  const googleEmailClean = sanitizeEmail(userData.email);
+
+                  localStorage.setItem("fittrack_auth_state", "authenticated");
+                  localStorage.setItem("fittrack_auth_provider", "google");
+                  localStorage.setItem("fittrack_user_email", googleEmailClean);
+                  localStorage.setItem("fittrack_user_name", googleName);
+                  if (userData.picture) {
+                    localStorage.setItem("fittrack_user_avatar", userData.picture);
+                  }
                   saveAthleteProfile({
-                    name: userData.name || "Google Athlete",
-                    email: userData.email,
+                    name: googleName,
+                    email: googleEmailClean,
                     avatar: userData.picture || "",
                     location: "New York, USA",
                     focus: "Hypertrophy & Strength Protocol",
                   });
-                  localStorage.setItem("fittrack_auth_state", "authenticated");
-                  localStorage.setItem("fittrack_auth_provider", "google");
-                  localStorage.setItem("fittrack_user_email", userData.email);
-                  if (userData.picture) {
-                    localStorage.setItem("fittrack_user_avatar", userData.picture);
-                  }
                   // Save account to remembered list
                   try {
-                    const updated = Array.from(new Set([userData.email, ...savedGoogleAccounts]));
+                    const updated = Array.from(new Set([googleEmailClean, ...savedGoogleAccounts]));
                     localStorage.setItem("fittrack_google_accounts", JSON.stringify(updated));
                     setSavedGoogleAccounts(updated);
                   } catch {}
@@ -173,7 +178,7 @@ export default function Landing() {
                   setIsGoogleLoading(false);
                   setGoogleModalOpen(false);
                   setAuthModalOpen(false);
-                  toast.success(`Welcome, ${userData.name || userData.email}! Signed in with Google.`);
+                  toast.success(`Welcome, ${googleName}! Signed in with Google.`);
                   setLocation("/overview");
                   return;
                 }
@@ -268,12 +273,17 @@ export default function Landing() {
     e.preventDefault();
     setIsGoogleLoading(true);
     setTimeout(() => {
-      const email = googleEmail.trim() || "athlete@gmail.com";
+      const email = sanitizeEmail(googleEmail) || "athlete@gmail.com";
       const usernamePart = email.split("@")[0] || "Athlete";
       const cleanName = usernamePart
         .split(/[\._\-]/)
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
         .join(" ");
+
+      localStorage.setItem("fittrack_auth_state", "authenticated");
+      localStorage.setItem("fittrack_auth_provider", "google");
+      localStorage.setItem("fittrack_user_email", email);
+      localStorage.setItem("fittrack_user_name", cleanName || "Google Athlete");
 
       saveAthleteProfile({
         name: cleanName || "Google Athlete",
@@ -289,9 +299,6 @@ export default function Landing() {
         setSavedGoogleAccounts(updatedAccounts);
       } catch {}
 
-      localStorage.setItem("fittrack_auth_state", "authenticated");
-      localStorage.setItem("fittrack_auth_provider", "google");
-      localStorage.setItem("fittrack_user_email", email);
       setIsGoogleLoading(false);
       setGoogleModalOpen(false);
       toast.success(`Google Account connected: ${email}`);
@@ -313,8 +320,12 @@ export default function Landing() {
     const cleanName = sanitizeText(name) || "Athlete";
     const cleanFocus = sanitizeText(focus) || "Focused strength protocol";
 
+    localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_user_email", cleanEmail);
-    if (authMode === "signup") {
+    if (name) {
+      localStorage.setItem("fittrack_user_name", cleanName);
+    }
+    if (authMode === "signup" || name) {
       saveAthleteProfile({
         name: cleanName,
         email: cleanEmail,
@@ -325,7 +336,6 @@ export default function Landing() {
     } else {
       toast.success("Athlete authenticated. Launching Command Deck.");
     }
-    localStorage.setItem("fittrack_auth_state", "authenticated");
     setAuthModalOpen(false);
     setLocation("/overview");
   };

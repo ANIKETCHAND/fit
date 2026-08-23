@@ -41,6 +41,18 @@ const defaultNotifications: NotificationRecord[] = [];
 
 const getDefaultAthleteProfile = (): AthleteProfile => {
   const email = getActiveUserEmail();
+  try {
+    const cachedName = localStorage.getItem("fittrack_user_name");
+    if (cachedName && cachedName.trim()) {
+      return {
+        name: cachedName.trim(),
+        email: email && email !== "default_athlete" ? email : "athlete@fittrack.training",
+        location: "New York, USA",
+        focus: "Hypertrophy & Strength",
+      };
+    }
+  } catch {}
+
   if (email && email !== "default_athlete") {
     const usernamePart = email.split("@")[0] || "Athlete";
     const cleanName = usernamePart
@@ -74,7 +86,14 @@ export const pushMilestoneNotification = (title: string, detail: string) => { co
 export const getReminderSettings = () => safeRead<ReminderSettings>(reminderKey, { enabled: true, time: "18:30", days: ["Mon", "Wed", "Fri"] });
 export const saveReminderSettings = (value: ReminderSettings) => write(reminderKey, value);
 export const getAthleteProfile = () => safeRead<AthleteProfile>(athleteProfileKey, getDefaultAthleteProfile());
-export const saveAthleteProfile = (value: AthleteProfile) => write(athleteProfileKey, value);
+export const saveAthleteProfile = (value: AthleteProfile) => {
+  if (value.name && value.name.trim()) {
+    try {
+      localStorage.setItem("fittrack_user_name", value.name.trim());
+    } catch {}
+  }
+  write(athleteProfileKey, value);
+};
 export const getConnectedDevices = () => safeRead<ConnectedDevice[]>(connectedDevicesKey, defaultConnectedDevices);
 export const saveConnectedDevices = (value: ConnectedDevice[]) => write(connectedDevicesKey, value);
 export const getExerciseProgress = (): ExerciseProgress => {

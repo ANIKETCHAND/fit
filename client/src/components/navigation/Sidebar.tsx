@@ -128,6 +128,7 @@ export function Sidebar() {
             onClick={() => {
               localStorage.removeItem("fittrack_auth_state");
               localStorage.removeItem("fittrack_user_email");
+              localStorage.removeItem("fittrack_user_name");
               localStorage.removeItem("fittrack_user_avatar");
               localStorage.removeItem("manus-runtime-user-info");
               try { sessionStorage.removeItem("manus-cookie"); } catch {}
