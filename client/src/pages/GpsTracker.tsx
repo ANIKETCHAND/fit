@@ -20,8 +20,23 @@ const distanceBetween = (a: RoutePoint, b: RoutePoint) => {
 const formatDuration = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 const formatDistance = (meters: number) => meters >= 1000 ? `${(meters / 1000).toFixed(2)} km` : `${Math.round(meters)} m`;
 
-function buildDemoRoute(): RoutePoint[] {
-  const origin = { latitude: 28.6139, longitude: 77.209 };
+const GPS_STORAGE_KEY = "fittrack_gps_sessions";
+let gpsIdCounter = Date.now();
+
+function loadLocalSessions(): LocalGpsSession[] {
+  try { return JSON.parse(localStorage.getItem(GPS_STORAGE_KEY) || "[]"); } catch { return []; }
+}
+function saveLocalSessions(sessions: LocalGpsSession[]) {
+  try { localStorage.setItem(GPS_STORAGE_KEY, JSON.stringify(sessions)); } catch { /* ignore */ }
+}
+
+interface LocalGpsSession {
+  id: number; label: string; startedAt: string; endedAt: string;
+  durationSeconds: number; distanceMeters: number; averageSpeedKph: number;
+  points: RoutePoint[];
+}
+
+function buildDemoRoute(origin = { latitude: 28.6139, longitude: 77.209 }): RoutePoint[] {
   return Array.from({ length: 22 }, (_, index) => ({
     latitude: origin.latitude + Math.sin(index / 3.2) * 0.0035 + index * 0.00019,
     longitude: origin.longitude + Math.cos(index / 4.1) * 0.004 + index * 0.00014,
@@ -40,7 +55,10 @@ function locationMessage(error: GeolocationPositionError) {
 export default function GpsTracker() {
   const utils = trpc.useUtils();
   const historyQuery = trpc.gps.list.useQuery();
-  const savedSessions = historyQuery.data ?? [];
+  const [localSessions, setLocalSessions] = useState<LocalGpsSession[]>(loadLocalSessions);
+  const serverSessions = historyQuery.data ?? [];
+  // Merge: server sessions take precedence, then local-only ones
+  const savedSessions = serverSessions.length > 0 ? serverSessions : localSessions;
   const [livePoints, setLivePoints] = useState<RoutePoint[]>([]);
   const [isTracking, setIsTracking] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -57,13 +75,20 @@ export default function GpsTracker() {
 
   const createSession = trpc.gps.create.useMutation({
     onMutate: () => setSaveError(null),
-    onSuccess: async () => { await utils.gps.list.invalidate(); toast.success("Route saved to your training history."); },
-    onError: () => { const message = "The route could not be saved. Your captured trace is still here—check your connection and retry."; setSaveError(message); toast.error(message); },
+    onSettled: async () => { try { await utils.gps.list.invalidate(); } catch { /* offline */ } },
+    onError: () => { /* handled in saveRoute */ },
   });
   const removeSession = trpc.gps.remove.useMutation({
     onMutate: () => { setRemoveError(null); setFailedRemovalId(null); },
-    onSuccess: async () => { setSelectedId(null); await utils.gps.list.invalidate(); toast.success("Saved route removed."); },
-    onError: (_error, variables) => { const message = "The saved route could not be removed. It remains in your history; retry when connected."; setRemoveError(message); setFailedRemovalId(variables.id); toast.error(message); },
+    onSettled: async () => { try { await utils.gps.list.invalidate(); } catch { /* offline */ } },
+    onError: (_error, variables) => {
+      // Fallback: remove from local storage
+      const next = localSessions.filter((s) => s.id !== variables.id);
+      saveLocalSessions(next);
+      setLocalSessions(next);
+      setSelectedId(null);
+      toast.success("Route removed from local history.");
+    },
   });
 
   useEffect(() => () => { if (watchIdRef.current !== null) navigator.geolocation?.clearWatch(watchIdRef.current); }, []);
@@ -150,7 +175,10 @@ export default function GpsTracker() {
 
   const previewSignal = () => {
     setCaptureError(null);
-    setLivePoints(buildDemoRoute());
+    const origin = userLocationInfo
+      ? { latitude: userLocationInfo.lat, longitude: userLocationInfo.lng }
+      : undefined;
+    setLivePoints(buildDemoRoute(origin));
     setElapsedSeconds(378);
     setStartedAt(Date.now() - 378_000);
     setIsTracking(false);
@@ -164,15 +192,25 @@ export default function GpsTracker() {
     }
     const endedAt = new Date(livePoints[livePoints.length - 1].timestampMs);
     const duration = Math.max(1, Math.round((endedAt.getTime() - startedAt) / 1000));
-    createSession.mutate({
+    const avgSpeed = (liveDistance / duration) * 3.6;
+    // Always save locally first as fallback
+    const newSession: LocalGpsSession = {
+      id: ++gpsIdCounter,
       label: "Outdoor Movement Route",
-      startedAt: new Date(startedAt),
-      endedAt,
+      startedAt: new Date(startedAt).toISOString(),
+      endedAt: endedAt.toISOString(),
       durationSeconds: duration,
       distanceMeters: liveDistance,
-      averageSpeedKph: liveDistance / duration * 3.6,
+      averageSpeedKph: avgSpeed,
       points: livePoints,
-    });
+    };
+    const next = [newSession, ...localSessions];
+    saveLocalSessions(next);
+    setLocalSessions(next);
+    createSession.mutate(
+      { label: "Outdoor Movement Route", startedAt: new Date(startedAt), endedAt, durationSeconds: duration, distanceMeters: liveDistance, averageSpeedKph: avgSpeed, points: livePoints },
+      { onSettled: () => { toast.success("Route saved to your training history."); setLivePoints([]); } }
+    );
   };
 
   const handleLoadingChange = useCallback((loading: boolean) => {

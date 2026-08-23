@@ -7,6 +7,29 @@ export function WeeklyProgress() {
 }
 
 export function VitalStrip() {
-  const data = [{ icon: Flame, label: "Calories", value: "1,846", sub: "of 2,400 kcal", accent: "lime" }, { icon: Scale, label: "Weight", value: "74.8", sub: "kg · −0.4 this week", accent: "blue" }, { icon: Footprints, label: "Steps", value: "8,426", sub: "78% of target", accent: "lavender" }];
+  const todayKcal = (() => {
+    try {
+      const logs = JSON.parse(localStorage.getItem("fittrack_nutrition_logs") || "[]") as { calories: number; consumedAt: string }[];
+      const today = new Date().toISOString().split("T")[0];
+      return logs.filter((e) => e.consumedAt?.startsWith(today)).reduce((sum, e) => sum + (Number(e.calories) || 0), 0);
+    } catch { return 0; }
+  })();
+  const goalKcal = (() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("fittrack-calibration-settings") || "null");
+      return s?.goalKcal ?? 2400;
+    } catch { return 2400; }
+  })();
+  const weightKg = (() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("fittrack-calibration-settings") || "null");
+      return s?.weightKg ?? 74.8;
+    } catch { return 74.8; }
+  })();
+  const data = [
+    { icon: Flame, label: "Calories", value: todayKcal.toLocaleString(), sub: `of ${goalKcal.toLocaleString()} kcal`, accent: "lime" },
+    { icon: Scale, label: "Weight", value: weightKg.toString(), sub: "kg · today's reading", accent: "blue" },
+    { icon: Footprints, label: "Steps", value: "8,426", sub: "78% of target", accent: "lavender" },
+  ];
   return <div className="vital-strip">{data.map(({ icon: Icon, ...vital }) => <div className="vital-item" key={vital.label}><span className={`vital-icon ${vital.accent}`}><Icon size={16} /></span><div><p>{vital.label}</p><b>{vital.value}</b><small>{vital.sub}</small></div></div>)}</div>;
 }

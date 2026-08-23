@@ -328,7 +328,11 @@ export default function ExerciseLibrary() {
       {filtered.length === 0 && (
         <div className="library-empty" style={{ textAlign: "center", padding: "40px 20px" }}>
           <p style={{ marginBottom: "14px", color: "#8fa18f" }}>
-            No exercises match "{query || focus}".
+            {focus === "Coached"
+              ? "No coached exercises yet. Flip any exercise card to review its coaching cues — it will appear here."
+              : focus === "Favorites"
+              ? "No favorites saved yet. Click the star on any exercise card to save it here."
+              : `No exercises match "${query || focus}".`}
           </p>
           <button
             className="inline-add-custom-btn"

@@ -5,6 +5,21 @@ import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
 import { getNotifications, getReminderSettings, saveNotifications, saveReminderSettings, type NotificationRecord, type ReminderSettings } from "@/lib/user-store";
 
+function formatNotificationTime(createdAt: string): string {
+  // Support old string format like "Today · 08:10" passthrough
+  if (!createdAt.includes("T")) return createdAt;
+  const date = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `Today · ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  if (diffHours < 48) return `Yesterday · ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export default function Notifications() {
   const [notifications, setNotifications] = useState<NotificationRecord[]>(getNotifications);
@@ -16,4 +31,4 @@ export default function Notifications() {
   const grouped = useMemo(() => ({ new: notifications.filter((item) => !item.read), archive: notifications.filter((item) => item.read) }), [notifications]);
   return <WorkflowLayout kicker="Signals / notification archive" title="Read the record" detail="Milestones, coaching updates, and reminder settings persist on this device so training context remains visible between sessions."><section className="notification-layout"><div className="notification-stream"><div className="inbox-topline"><div><span className="panel-label">Signal inbox</span><h2>{unread ? `${unread} update${unread > 1 ? "s" : ""}` : "Archive clear"}</h2></div><button onClick={markAll}><CheckCheck size={15} />Mark all read</button></div>{grouped.new.length > 0 && <><span className="inbox-divider">Active signals</span>{grouped.new.map((item) => <NotificationItem key={item.id} item={item} onRead={() => { const next = notifications.map((value) => value.id === item.id ? { ...value, read: true } : value); setNotifications(next); saveNotifications(next); }} />)}</>}<span className="inbox-divider">Archived signal</span>{grouped.archive.map((item) => <NotificationItem key={item.id} item={item} />)}</div><aside className="reminder-console"><div className="reminder-head"><div><span className="panel-label">Workout reminder</span><h2>Set the window</h2></div><Settings2 size={19} /></div><div className="reminder-switch"><div><b>Reminder active</b><span>Local device preference</span></div><button className={reminder.enabled ? "toggle-on" : ""} aria-pressed={reminder.enabled} onClick={() => saveReminder({ ...reminder, enabled: !reminder.enabled })}><i /></button></div><label className="reminder-time"><span><Clock3 size={14} />Preferred time</span><input type="time" value={reminder.time} disabled={!reminder.enabled} onChange={(event) => saveReminder({ ...reminder, time: event.target.value })} /></label><div className="reminder-days"><span><CalendarClock size={14} />Training days</span><div>{days.map((day) => <button key={day} disabled={!reminder.enabled} className={reminder.days.includes(day) ? "selected" : ""} onClick={() => toggleDay(day)}>{day}</button>)}</div></div><div className="reminder-summary"><i />{reminder.enabled && reminder.days.length ? `Reminder held for ${reminder.days.join(" · ")} at ${reminder.time}` : "Reminder paused — re-enable when your next block begins."}</div><button className="save-reminder" onClick={() => toast("Workout reminder settings saved to this device")}><SlidersHorizontal size={15} />Save reminder protocol</button></aside></section></WorkflowLayout>;
 }
-function NotificationItem({ item, onRead }: { item: NotificationRecord; onRead?: () => void }) { const Icon = item.kind === "milestone" ? Medal : item.kind === "reminder" ? CalendarClock : Bell; return <article className={`notification-item ${item.read ? "read" : "unread"}`} onClick={onRead}><div className="notification-icon"><Icon size={17} /></div><div><span>{item.kind === "milestone" ? "Performance milestone" : item.kind === "reminder" ? "Workout reminder" : "System signal"} · {item.createdAt}</span><h3>{item.title}</h3><p>{item.detail}</p></div>{!item.read && <i />}</article>; }
+function NotificationItem({ item, onRead }: { item: NotificationRecord; onRead?: () => void }) { const Icon = item.kind === "milestone" ? Medal : item.kind === "reminder" ? CalendarClock : Bell; return <article className={`notification-item ${item.read ? "read" : "unread"}`} onClick={onRead}><div className="notification-icon"><Icon size={17} /></div><div><span>{item.kind === "milestone" ? "Performance milestone" : item.kind === "reminder" ? "Workout reminder" : "System signal"} · {formatNotificationTime(item.createdAt)}</span><h3>{item.title}</h3><p>{item.detail}</p></div>{!item.read && <i />}</article>; }

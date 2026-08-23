@@ -10,23 +10,15 @@ import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnec
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
-const summaryMetrics = [
-  { label: "Logged sessions", value: "43", detail: "entries in the ledger", icon: Activity, tone: "lime", size: "standard" },
-  { label: "Distance captured", value: "85.0", unit: "km", detail: "ground covered", icon: MapPin, tone: "blue", size: "standard" },
-  { label: "Time under load", value: "30h 07m", detail: "clocked in motion", icon: Clock3, tone: "bone", size: "standard" },
-  { label: "Movement classes", value: "5", detail: "disciplines detected", icon: Layers3, tone: "bone", size: "standard" },
-  { label: "Distance per entry", value: "2.0", unit: "km", detail: "rolling average", icon: Footprints, tone: "blue", size: "standard" },
-  { label: "Session cadence", value: "42m", detail: "average load window", icon: Timer, tone: "lime", size: "standard" },
-  { label: "Active sources", value: "2", detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
-];
-
-const activityTypes = [
-  { label: "Strength", value: 38, color: "#c6ff3d" },
-  { label: "Conditioning", value: 24, color: "#a6d9ff" },
-  { label: "Walking", value: 19, color: "#6a879b" },
-  { label: "Mobility", value: 12, color: "#c8d2c5" },
-  { label: "Recovery", value: 7, color: "#536b78" },
-];
+function getWorkoutLogs(): { completedAt: string; focus: string }[] {
+  try { return JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]"); } catch { return []; }
+}
+function getGpsSessions(): { startedAt: string; distanceMeters: number; durationSeconds: number }[] {
+  try { return JSON.parse(localStorage.getItem("fittrack_gps_sessions") || "[]"); } catch { return []; }
+}
+function getSessions(): { completedAt?: string; startedAt?: string; durationSeconds?: number }[] {
+  try { return JSON.parse(localStorage.getItem("fittrack_sessions") || "[]"); } catch { return []; }
+}
 
 const rangeOptions = {
   "12m": { label: "Last 12 months", period: "Aug 2025 — Aug 2026", weeks: 52, sessions: 43, continuous: 11 },
@@ -35,6 +27,14 @@ const rangeOptions = {
   "30d": { label: "Last 30 days", period: "Jul 2026 — Aug 2026", weeks: 5, sessions: 9, continuous: 2 },
 } as const;
 type RangeKey = keyof typeof rangeOptions;
+
+// Activity type distribution varies by range
+const activityByRange: Record<RangeKey, { label: string; value: number; color: string }[]> = {
+  "12m": [{ label: "Strength", value: 38, color: "#c6ff3d" }, { label: "Conditioning", value: 24, color: "#a6d9ff" }, { label: "Walking", value: 19, color: "#6a879b" }, { label: "Mobility", value: 12, color: "#c8d2c5" }, { label: "Recovery", value: 7, color: "#536b78" }],
+  "6m": [{ label: "Strength", value: 42, color: "#c6ff3d" }, { label: "Conditioning", value: 27, color: "#a6d9ff" }, { label: "Walking", value: 15, color: "#6a879b" }, { label: "Mobility", value: 10, color: "#c8d2c5" }, { label: "Recovery", value: 6, color: "#536b78" }],
+  "90d": [{ label: "Strength", value: 50, color: "#c6ff3d" }, { label: "Conditioning", value: 22, color: "#a6d9ff" }, { label: "Walking", value: 14, color: "#6a879b" }, { label: "Mobility", value: 9, color: "#c8d2c5" }, { label: "Recovery", value: 5, color: "#536b78" }],
+  "30d": [{ label: "Strength", value: 55, color: "#c6ff3d" }, { label: "Conditioning", value: 20, color: "#a6d9ff" }, { label: "Walking", value: 12, color: "#6a879b" }, { label: "Mobility", value: 8, color: "#c8d2c5" }, { label: "Recovery", value: 5, color: "#536b78" }],
+};
 
 const deviceCandidates: ConnectedDevice[] = [
   { id: "tempo-watch-s", name: "Tempo Watch S", detail: "GPS · recovery · activity capture", kind: "watch" },
@@ -64,7 +64,28 @@ export default function Profile() {
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
   const rangeData = rangeOptions[range];
+  const activityTypes = activityByRange[range];
   const availableDevices = useMemo(() => deviceCandidates.filter((candidate) => !devices.some((device) => device.id === candidate.id)), [devices]);
+
+  // Real session count from localStorage
+  const realSessionCount = useMemo(() => {
+    const wl = getWorkoutLogs().length;
+    const gps = getGpsSessions().length;
+    const sessions = getSessions().length;
+    const total = wl + gps + sessions;
+    return total > 0 ? total : rangeData.sessions;
+  }, [rangeData.sessions]);
+
+  const summaryMetrics = useMemo(() => [
+    { label: "Logged sessions", value: String(realSessionCount), detail: "entries in the ledger", icon: Activity, tone: "lime", size: "standard" },
+    { label: "Distance captured", value: (getGpsSessions().reduce((s, g) => s + (g.distanceMeters || 0), 0) / 1000).toFixed(1) || "0.0", unit: "km", detail: "ground covered", icon: MapPin, tone: "blue", size: "standard" },
+    { label: "Time under load", value: "30h 07m", detail: "clocked in motion", icon: Clock3, tone: "bone", size: "standard" },
+    { label: "Movement classes", value: "5", detail: "disciplines detected", icon: Layers3, tone: "bone", size: "standard" },
+    { label: "Distance per entry", value: "2.0", unit: "km", detail: "rolling average", icon: Footprints, tone: "blue", size: "standard" },
+    { label: "Session cadence", value: "42m", detail: "average load window", icon: Timer, tone: "lime", size: "standard" },
+    { label: "Active sources", value: String(devices.length || 2), detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
+  ], [realSessionCount, devices]);
+
   let offset = 0;
 
   const openProfileEditor = () => { setDraft(athlete); setProfileOpen(true); };
@@ -76,7 +97,7 @@ export default function Profile() {
     <Sidebar />
     <main className="profile-main">
       <header className="profile-topbar">
-        <div className="profile-heading"><div className="header-wordmark"><img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="" /><strong>FIT<span>TRACK</span></strong></div><div><span className="eyebrow">Athlete identity / analytics</span><h1>{athlete.name.split(" ")[0]}’s <em>training profile.</em></h1></div></div>
+        <div className="profile-heading"><div className="header-wordmark"><img src="/manus-storage/fittrack-signal-mark_e3117665.png" alt="" /><strong>FIT<span>TRACK</span></strong></div><div><span className="eyebrow">Athlete identity / analytics</span><h1>{athlete.name.split(" ")[0]}'s <em>training profile.</em></h1></div></div>
         <div className="profile-top-actions"><button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}><Bell size={19} /><b /></button><button className="avatar-button profile-avatar" aria-label="Edit athlete profile" onClick={openProfileEditor}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt="" /> : initials(athlete.name)}<ChevronDown size={14} /></button></div>
       </header>
 
@@ -85,7 +106,7 @@ export default function Profile() {
         <label className="profile-range profile-range-control"><CalendarDays size={14} /><span className="sr-only">Contribution ledger period</span><select aria-label="Contribution ledger period" value={range} onChange={(event) => setRange(event.target.value as RangeKey)}>{Object.entries(rangeOptions).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
       </motion.section>
 
-      <motion.section className="profile-metric-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: .035 } } }}>{summaryMetrics.map(({ label, value, unit, detail, icon: Icon, tone, size }, index) => <motion.article key={label} className={`profile-metric metric-${tone} metric-${size}`} variants={{ hidden: { opacity: 0, y: 9 }, visible: { opacity: 1, y: 0 } }}><Icon size={16} /><span>{label}</span><strong>{index === 0 ? rangeData.sessions : value}{unit && <small>{unit}</small>}</strong><p>{index === 0 ? `${rangeData.label.toLowerCase()}` : detail}</p></motion.article>)}</motion.section>
+      <motion.section className="profile-metric-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: .035 } } }}>{summaryMetrics.map(({ label, value, unit, detail, icon: Icon, tone, size }) => <motion.article key={label} className={`profile-metric metric-${tone} metric-${size}`} variants={{ hidden: { opacity: 0, y: 9 }, visible: { opacity: 1, y: 0 } }}><Icon size={16} /><span>{label}</span><strong>{value}{unit && <small>{unit}</small>}</strong><p>{detail}</p></motion.article>)}</motion.section>
 
       <motion.section className="profile-contribution-wrapper" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .12 }}>
         <GithubContributionGraph />

@@ -7,7 +7,7 @@ import { PixelBadge } from "@/components/achievements/PixelBadge";
 import { BadgeShareSheet } from "@/components/achievements/BadgeShareSheet";
 import { BadgeUnlockOverlay } from "@/components/achievements/BadgeUnlockOverlay";
 import { achievementStorageKey, achievements, type Achievement } from "@/lib/rewards-data";
-import { pushMilestoneNotification } from "@/lib/user-store";
+import { pushMilestoneNotification, getStreak } from "@/lib/user-store";
 
 export default function Achievements() {
   const [claimed, setClaimed] = useState<string[]>(() =>
@@ -57,10 +57,10 @@ export default function Achievements() {
           <div className="achievement-chain">
             <span>Current streak</span>
             <b>
-              03 <small>days</small>
+              {String(getStreak().count).padStart(2, "0")} <small>days</small>
             </b>
             <i>
-              <b style={{ width: "43%" }} />
+              <b style={{ width: `${Math.min(100, (getStreak().count / 7) * 100)}%` }} />
             </i>
           </div>
           <div className="achievement-pr">

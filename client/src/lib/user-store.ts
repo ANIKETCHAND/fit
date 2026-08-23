@@ -37,7 +37,7 @@ export const getExercisePreferences = () => safeRead<Record<string, ExercisePref
 export const saveExercisePreferences = (value: Record<string, ExercisePreference>) => write(preferenceKey, value);
 export const getNotifications = () => safeRead<NotificationRecord[]>(notificationKey, defaultNotifications);
 export const saveNotifications = (value: NotificationRecord[]) => write(notificationKey, value);
-export const pushMilestoneNotification = (title: string, detail: string) => { const notifications = getNotifications(); const id = `milestone-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`; if (!notifications.some((item) => item.id === id)) saveNotifications([{ id, title, detail, kind: "milestone", createdAt: "Just now", read: false }, ...notifications]); };
+export const pushMilestoneNotification = (title: string, detail: string) => { const notifications = getNotifications(); const id = `milestone-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`; if (!notifications.some((item) => item.id === id)) saveNotifications([{ id, title, detail, kind: "milestone", createdAt: new Date().toISOString(), read: false }, ...notifications]); };
 export const getReminderSettings = () => safeRead<ReminderSettings>(reminderKey, { enabled: true, time: "18:30", days: ["Mon", "Wed", "Fri"] });
 export const saveReminderSettings = (value: ReminderSettings) => write(reminderKey, value);
 export const getAthleteProfile = () => safeRead<AthleteProfile>(athleteProfileKey, defaultAthleteProfile);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Activity, Check, Dumbbell, LibraryBig, Minus, Plus, TimerReset } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -8,19 +8,66 @@ import { BackendFeedback } from "@/components/feedback/BackendFeedback";
 import { BadgeUnlockOverlay } from "@/components/achievements/BadgeUnlockOverlay";
 import { BadgeShareSheet } from "@/components/achievements/BadgeShareSheet";
 import { StreakFireOverlay } from "@/components/streaks/StreakFireOverlay";
-import { achievementStorageKey, achievements, type Achievement } from "@/lib/rewards-data";
+import { achievementStorageKey, achievements, libraryExercises, type Achievement } from "@/lib/rewards-data";
 import { advanceStreak, pushMilestoneNotification, type DailyStreak } from "@/lib/user-store";
 import { trpc } from "@/lib/trpc";
 
-const lifts = [{ name: "Barbell bench press", prescription: "4 × 6–8", load: 82.5, rest: "02:30" }, { name: "Incline Dumbbell Press", prescription: "3 × 10", load: 30, rest: "01:45" }, { name: "Cable Fly", prescription: "3 × 12", load: 27.5, rest: "01:15" }];
+const defaultLifts = [
+  { name: "Barbell bench press", prescription: "4 × 6–8", load: 82.5, rest: "02:30", focus: "Pectorals" },
+  { name: "Incline Dumbbell Press", prescription: "3 × 10", load: 30, rest: "01:45", focus: "Pectorals" },
+  { name: "Cable Fly", prescription: "3 × 12", load: 27.5, rest: "01:15", focus: "Pectorals" },
+];
 
 export default function LogWorkout() {
   const [, setLocation] = useLocation();
-  const [complete, setComplete] = useState<number[]>([]); const [load, setLoad] = useState(lifts[0].load); const [staged] = useState(() => localStorage.getItem("fittrack-staged-exercise")); const [celebrating, setCelebrating] = useState<Achievement | null>(null); const [sharing, setSharing] = useState<Achievement | null>(null); const [streakCelebrating, setStreakCelebrating] = useState<DailyStreak | null>(null); const [pendingAchievement, setPendingAchievement] = useState<Achievement | null>(null); const [saveError, setSaveError] = useState<string | null>(null);
-  const saveWorkout = trpc.workouts.create.useMutation({ onMutate: () => setSaveError(null), onError: () => commitRewards(), onSuccess: () => commitRewards() });
+  const [staged] = useState(() => localStorage.getItem("fittrack-staged-exercise"));
+
+  const lifts = useMemo(() => {
+    if (!staged) return defaultLifts;
+    const found = libraryExercises.find((e) => e.name === staged);
+    if (!found) return defaultLifts;
+    const [setsStr = "3", repsStr = "8–10"] = found.sets.split("×").map((s) => s.trim());
+    return [
+      { name: found.name, prescription: `${setsStr} × ${repsStr}`, load: 60, rest: "02:00", focus: found.focus.split("·")[0].trim() },
+      ...defaultLifts.slice(1).map((l) => ({ ...l, focus: found.focus.split("·")[0].trim() })),
+    ];
+  }, [staged]);
+
+  const primaryFocus = lifts[0].focus;
+  const [complete, setComplete] = useState<number[]>([]);
+  const [load, setLoad] = useState(lifts[0].load);
+  const [celebrating, setCelebrating] = useState<Achievement | null>(null);
+  const [sharing, setSharing] = useState<Achievement | null>(null);
+  const [streakCelebrating, setStreakCelebrating] = useState<DailyStreak | null>(null);
+  const [pendingAchievement, setPendingAchievement] = useState<Achievement | null>(null);
+
+  const saveWorkout = trpc.workouts.create.useMutation({ onError: () => commitRewards(), onSuccess: () => commitRewards() });
   const toggle = (index: number) => setComplete((previous) => previous.includes(index) ? previous.filter((item) => item !== index) : [...previous, index]);
-  const completion = Math.round((complete.length / lifts.length) * 100); const volume = complete.reduce((total, index) => total + (index === 0 ? load * 28 : lifts[index].load * (index === 1 ? 30 : 36)), 0); const finish = () => setLocation("/"); const afterStreak = () => { if (pendingAchievement) { setCelebrating(pendingAchievement); setPendingAchievement(null); } else finish(); };
-  const commitRewards = () => { const streakResult = advanceStreak(); const benchBreaker = achievements.find((achievement) => achievement.id === "bench-breaker")!; const alreadyUnlocked = localStorage.getItem(achievementStorageKey(benchBreaker.id)) === "unlocked"; const earnedPR = load >= 85 && !alreadyUnlocked; if (earnedPR) { localStorage.setItem(achievementStorageKey(benchBreaker.id), "unlocked"); pushMilestoneNotification("Bench Breaker unlocked", benchBreaker.description); setPendingAchievement({ ...benchBreaker, unlocked: true }); } if (streakResult.advanced) { pushMilestoneNotification(`${streakResult.streak.count} day streak secured`, "A completed daily training protocol extended your continuity signal."); setStreakCelebrating(streakResult.streak); } else if (earnedPR) setCelebrating({ ...benchBreaker, unlocked: true }); else { toast(streakResult.alreadyRecorded ? "Training saved — today’s daily streak is already secured" : "Training stimulus recorded — pectoral readiness recalibrated"); finish(); } };
-  const save = () => { if (complete.length !== lifts.length) { toast("Complete all three movements before closing the training protocol"); return; } saveWorkout.mutate({ title: "Chest hypertrophy protocol", focus: "Pectorals", movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date() }); };
-  return <><WorkflowLayout kicker="Training / strength log" title="Record the work" detail="Capture load, effort, and recovery intervals before the signal fades. Complete the full protocol to advance your daily training streak."><motion.section className="workflow-grid workout-grid" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}><div className="workflow-panel exercise-board"><div className="workout-head"><div><span className="panel-label">Chest / hypertrophy</span><b className="workout-status"><Activity size={12} />Strength protocol</b></div><div className="workout-head-actions"><span className="protocol-tag">46 min protocol</span><button className="library-link" onClick={() => setLocation("/exercise-library")}><LibraryBig size={14} />Library</button></div></div>{staged && <button className="staged-movement" onClick={() => setLocation("/exercise-library")}><i />Staged movement: <b>{staged}</b><span>Review ↗</span></button>}<div className="set-ledger-label"><span>Set ledger</span><span>Rest clock</span><span>Load</span></div>{lifts.map((lift, index) => <div key={lift.name} className={complete.includes(index) ? "lift-row complete" : "lift-row"}><button className="set-toggle" aria-label={`Mark ${lift.name} complete`} onClick={() => toggle(index)}>{complete.includes(index) ? <Check size={15} /> : <span>0{index + 1}</span>}</button><div><b>{lift.name}</b><small>{lift.prescription} · RPE 8 · rest {lift.rest}</small></div><button className="load-control" aria-label={`Decrease ${lift.name} load`} onClick={() => index === 0 && setLoad(Math.max(0, load - 2.5))}><Minus size={13} /></button><strong>{index === 0 ? load : lift.load}<small>kg</small></strong><button className="load-control" aria-label={`Increase ${lift.name} load`} onClick={() => index === 0 && setLoad(load + 2.5)}><Plus size={13} /></button></div>)}<button className="text-action" onClick={() => setLocation("/exercise-library")}><Plus size={15} />Browse exercise library</button></div><aside className="workflow-panel training-readout"><div className="focus-anatomy"><div className="focus-anatomy-head"><span className="panel-label">Focus region</span><span>MUS / 01</span></div><div className="pectoral-scan"><i className="pectoral-left" /><i className="pectoral-right" /><b>PEC<br />MAJOR</b><span className="scan-beam" /></div><div className="focus-meta"><span><i />Readiness 82</span><span>Chest volume</span></div></div><div className="training-gauge"><Dumbbell size={22} /><span>Protocol completion</span><strong>{completion}%</strong><i><b style={{ width: `${completion}%` }} /></i></div><div className="readout-line"><span>Estimated volume</span><b>{Math.round(volume).toLocaleString()} kg</b></div><div className="readout-line"><span>Focus signal</span><b className="lime">Pectorals</b></div><button className="commit-button" disabled={saveWorkout.isPending} onClick={save}><TimerReset size={16} />{saveWorkout.isPending ? "Saving protocol" : "Save training"} <span>↗</span></button>{saveWorkout.isPending && <BackendFeedback tone="loading" title="Secure training commit" detail="Writing this completed protocol to your athlete ledger." />}{saveError && <BackendFeedback tone="error" title="Training not saved" detail={saveError} onRetry={save} />}</aside></motion.section></WorkflowLayout>{streakCelebrating && <StreakFireOverlay streak={streakCelebrating} onContinue={afterStreak} />}{celebrating && <BadgeUnlockOverlay achievement={celebrating} onClose={finish} onShare={() => { setSharing(celebrating); setCelebrating(null); }} />}{sharing && <BadgeShareSheet achievement={sharing} onClose={finish} />}</>;
+  const completion = Math.round((complete.length / lifts.length) * 100);
+  const volume = complete.reduce((total, index) => total + (index === 0 ? load * 28 : lifts[index].load * (index === 1 ? 30 : 36)), 0);
+  const finish = () => { try { localStorage.removeItem("fittrack-staged-exercise"); } catch { /* ignore */ } setLocation("/"); };
+  const afterStreak = () => { if (pendingAchievement) { setCelebrating(pendingAchievement); setPendingAchievement(null); } else finish(); };
+
+  const commitRewards = () => {
+    const streakResult = advanceStreak();
+    const benchBreaker = achievements.find((a) => a.id === "bench-breaker")!;
+    const alreadyUnlocked = localStorage.getItem(achievementStorageKey(benchBreaker.id)) === "unlocked";
+    const earnedPR = load >= 85 && !alreadyUnlocked;
+    if (earnedPR) { localStorage.setItem(achievementStorageKey(benchBreaker.id), "unlocked"); pushMilestoneNotification("Bench Breaker unlocked", benchBreaker.description); setPendingAchievement({ ...benchBreaker, unlocked: true }); }
+    if (streakResult.advanced) { pushMilestoneNotification(`${streakResult.streak.count} day streak secured`, "A completed daily training protocol extended your continuity signal."); setStreakCelebrating(streakResult.streak); }
+    else if (earnedPR) setCelebrating({ ...benchBreaker, unlocked: true });
+    else { toast(streakResult.alreadyRecorded ? "Training saved — today's daily streak is already secured" : `Training stimulus recorded — ${primaryFocus.toLowerCase()} readiness recalibrated`); finish(); }
+  };
+
+  const save = () => {
+    if (complete.length !== lifts.length) { toast("Complete all movements before closing the training protocol"); return; }
+    try {
+      const sessions = JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]");
+      sessions.unshift({ title: `${primaryFocus} protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date().toISOString() });
+      localStorage.setItem("fittrack_workout_logs", JSON.stringify(sessions.slice(0, 50)));
+    } catch { /* ignore */ }
+    saveWorkout.mutate({ title: `${primaryFocus} hypertrophy protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date() });
+  };
+
+  return <><WorkflowLayout kicker="Training / strength log" title="Record the work" detail="Capture load, effort, and recovery intervals before the signal fades. Complete the full protocol to advance your daily training streak."><motion.section className="workflow-grid workout-grid" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}><div className="workflow-panel exercise-board"><div className="workout-head"><div><span className="panel-label">{primaryFocus} / hypertrophy</span><b className="workout-status"><Activity size={12} />Strength protocol</b></div><div className="workout-head-actions"><span className="protocol-tag">46 min protocol</span><button className="library-link" onClick={() => setLocation("/exercise-library")}><LibraryBig size={14} />Library</button></div></div>{staged && <button className="staged-movement" onClick={() => setLocation("/exercise-library")}><i />Staged movement: <b>{staged}</b><span>Review ↗</span></button>}<div className="set-ledger-label"><span>Set ledger</span><span>Rest clock</span><span>Load</span></div>{lifts.map((lift, index) => <div key={lift.name} className={complete.includes(index) ? "lift-row complete" : "lift-row"}><button className="set-toggle" aria-label={`Mark ${lift.name} complete`} onClick={() => toggle(index)}>{complete.includes(index) ? <Check size={15} /> : <span>0{index + 1}</span>}</button><div><b>{lift.name}</b><small>{lift.prescription} · RPE 8 · rest {lift.rest}</small></div><button className="load-control" aria-label={`Decrease ${lift.name} load`} onClick={() => index === 0 && setLoad(Math.max(0, load - 2.5))}><Minus size={13} /></button><strong>{index === 0 ? load : lift.load}<small>kg</small></strong><button className="load-control" aria-label={`Increase ${lift.name} load`} onClick={() => index === 0 && setLoad(load + 2.5)}><Plus size={13} /></button></div>)}<button className="text-action" onClick={() => setLocation("/exercise-library")}><Plus size={15} />Browse exercise library</button></div><aside className="workflow-panel training-readout"><div className="focus-anatomy"><div className="focus-anatomy-head"><span className="panel-label">Focus region</span><span>MUS / 01</span></div><div className="pectoral-scan"><i className="pectoral-left" /><i className="pectoral-right" /><b>PEC<br />MAJOR</b><span className="scan-beam" /></div><div className="focus-meta"><span><i />Readiness 82</span><span>{primaryFocus} volume</span></div></div><div className="training-gauge"><Dumbbell size={22} /><span>Protocol completion</span><strong>{completion}%</strong><i><b style={{ width: `${completion}%` }} /></i></div><div className="readout-line"><span>Estimated volume</span><b>{Math.round(volume).toLocaleString()} kg</b></div><div className="readout-line"><span>Focus signal</span><b className="lime">{primaryFocus}</b></div><button className="commit-button" disabled={saveWorkout.isPending} onClick={save}><TimerReset size={16} />{saveWorkout.isPending ? "Saving protocol" : "Save training"} <span>↗</span></button>{saveWorkout.isPending && <BackendFeedback tone="loading" title="Secure training commit" detail="Writing this completed protocol to your athlete ledger." />}</aside></motion.section></WorkflowLayout>{streakCelebrating && <StreakFireOverlay streak={streakCelebrating} onContinue={afterStreak} />}{celebrating && <BadgeUnlockOverlay achievement={celebrating} onClose={finish} onShare={() => { setSharing(celebrating); setCelebrating(null); }} />}{sharing && <BadgeShareSheet achievement={sharing} onClose={finish} />}</>;
 }
