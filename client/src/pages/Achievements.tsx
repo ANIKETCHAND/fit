@@ -41,7 +41,7 @@ export default function Achievements() {
   return (
     <>
       <WorkflowLayout
-        kicker="Progress / achievement cabinet"
+        kicker="Achievement cabinet"
         title="Earn the signal"
         detail="Training consistency and personal records unlock durable markers of the work. Every badge maps to a measurable performance condition."
       >
