@@ -26,18 +26,18 @@ export function Landing3DScene() {
     container.appendChild(renderer.domElement);
 
     // 2. Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0x1a2b1f, 2.2);
+    const ambientLight = new THREE.AmbientLight(0x1e3324, 2.5);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xc6ff3d, 2.4);
+    const dirLight = new THREE.DirectionalLight(0xc6ff3d, 3.2);
     dirLight.position.set(4, 7, 8);
     scene.add(dirLight);
 
-    const blueLight = new THREE.PointLight(0xa6d9ff, 3.2, 40);
+    const blueLight = new THREE.PointLight(0xa6d9ff, 3.8, 40);
     blueLight.position.set(-8, -2, 6);
     scene.add(blueLight);
 
-    const limeLight = new THREE.PointLight(0xc6ff3d, 3.8, 35);
+    const limeLight = new THREE.PointLight(0xc6ff3d, 4.5, 35);
     limeLight.position.set(7, 3, 7);
     scene.add(limeLight);
 
@@ -63,15 +63,15 @@ export function Landing3DScene() {
     let { planeW, planeH } = calcDimensions();
     const planeGeo = new THREE.PlaneGeometry(planeW, planeH, 32, 32);
 
-    // Translucent Material (opacity ~0.35 for subtle cinematic depth)
+    // Translucent Material (tuned to ~0.54 for clearer silhouette and muscle visibility)
     const planeMat = new THREE.MeshStandardMaterial({
       map: backTexture,
       transparent: true,
-      opacity: 0.36,
-      roughness: 0.35,
+      opacity: 0.54,
+      roughness: 0.3,
       metalness: 0.15,
-      emissive: 0x091a0e,
-      emissiveIntensity: 0.3,
+      emissive: 0x0d2214,
+      emissiveIntensity: 0.45,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
