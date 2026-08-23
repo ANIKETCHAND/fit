@@ -487,17 +487,17 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* 7. High-Tech Cybernetic Authentication Modal */}
+      {/* 7. Authentication Modal */}
       <Dialog open={authModalOpen} onOpenChange={setAuthModalOpen}>
         <DialogContent className="auth-dialog-card sm:max-w-[460px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold uppercase tracking-wider text-[#eef5eb] font-['Chakra_Petch']">
-              {authMode === "signin" ? "Athlete Sign In" : "Register Athlete Profile"}
+              {authMode === "signin" ? "Sign In" : "Create Account"}
             </DialogTitle>
             <DialogDescription className="text-xs text-[#8a9b89] font-['Space_Mono']">
               {authMode === "signin"
-                ? "Enter your credentials to synchronize local biometrics and open the Command Deck."
-                : "Initialize your athlete identity, body mass targets, and training profile."}
+                ? "Enter your email to sign in and open the Command Deck."
+                : "Initialize your profile and training targets."}
             </DialogDescription>
           </DialogHeader>
 
@@ -547,13 +547,13 @@ export default function Landing() {
             </button>
 
             <div className="auth-divider">
-              <span>OR USE ATHLETE CREDENTIALS</span>
+              <span>OR SIGN IN WITH EMAIL</span>
             </div>
 
             <form onSubmit={handleAuthSubmit} className="auth-form-stack">
             {authMode === "signup" && (
               <div className="auth-input-group">
-                <label>Athlete Name</label>
+                <label>Full Name</label>
                 <input
                   type="text"
                   value={name}
@@ -565,18 +565,18 @@ export default function Landing() {
             )}
 
             <div className="auth-input-group">
-              <label>Athlete ID / Email</label>
+              <label>Email Address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="athlete@fittrack.training"
+                placeholder="your.email@gmail.com"
                 required
               />
             </div>
 
             <div className="auth-input-group">
-              <label>Security Key / Password</label>
+              <label>Password</label>
               <input
                 type="password"
                 value={password}
@@ -600,7 +600,7 @@ export default function Landing() {
 
             <button type="submit" className="auth-submit-btn">
               {authMode === "signin" ? <LogIn size={16} /> : <UserCheck size={16} />}
-              {authMode === "signin" ? "Authorize & Enter Overview" : "Initialize Athlete Profile"}
+              {authMode === "signin" ? "Sign In & Enter Overview" : "Create Account"}
             </button>
           </form>
           </div>
