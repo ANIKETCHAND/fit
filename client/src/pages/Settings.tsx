@@ -14,30 +14,62 @@ const activityOptions: { value: CalibrationSettings["activityLevel"]; label: str
   { value: "very_active", label: "Double sessions", detail: "Athlete workload", multiplier: 1.9 },
 ];
 
-const calcBmr = (settings: CalibrationSettings) => Math.round(10 * settings.weightKg + 6.25 * settings.heightCm - 5 * settings.age + (settings.sex === "male" ? 5 : -161));
+const calcBmr = (settings: CalibrationSettings) => Math.round(10 * (Number(settings.weightKg) || 75) + 6.25 * (Number(settings.heightCm) || 175) - 5 * (Number(settings.age) || 28) + (settings.sex === "male" ? 5 : -161));
 const calcTdee = (settings: CalibrationSettings) => Math.round(calcBmr(settings) * (activityOptions.find((item) => item.value === settings.activityLevel)?.multiplier ?? 1.55));
+
+const computeTargets = (settings: CalibrationSettings) => {
+  const bmrVal = calcBmr(settings);
+  const multiplier = activityOptions.find((item) => item.value === settings.activityLevel)?.multiplier ?? 1.55;
+  const tdeeVal = Math.round(bmrVal * multiplier);
+  const proteinVal = Math.round((Number(settings.weightKg) || 75) * 2.2);
+  const fatVal = Math.round((tdeeVal * 0.25) / 9);
+  const carbsVal = Math.max(0, Math.round((tdeeVal - proteinVal * 4 - fatVal * 9) / 4));
+  return {
+    goalKcal: tdeeVal,
+    goalProtein: proteinVal,
+    goalFat: fatVal,
+    goalCarbs: carbsVal,
+  };
+};
 
 export default function Settings() {
   const [form, setForm] = useState<CalibrationSettings>(() => getCalibrationSettings());
   const [saved, setSaved] = useState(false);
-  const update = <Key extends keyof CalibrationSettings>(key: Key, value: CalibrationSettings[Key]) => { setSaved(false); setForm((current) => ({ ...current, [key]: value })); };
+
+  // Update biometric parameters and automatically recalculate targets with respect to height, weight, etc.
+  const updateBiometric = <Key extends "heightCm" | "weightKg" | "age" | "sex" | "activityLevel">(key: Key, value: CalibrationSettings[Key]) => {
+    setSaved(false);
+    setForm((current) => {
+      const updated = { ...current, [key]: value };
+      const newTargets = computeTargets(updated);
+      return { ...updated, ...newTargets };
+    });
+  };
+
+  // Direct manual adjustments to targets or name
+  const update = <Key extends keyof CalibrationSettings>(key: Key, value: CalibrationSettings[Key]) => {
+    setSaved(false);
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
   const bmr = calcBmr(form);
   const tdee = calcTdee(form);
+
   const autoSetTargets = () => {
-    const protein = Math.round(form.weightKg * 2.2);
-    const fat = Math.round((tdee * 0.25) / 9);
-    update("goalKcal", tdee); update("goalProtein", protein); update("goalFat", fat); update("goalCarbs", Math.max(0, Math.round((tdee - protein * 4 - fat * 9) / 4)));
-    toast("Targets calibrated from your current baseline");
+    const targets = computeTargets(form);
+    setForm((current) => ({ ...current, ...targets }));
+    toast.success("Targets calibrated from your current height, weight & workload");
   };
-  const save = () => { saveCalibrationSettings(form); setSaved(true); toast("Calibration saved locally"); };
-  const reset = () => { setForm(resetCalibrationSettings()); setSaved(false); toast("Calibration restored to its baseline"); };
+
+  const save = () => { saveCalibrationSettings(form); setSaved(true); toast.success("Calibration and daily targets saved locally"); };
+  const reset = () => { setForm(resetCalibrationSettings()); setSaved(false); toast.info("Calibration restored to its baseline"); };
 
   return <WorkflowLayout kicker="System / calibration" title="Calibrate your engine" detail="Set the biometric baseline, workload profile, and nutrition targets that shape every training signal.">
     <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
       <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
-        <div className="command-deck-head"><div><span className="deck-kicker"><i /> Athlete calibration</span><h2>Baseline parameters</h2><p>Use your current measurements. These values stay in this browser and power your daily energy targets.</p></div><div className={`deck-status ${saved ? "is-saved" : ""}`}><i />{saved ? "Stored locally" : "Draft active"}</div></div>
-        <section className="settings-section"><div className="section-marker"><UserRound size={16} /><div><span>01 / athlete</span><b>Identity & biometrics</b></div></div><div className="settings-field-grid identity-grid"><label className="deck-field wide"><span>Display name</span><input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Athlete name" /></label><label className="deck-field"><span>Age</span><input type="number" min="14" max="99" value={form.age} onChange={(event) => update("age", Number(event.target.value))} /></label><label className="deck-field"><span>Height <em>cm</em></span><input type="number" min="120" max="250" value={form.heightCm} onChange={(event) => update("heightCm", Number(event.target.value))} /></label><label className="deck-field"><span>Mass <em>kg</em></span><input type="number" min="35" max="300" step="0.1" value={form.weightKg} onChange={(event) => update("weightKg", Number(event.target.value))} /></label></div><div className="sex-control" aria-label="Biological sex"><span>Biological sex</span><div><button type="button" className={form.sex === "male" ? "selected" : ""} onClick={() => update("sex", "male")}>Male</button><button type="button" className={form.sex === "female" ? "selected" : ""} onClick={() => update("sex", "female")}>Female</button></div></div></section>
-        <section className="settings-section workload-section"><div className="section-marker"><Activity size={16} /><div><span>02 / workload</span><b>Training rhythm</b></div></div><div className="activity-matrix">{activityOptions.map((option, index) => <button type="button" key={option.value} className={form.activityLevel === option.value ? "activity-choice selected" : "activity-choice"} onClick={() => update("activityLevel", option.value)}><span>0{index + 1}</span><b>{option.label}</b><small>{option.detail}</small><i /></button>)}</div></section>
+        <div className="command-deck-head"><div><span className="deck-kicker"><i /> Athlete calibration</span><h2>Baseline parameters</h2><p>Use your current measurements. These values stay in this browser and dynamically power your daily protein and energy targets.</p></div><div className={`deck-status ${saved ? "is-saved" : ""}`}><i />{saved ? "Stored locally" : "Draft active"}</div></div>
+        <section className="settings-section"><div className="section-marker"><UserRound size={16} /><div><span>01 / athlete</span><b>Identity & biometrics</b></div></div><div className="settings-field-grid identity-grid"><label className="deck-field wide"><span>Display name</span><input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Athlete name" /></label><label className="deck-field"><span>Age</span><input type="number" min="14" max="99" value={form.age} onChange={(event) => updateBiometric("age", Number(event.target.value))} /></label><label className="deck-field"><span>Height <em>cm</em></span><input type="number" min="120" max="250" value={form.heightCm} onChange={(event) => updateBiometric("heightCm", Number(event.target.value))} /></label><label className="deck-field"><span>Mass <em>kg</em></span><input type="number" min="35" max="300" step="0.1" value={form.weightKg} onChange={(event) => updateBiometric("weightKg", Number(event.target.value))} /></label></div><div className="sex-control" aria-label="Biological sex"><span>Biological sex</span><div><button type="button" className={form.sex === "male" ? "selected" : ""} onClick={() => updateBiometric("sex", "male")}>Male</button><button type="button" className={form.sex === "female" ? "selected" : ""} onClick={() => updateBiometric("sex", "female")}>Female</button></div></div></section>
+        <section className="settings-section workload-section"><div className="section-marker"><Activity size={16} /><div><span>02 / workload</span><b>Training rhythm</b></div></div><div className="activity-matrix">{activityOptions.map((option, index) => <button type="button" key={option.value} className={form.activityLevel === option.value ? "activity-choice selected" : "activity-choice"} onClick={() => updateBiometric("activityLevel", option.value)}><span>0{index + 1}</span><b>{option.label}</b><small>{option.detail}</small><i /></button>)}</div></section>
         <section className="settings-section target-section"><div className="section-marker"><Target size={16} /><div><span>03 / nutrition</span><b>Daily targets</b></div><button type="button" className="recalculate-button" onClick={autoSetTargets}><Calculator size={14} />Auto-calibrate</button></div><div className="settings-field-grid targets-grid"><label className="deck-field"><span>Energy <em>kcal</em></span><input type="number" min="1000" max="6000" value={form.goalKcal} onChange={(event) => update("goalKcal", Number(event.target.value))} /></label><label className="deck-field"><span>Protein <em>g</em></span><input type="number" min="40" max="450" value={form.goalProtein} onChange={(event) => update("goalProtein", Number(event.target.value))} /></label><label className="deck-field"><span>Carbohydrate <em>g</em></span><input type="number" min="0" max="800" value={form.goalCarbs} onChange={(event) => update("goalCarbs", Number(event.target.value))} /></label><label className="deck-field"><span>Fat <em>g</em></span><input type="number" min="20" max="300" value={form.goalFat} onChange={(event) => update("goalFat", Number(event.target.value))} /></label></div></section>
         <div className="settings-actions"><button type="button" className="reset-calibration" onClick={reset}><RotateCcw size={15} />Restore baseline</button><button type="submit" className="save-calibration"><Save size={16} />Save calibration <span>↗</span></button></div>
       </form>
