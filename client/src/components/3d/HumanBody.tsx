@@ -1,5 +1,5 @@
-import { Html, useTexture } from "@react-three/drei";
-import { Suspense, useRef } from "react";
+import { Html, useGLTF } from "@react-three/drei";
+import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useReducedMotion } from "framer-motion";
@@ -8,6 +8,9 @@ import { muscleLibrary, type MuscleId } from "@/lib/fitness-data";
 
 export const BODY_MODEL_PATH = "/models/body.glb";
 
+// Preload the GLB model
+useGLTF.preload(BODY_MODEL_PATH);
+
 type HumanBodyProps = {
   selected: MuscleId;
   hovered: MuscleId | null;
@@ -15,26 +18,48 @@ type HumanBodyProps = {
   onSelect: (id: MuscleId) => void;
 };
 
-// Realistic Anatomical Human Musculature Figure
-function AnatomicalFigure({
+// 1. Realistic 3D Human Mesh Component loaded from GLB
+function Realistic3DHumanMesh() {
+  const { scene } = useGLTF(BODY_MODEL_PATH);
+
+  const clonedScene = useMemo(() => {
+    const clone = scene.clone(true);
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        // Anatomical clinical muscle shading
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: "#2a5237",
+          emissive: "#152f1e",
+          emissiveIntensity: 0.48,
+          roughness: 0.35,
+          metalness: 0.22,
+          wireframe: false,
+        });
+      }
+    });
+    return clone;
+  }, [scene]);
+
+  return (
+    <primitive
+      object={clonedScene}
+      position={[0, -3.2, 0]}
+      scale={3.65}
+      rotation={[0, 0, 0]}
+    />
+  );
+}
+
+// 2. Interactive 3D Muscle Highlight Overlays for Raycast Selection
+function InteractiveMuscleZones({
   selected,
   hovered,
   onHover,
   onSelect,
 }: HumanBodyProps) {
-  // Load high-resolution anatomical texture plates
-  const [frontTex, backTex, sideTex, threeQTex] = useTexture([
-    "/assets/anatomy-front.png",
-    "/assets/anatomy-back.png",
-    "/assets/anatomy-side.png",
-    "/assets/anatomy-three_quarter.png",
-  ]);
-
-  frontTex.colorSpace = THREE.SRGBColorSpace;
-  backTex.colorSpace = THREE.SRGBColorSpace;
-  sideTex.colorSpace = THREE.SRGBColorSpace;
-  threeQTex.colorSpace = THREE.SRGBColorSpace;
-
   const muscle = (
     id: MuscleId,
     position: [number, number, number],
@@ -57,117 +82,46 @@ function AnatomicalFigure({
   );
 
   return (
-    <group position={[0, -0.15, 0]}>
-      {/* 1. FRONT ANATOMICAL PLANE (Exposure of Pectorals, 6-Pack Abs, Quads, Biceps, Deltoids) */}
-      <mesh position={[0, 0, 0.05]} castShadow>
-        <planeGeometry args={[3.2, 6.64, 32, 32]} />
-        <meshStandardMaterial
-          map={frontTex}
-          transparent
-          opacity={0.96}
-          roughness={0.32}
-          metalness={0.15}
-          emissive="#0d1f14"
-          emissiveIntensity={0.35}
-          side={THREE.FrontSide}
-        />
-      </mesh>
+    <group position={[0, -0.1, 0]}>
+      {/* CHEST (Pectoralis Major) */}
+      {muscle("chest", [-0.42, 1.22, 0.32], [0.55, 0.42, 0.28], "box", [0.08, 0, 0.05])}
+      {muscle("chest", [0.42, 1.22, 0.32], [0.55, 0.42, 0.28], "box", [0.08, 0, -0.05])}
 
-      {/* 2. BACK ANATOMICAL PLANE (Trapezius, Lats V-Taper, Gluteus, Hamstrings, Calves) */}
-      <mesh position={[0, 0, -0.05]} rotation={[0, Math.PI, 0]} castShadow>
-        <planeGeometry args={[3.3, 6.64, 32, 32]} />
-        <meshStandardMaterial
-          map={backTex}
-          transparent
-          opacity={0.96}
-          roughness={0.32}
-          metalness={0.15}
-          emissive="#0d1f14"
-          emissiveIntensity={0.35}
-          side={THREE.FrontSide}
-        />
-      </mesh>
+      {/* SHOULDERS (Deltoids) */}
+      {muscle("shoulders", [-1.02, 1.48, 0.05], [0.45, 0.52, 0.42], "capsule", [0, 0, 0.2])}
+      {muscle("shoulders", [1.02, 1.48, 0.05], [0.45, 0.52, 0.42], "capsule", [0, 0, -0.2])}
 
-      {/* 3. SIDE 3/4 DEPTH PLANES (Gives 3D volumetric silhouette from any angle) */}
-      <mesh position={[0, 0, 0]} rotation={[0, Math.PI / 4, 0]}>
-        <planeGeometry args={[3.0, 6.64]} />
-        <meshStandardMaterial
-          map={threeQTex}
-          transparent
-          opacity={0.35}
-          roughness={0.4}
-          depthWrite={false}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      <mesh position={[0, 0, 0]} rotation={[0, -Math.PI / 4, 0]}>
-        <planeGeometry args={[3.0, 6.64]} />
-        <meshStandardMaterial
-          map={threeQTex}
-          transparent
-          opacity={0.35}
-          roughness={0.4}
-          depthWrite={false}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* BICEPS (Biceps Brachii) */}
+      {muscle("biceps", [-1.25, 0.72, 0.12], [0.32, 0.58, 0.26], "capsule", [-0.1, 0.1, -0.12])}
+      {muscle("biceps", [1.25, 0.72, 0.12], [0.32, 0.58, 0.26], "capsule", [-0.1, -0.1, 0.12])}
 
-      {/* Volumetric Subtle Depth Core */}
-      <mesh position={[0, 0.8, 0]} scale={[0.85, 1.25, 0.35]}>
-        <sphereGeometry args={[1, 16, 16]} />
-        <meshStandardMaterial
-          color="#15261a"
-          emissive="#0c1710"
-          emissiveIntensity={0.3}
-          roughness={0.5}
-          transparent
-          opacity={0.5}
-        />
-      </mesh>
+      {/* TRICEPS (Triceps Brachii) */}
+      {muscle("triceps", [-1.25, 0.72, -0.14], [0.32, 0.62, 0.26], "capsule", [0.08, -0.1, -0.12])}
+      {muscle("triceps", [1.25, 0.72, -0.14], [0.32, 0.62, 0.26], "capsule", [0.08, 0.1, 0.12])}
 
-      {/* 4. INTERACTIVE 3D ANATOMICAL MUSCLE HIT-ZONES (FRONT & BACK) */}
+      {/* CORE / ABS (Rectus Abdominis & Obliques) */}
+      {muscle("core", [0, 0.35, 0.26], [0.72, 1.05, 0.28], "box")}
 
-      {/* A. CHEST (Pectoralis Major) */}
-      {muscle("chest", [-0.38, 1.35, 0.12], [0.55, 0.44, 0.22], "box", [0, 0, 0.05])}
-      {muscle("chest", [0.38, 1.35, 0.12], [0.55, 0.44, 0.22], "box", [0, 0, -0.05])}
+      {/* BACK (Latissimus Dorsi & Trapezius) */}
+      {muscle("back", [0, 1.62, -0.18], [0.95, 0.65, 0.28], "box")}
+      {muscle("back", [-0.55, 0.88, -0.22], [0.55, 0.88, 0.28], "box", [0, 0, -0.14])}
+      {muscle("back", [0.55, 0.88, -0.22], [0.55, 0.88, 0.28], "box", [0, 0, 0.14])}
 
-      {/* B. SHOULDERS (Deltoids - Front, Lateral & Rear Caps) */}
-      {muscle("shoulders", [-1.02, 1.58, 0.06], [0.42, 0.52, 0.38], "capsule", [0, 0, 0.18])}
-      {muscle("shoulders", [1.02, 1.58, 0.06], [0.42, 0.52, 0.38], "capsule", [0, 0, -0.18])}
-      {muscle("shoulders", [-1.02, 1.58, -0.06], [0.42, 0.52, 0.38], "capsule", [0, 0, 0.18])}
-      {muscle("shoulders", [1.02, 1.58, -0.06], [0.42, 0.52, 0.38], "capsule", [0, 0, -0.18])}
+      {/* GLUTES (Gluteus Maximus) */}
+      {muscle("glutes", [-0.38, -0.38, -0.24], [0.48, 0.52, 0.38], "sphere")}
+      {muscle("glutes", [0.38, -0.38, -0.24], [0.48, 0.52, 0.38], "sphere")}
 
-      {/* C. BICEPS (Biceps Brachii - Front Arm) */}
-      {muscle("biceps", [-1.22, 0.82, 0.1], [0.32, 0.58, 0.24], "capsule", [-0.1, 0.1, -0.12])}
-      {muscle("biceps", [1.22, 0.82, 0.1], [0.32, 0.58, 0.24], "capsule", [-0.1, -0.1, 0.12])}
+      {/* QUADRICEPS (Rectus Femoris & Vastus Lateralis/Medialis) */}
+      {muscle("quads", [-0.44, -1.25, 0.16], [0.46, 1.15, 0.36], "capsule", [0.04, 0, 0.02])}
+      {muscle("quads", [0.44, -1.25, 0.16], [0.46, 1.15, 0.36], "capsule", [0.04, 0, -0.02])}
 
-      {/* D. TRICEPS (Triceps Brachii - Rear Arm) */}
-      {muscle("triceps", [-1.22, 0.82, -0.12], [0.32, 0.62, 0.26], "capsule", [0.08, -0.1, -0.12])}
-      {muscle("triceps", [1.22, 0.82, -0.12], [0.32, 0.62, 0.26], "capsule", [0.08, 0.1, 0.12])}
+      {/* HAMSTRINGS (Biceps Femoris & Semitendinosus) */}
+      {muscle("hamstrings", [-0.44, -1.25, -0.18], [0.46, 1.15, 0.36], "capsule", [-0.04, 0, 0.02])}
+      {muscle("hamstrings", [0.44, -1.25, -0.18], [0.46, 1.15, 0.36], "capsule", [-0.04, 0, -0.02])}
 
-      {/* E. CORE / ABS (Rectus Abdominis 6-Pack & Obliques) */}
-      {muscle("core", [0, 0.58, 0.12], [0.68, 0.95, 0.22], "box")}
-
-      {/* F. BACK (Latissimus Dorsi V-Taper Wings & Trapezius) */}
-      {muscle("back", [0, 1.88, -0.12], [0.92, 0.68, 0.24], "box")}
-      {muscle("back", [-0.52, 1.05, -0.12], [0.55, 0.82, 0.24], "box", [0, 0, -0.12])}
-      {muscle("back", [0.52, 1.05, -0.12], [0.55, 0.82, 0.24], "box", [0, 0, 0.12])}
-
-      {/* G. GLUTES (Gluteus Maximus - Rear Pelvis) */}
-      {muscle("glutes", [-0.36, -0.22, -0.14], [0.48, 0.52, 0.32], "sphere")}
-      {muscle("glutes", [0.36, -0.22, -0.14], [0.48, 0.52, 0.32], "sphere")}
-
-      {/* H. QUADRICEPS (Rectus Femoris & Vastus Lateralis / Medialis) */}
-      {muscle("quads", [-0.44, -1.18, 0.12], [0.46, 1.15, 0.32], "capsule", [0.04, 0, 0.02])}
-      {muscle("quads", [0.44, -1.18, 0.12], [0.46, 1.15, 0.32], "capsule", [0.04, 0, -0.02])}
-
-      {/* I. HAMSTRINGS (Biceps Femoris & Semitendinosus - Rear Thighs) */}
-      {muscle("hamstrings", [-0.44, -1.18, -0.14], [0.46, 1.15, 0.32], "capsule", [-0.04, 0, 0.02])}
-      {muscle("hamstrings", [0.44, -1.18, -0.14], [0.46, 1.15, 0.32], "capsule", [-0.04, 0, -0.02])}
-
-      {/* J. CALVES (Gastrocnemius - Medial & Lateral Heads) */}
-      {muscle("calves", [-0.42, -2.48, 0.0], [0.38, 0.88, 0.32], "capsule", [0.02, 0, 0.03])}
-      {muscle("calves", [0.42, -2.48, 0.0], [0.38, 0.88, 0.32], "capsule", [0.02, 0, -0.03])}
+      {/* CALVES (Gastrocnemius & Soleus) */}
+      {muscle("calves", [-0.42, -2.52, -0.04], [0.38, 0.88, 0.36], "capsule", [0.02, 0, 0.03])}
+      {muscle("calves", [0.42, -2.52, -0.04], [0.38, 0.88, 0.36], "capsule", [0.02, 0, -0.03])}
     </group>
   );
 }
@@ -185,23 +139,27 @@ export function HumanBody({
   useFrame(({ clock }) => {
     if (!root.current || reduceMotion) return;
     const breath = Math.sin(clock.elapsedTime * 1.2);
-    root.current.position.y = 0.25 + breath * 0.015;
-    root.current.scale.setScalar(1 + breath * 0.004);
+    root.current.position.y = 0.15 + breath * 0.015;
   });
 
   return (
-    <group ref={root} position={[0, 0.25, 0]}>
+    <group ref={root} position={[0, 0.15, 0]}>
+      {/* 3D Polygonal Mesh Body */}
       <Suspense fallback={null}>
-        <AnatomicalFigure
-          selected={selected}
-          hovered={hovered}
-          onHover={onHover}
-          onSelect={onSelect}
-        />
+        <Realistic3DHumanMesh />
       </Suspense>
 
+      {/* Interactive Muscle Layers */}
+      <InteractiveMuscleZones
+        selected={selected}
+        hovered={hovered}
+        onHover={onHover}
+        onSelect={onSelect}
+      />
+
+      {/* Floating 3D Telemetry Label */}
       {label && (
-        <Html position={[0, 3.45, 0]} center style={{ pointerEvents: "none" }}>
+        <Html position={[0, 3.25, 0]} center style={{ pointerEvents: "none" }}>
           <div className="body-float-label">
             <span className="pulse-dot" />
             {muscleLibrary[label].anatomicalName}
