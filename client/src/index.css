@@ -41,8 +41,8 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   .close-menu { display:block; }
   .nav-scrim { display:block; position:fixed; z-index:997; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); border:0; }
   .sidebar-trigger-btn { top: 12px; left: 12px; width: 36px; height: 36px; }
-  .dashboard-main { margin-left:0; padding:14px 12px calc(76px + env(safe-area-inset-bottom, 0px)); }
-  .workflow-main { margin-left:0; padding:14px 12px calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .dashboard-main { margin-left:0; padding:14px 12px 28px; }
+  .workflow-main { margin-left:0; padding:14px 12px 28px; }
   .workflow-intro { padding: 20px 0 16px; }
   .workflow-intro h1 { font-size: clamp(32px, 8vw, 44px) !important; line-height: 0.95; }
   .workflow-grid { grid-template-columns: 1fr !important; }
@@ -75,40 +75,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   .readiness-meter { margin:14px 0; }
   .exercise-title,.exercise-list { display:none; }
   .start-workout { margin-top:0; min-height:42px; }
-  .mobile-bottom-nav {
-    z-index: 998 !important;
-    display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    background: rgba(9, 12, 10, 0.95) !important;
-    border-top: 1px solid rgba(198, 255, 61, 0.2) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7) !important;
-  }
-  .mobile-bottom-nav button {
-    border: 0 !important;
-    background: transparent !important;
-    color: #839284 !important;
-    font: 700 8px "Space Mono", monospace !important;
-    text-transform: uppercase !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 3px !important;
-    padding: 4px 0 !important;
-    transition: color 0.15s ease !important;
-  }
-  .mobile-bottom-nav button.active {
-    color: #c6ff3d !important;
-    text-shadow: 0 0 10px rgba(198, 255, 61, 0.5) !important;
-  }
+  .mobile-bottom-nav { display:none !important; }
   .body-controls { right:10px; bottom:10px; }
   .stage-caption { left:10px; bottom:10px; }
   .stage-topline { top:10px; left:10px; right:10px; }
