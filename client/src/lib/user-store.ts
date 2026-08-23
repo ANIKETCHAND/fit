@@ -25,10 +25,7 @@ const defaultNotifications: NotificationRecord[] = [
 ];
 
 const defaultAthleteProfile: AthleteProfile = { name: "Jordan Mercer", email: "jordan@fittrack.training", location: "Brooklyn, NY", focus: "Focused strength protocol" };
-const defaultConnectedDevices: ConnectedDevice[] = [
-  { id: "pulseband-x2", name: "Pulseband X2", detail: "Heart rate · recovery signal", kind: "band" },
-  { id: "training-log", name: "Training log", detail: "Sets · load · movement volume", kind: "log" },
-];
+const defaultConnectedDevices: ConnectedDevice[] = [];
 const defaultCalibrationSettings = (): CalibrationSettings => ({ name: "Jordan Mercer", age: 31, heightCm: 180, weightKg: 78, sex: "male", activityLevel: "moderate", goalKcal: 2840, goalProtein: 172, goalCarbs: 328, goalFat: 79 });
 
 const safeRead = <T,>(key: string, fallback: T): T => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } };

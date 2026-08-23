@@ -13,77 +13,85 @@ const MONTHS = [
   "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
 ];
 
-const YEAR_STATS: Record<Year, { count: number; text: string }> = {
-  2026: { count: 142, text: "142 contributions in the last year" },
-  2025: { count: 198, text: "198 contributions in 2025" },
-  2024: { count: 115, text: "115 contributions in 2024" },
-};
+function getRecordedActivities(): Map<string, number> {
+  const map = new Map<string, number>();
+  const addDate = (raw?: string) => {
+    if (!raw) return;
+    try {
+      const dateStr = raw.includes("T") ? raw.split("T")[0] : raw;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        map.set(dateStr, (map.get(dateStr) || 0) + 1);
+      }
+    } catch {}
+  };
+
+  try {
+    const workouts: any[] = JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]");
+    workouts.forEach((w) => addDate(w.completedAt || w.date || w.startedAt));
+  } catch {}
+  try {
+    const gps: any[] = JSON.parse(localStorage.getItem("fittrack_gps_sessions") || "[]");
+    gps.forEach((g) => addDate(g.startedAt || g.completedAt || g.date));
+  } catch {}
+  try {
+    const sessions: any[] = JSON.parse(localStorage.getItem("fittrack_sessions") || "[]");
+    sessions.forEach((s) => addDate(s.completedAt || s.startedAt || s.date));
+  } catch {}
+  return map;
+}
 
 export function GithubContributionGraph() {
   const [selectedYear, setSelectedYear] = useState<Year>(2026);
   const [hoveredCell, setHoveredCell] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
 
-  // Generate 53 weeks × 7 days
-  const weeks = useMemo(() => {
+  // Compute 53 weeks dynamically for the selected year
+  const { weeks, totalCount } = useMemo(() => {
+    const activityMap = getRecordedActivities();
     const totalWeeks = 53;
     const grid: DayCell[][] = [];
+    let sum = 0;
 
-    // Seeded generator based on selectedYear
+    // Start date for the 53 weeks grid
+    // For 2026, 52 weeks window ending today / end of year
+    const today = new Date();
+    const isCurrentYear = selectedYear === today.getFullYear();
+    const endDate = isCurrentYear ? today : new Date(selectedYear, 11, 31);
+    
+    // Align start to 52 weeks prior on Sunday
+    const startDate = new Date(endDate);
+    startDate.setDate(endDate.getDate() - (totalWeeks * 7 - 1));
+    const dayOfWeek = startDate.getDay();
+    startDate.setDate(startDate.getDate() - dayOfWeek); // move to Sunday
+
+    const cursor = new Date(startDate);
+
     for (let w = 0; w < totalWeeks; w++) {
       const week: DayCell[] = [];
       for (let d = 0; d < 7; d++) {
+        const y = cursor.getFullYear();
+        const m = String(cursor.getMonth() + 1).padStart(2, "0");
+        const dayNum = String(cursor.getDate()).padStart(2, "0");
+        const dateKey = `${y}-${m}-${dayNum}`;
+        const count = activityMap.get(dateKey) || 0;
+        sum += count;
+
         let level: 0 | 1 | 2 | 3 | 4 = 0;
-        let count = 0;
+        if (count >= 4) level = 4;
+        else if (count === 3) level = 3;
+        else if (count === 2) level = 2;
+        else if (count === 1) level = 1;
 
-        if (selectedYear === 2026) {
-          // Realistic distribution across all weeks of the year with peaks
-          const seed = (w * 13 + d * 7 + (w % 7) * 3) % 19;
-          if (w >= 48) {
-            // Recent weeks have high intensity
-            if (seed > 13) { level = 4; count = 4 + (d % 2); }
-            else if (seed > 7) { level = 3; count = 3; }
-            else if (seed > 3) { level = 2; count = 2; }
-            else { level = 1; count = 1; }
-          } else {
-            // Earlier weeks distributed across the whole calendar
-            if (seed > 15) { level = 3; count = 3; }
-            else if (seed > 11) { level = 2; count = 2; }
-            else if (seed > 6 && (w + d) % 3 === 0) { level = 1; count = 1; }
-            else if (seed > 4 && (w * 2 + d) % 4 === 0) { level = 1; count = 1; }
-          }
-        } else if (selectedYear === 2025) {
-          const seed = (w * 17 + d * 5 + 3) % 13;
-          if (seed > 9) {
-            level = 3;
-            count = 4;
-          } else if (seed > 6) {
-            level = 2;
-            count = 2;
-          } else if (seed > 3) {
-            level = 1;
-            count = 1;
-          }
-        } else {
-          const seed = (w * 19 + d * 3 + 7) % 15;
-          if (seed > 11) {
-            level = 3;
-            count = 3;
-          } else if (seed > 8) {
-            level = 2;
-            count = 2;
-          } else if (seed > 5) {
-            level = 1;
-            count = 1;
-          }
-        }
-
-        const dateStr = `2026-W${w + 1}-D${d + 1}`;
-        week.push({ date: dateStr, count, level });
+        week.push({ date: dateKey, count, level });
+        cursor.setDate(cursor.getDate() + 1);
       }
       grid.push(week);
     }
-    return grid;
+    return { weeks: grid, totalCount: sum };
   }, [selectedYear]);
+
+  const yearHeaderText = selectedYear === 2026 
+    ? `${totalCount} contribution${totalCount === 1 ? "" : "s"} in the last year`
+    : `${totalCount} contribution${totalCount === 1 ? "" : "s"} in ${selectedYear}`;
 
   return (
     <div className="gh-contribution-section">
@@ -91,7 +99,7 @@ export function GithubContributionGraph() {
         {/* Top Header */}
         <div className="gh-contribution-topbar">
           <span className="gh-contribution-title">
-            {YEAR_STATS[selectedYear].text}
+            {yearHeaderText}
           </span>
         </div>
 

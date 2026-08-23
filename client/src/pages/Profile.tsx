@@ -67,24 +67,61 @@ export default function Profile() {
   const activityTypes = activityByRange[range];
   const availableDevices = useMemo(() => deviceCandidates.filter((candidate) => !devices.some((device) => device.id === candidate.id)), [devices]);
 
-  // Real session count from localStorage
-  const realSessionCount = useMemo(() => {
-    const wl = getWorkoutLogs().length;
-    const gps = getGpsSessions().length;
-    const sessions = getSessions().length;
-    const total = wl + gps + sessions;
-    return total > 0 ? total : rangeData.sessions;
-  }, [rangeData.sessions]);
+  // Real session logs from localStorage
+  const realWorkoutLogs = useMemo(() => getWorkoutLogs(), []);
+  const realGpsSessions = useMemo(() => getGpsSessions(), []);
+  const realSessions = useMemo(() => getSessions(), []);
+
+  const totalSessionCount = realWorkoutLogs.length + realGpsSessions.length + realSessions.length;
+
+  const totalDistanceKm = useMemo(() => {
+    const meters = realGpsSessions.reduce((sum, g) => sum + (g.distanceMeters || 0), 0);
+    return (meters / 1000).toFixed(1);
+  }, [realGpsSessions]);
+
+  const totalTimeUnderLoad = useMemo(() => {
+    let totalSec = 0;
+    realGpsSessions.forEach((g) => { totalSec += g.durationSeconds || 0; });
+    realSessions.forEach((s) => { totalSec += s.durationSeconds || 0; });
+    realWorkoutLogs.forEach(() => { totalSec += 2400; });
+    if (totalSec === 0) return "0h 00m";
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  }, [realWorkoutLogs, realGpsSessions, realSessions]);
+
+  const movementClassesCount = useMemo(() => {
+    const classes = new Set<string>();
+    realWorkoutLogs.forEach((w) => { if (w.focus) classes.add(w.focus); });
+    if (realGpsSessions.length > 0) classes.add("Cardio / GPS");
+    return classes.size;
+  }, [realWorkoutLogs, realGpsSessions]);
+
+  const avgDistancePerEntry = useMemo(() => {
+    if (realGpsSessions.length === 0) return "0.0";
+    const meters = realGpsSessions.reduce((sum, g) => sum + (g.distanceMeters || 0), 0);
+    return (meters / 1000 / realGpsSessions.length).toFixed(1);
+  }, [realGpsSessions]);
+
+  const avgSessionCadence = useMemo(() => {
+    if (totalSessionCount === 0) return "0m";
+    let totalSec = 0;
+    realGpsSessions.forEach((g) => { totalSec += g.durationSeconds || 0; });
+    realSessions.forEach((s) => { totalSec += s.durationSeconds || 0; });
+    realWorkoutLogs.forEach(() => { totalSec += 2400; });
+    const avgMin = Math.round(totalSec / 60 / totalSessionCount);
+    return `${avgMin}m`;
+  }, [totalSessionCount, realWorkoutLogs, realGpsSessions, realSessions]);
 
   const summaryMetrics = useMemo(() => [
-    { label: "Logged sessions", value: String(realSessionCount), detail: "entries in the ledger", icon: Activity, tone: "lime", size: "standard" },
-    { label: "Distance captured", value: (getGpsSessions().reduce((s, g) => s + (g.distanceMeters || 0), 0) / 1000).toFixed(1) || "0.0", unit: "km", detail: "ground covered", icon: MapPin, tone: "blue", size: "standard" },
-    { label: "Time under load", value: "30h 07m", detail: "clocked in motion", icon: Clock3, tone: "bone", size: "standard" },
-    { label: "Movement classes", value: "5", detail: "disciplines detected", icon: Layers3, tone: "bone", size: "standard" },
-    { label: "Distance per entry", value: "2.0", unit: "km", detail: "rolling average", icon: Footprints, tone: "blue", size: "standard" },
-    { label: "Session cadence", value: "42m", detail: "average load window", icon: Timer, tone: "lime", size: "standard" },
-    { label: "Active sources", value: String(devices.length || 2), detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
-  ], [realSessionCount, devices]);
+    { label: "Logged sessions", value: String(totalSessionCount), detail: "entries in the ledger", icon: Activity, tone: "lime", size: "standard" },
+    { label: "Distance captured", value: totalDistanceKm, unit: "km", detail: "ground covered", icon: MapPin, tone: "blue", size: "standard" },
+    { label: "Time under load", value: totalTimeUnderLoad, detail: "clocked in motion", icon: Clock3, tone: "bone", size: "standard" },
+    { label: "Movement classes", value: String(movementClassesCount), detail: "disciplines detected", icon: Layers3, tone: "bone", size: "standard" },
+    { label: "Distance per entry", value: avgDistancePerEntry, unit: "km", detail: "rolling average", icon: Footprints, tone: "blue", size: "standard" },
+    { label: "Session cadence", value: avgSessionCadence, detail: "average load window", icon: Timer, tone: "lime", size: "standard" },
+    { label: "Active sources", value: String(devices.length), detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
+  ], [totalSessionCount, totalDistanceKm, totalTimeUnderLoad, movementClassesCount, avgDistancePerEntry, avgSessionCadence, devices]);
 
   let offset = 0;
 
@@ -115,18 +152,34 @@ export default function Profile() {
       <section className="profile-analysis-grid">
         <motion.article className="profile-panel types-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .18 }}>
           <div className="profile-panel-head"><div><span className="panel-label">Movement mix</span><h2>Activity types</h2></div><Sparkles size={16} /></div>
-          <div className="activity-donut"><svg viewBox="0 0 42 42" role="img" aria-label="Activity type breakdown">{activityTypes.map((type) => { const currentOffset = offset; offset += type.value; return <circle key={type.label} cx="21" cy="21" r="15.9155" fill="transparent" stroke={type.color} strokeWidth="5" strokeDasharray={`${type.value} ${100 - type.value}`} strokeDashoffset={-currentOffset} />; })}</svg><div><strong>{rangeData.sessions}</strong><span>activities</span></div></div>
-          <div className="type-legend">{activityTypes.map((type) => <div key={type.label}><i style={{ background: type.color }} /><span>{type.label}</span><b>{type.value}%</b></div>)}</div>
+          {totalSessionCount === 0 ? (
+            <div style={{ padding: "32px 16px", textAlign: "center", color: "#819084" }}>
+              <p style={{ margin: "0 0 8px 0", font: "600 14px 'DM Sans'", color: "#d6ded6" }}>No activities recorded yet</p>
+              <span style={{ fontSize: "12px" }}>Complete a workout or GPS session to generate activity breakdown telemetry.</span>
+            </div>
+          ) : (
+            <>
+              <div className="activity-donut"><svg viewBox="0 0 42 42" role="img" aria-label="Activity type breakdown">{activityTypes.map((type) => { const currentOffset = offset; offset += type.value; return <circle key={type.label} cx="21" cy="21" r="15.9155" fill="transparent" stroke={type.color} strokeWidth="5" strokeDasharray={`${type.value} ${100 - type.value}`} strokeDashoffset={-currentOffset} />; })}</svg><div><strong>{totalSessionCount}</strong><span>activities</span></div></div>
+              <div className="type-legend">{activityTypes.map((type) => <div key={type.label}><i style={{ background: type.color }} /><span>{type.label}</span><b>{type.value}%</b></div>)}</div>
+            </>
+          )}
         </motion.article>
 
         <motion.article className="profile-panel device-panel" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .22 }}>
           <div className="profile-panel-head"><div><span className="panel-label">Input sources</span><h2>Device sync</h2></div><button onClick={() => setDeviceOpen(true)}><ArrowUpRight size={15} /> Manage</button></div>
-          {devices.map((device) => { const Icon = deviceIcon(device.kind); return <div className="device-row" key={device.id}><div className="device-symbol"><Icon size={18} /></div><div><strong>{device.name}</strong><span>{device.detail}</span></div><b><i /> {device.kind === "log" ? "synced" : "active"}</b></div>; })}
+          {devices.length === 0 ? (
+            <div style={{ padding: "28px 16px", textAlign: "center", color: "#819084" }}>
+              <p style={{ margin: "0 0 6px 0", font: "600 13px 'DM Sans'", color: "#d6ded6" }}>No hardware devices connected</p>
+              <span style={{ fontSize: "11px" }}>Click Manage to pair a smartwatch, fitness band, or activity tracker.</span>
+            </div>
+          ) : (
+            devices.map((device) => { const Icon = deviceIcon(device.kind); return <div className="device-row" key={device.id}><div className="device-symbol"><Icon size={18} /></div><div><strong>{device.name}</strong><span>{device.detail}</span></div><b><i /> {device.kind === "log" ? "synced" : "active"}</b></div>; })
+          )}
         </motion.article>
       </section>
 
       <section className="profile-bottom-grid">
-        <article className="profile-panel profile-guidance"><span className="panel-label">Next analysis</span><h2>Strength volume is your dominant signal.</h2><p>Strength leads the ledger at 38%. Hold the current loading pattern for four sessions, then recalibrate against recovery signal and session cadence.</p><button onClick={() => setLocation("/start-session")}>Open next protocol <ArrowUpRight size={15} /></button></article>
+        <article className="profile-panel profile-guidance"><span className="panel-label">Next analysis</span><h2>{totalSessionCount === 0 ? "Ready to begin your training protocol" : "Strength volume is your dominant signal."}</h2><p>{totalSessionCount === 0 ? "Your profile is active. Start logging exercises or GPS sessions to build your personal biomechanical telemetry ledger." : "Strength leads the ledger. Hold the current loading pattern for four sessions, then recalibrate against recovery signal and session cadence."}</p><button onClick={() => setLocation("/start-session")}>Open next protocol <ArrowUpRight size={15} /></button></article>
       </section>
     </main>
 
