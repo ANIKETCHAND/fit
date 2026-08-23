@@ -74,64 +74,79 @@ export default function Landing() {
   const [name, setName] = useState("Jordan Mercer");
   const [focus, setFocus] = useState("Hypertrophy & Strength");
 
-  // Initialize real Google Identity Services (GSI) if available
-  useEffect(() => {
-    const handleGoogleAuth = () => {
-      const g = (window as any).google;
-      if (g?.accounts?.id) {
-        try {
-          g.accounts.id.initialize({
-            client_id: "878203248102-mock.apps.googleusercontent.com",
-            callback: (res: any) => {
-              if (res?.credential) {
-                try {
-                  const base64Url = res.credential.split(".")[1];
-                  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-                  const payload = JSON.parse(decodeURIComponent(escape(atob(base64))));
-                  if (payload) {
-                    saveAthleteProfile({
-                      name: payload.name || "Google Athlete",
-                      email: payload.email,
-                      avatar: payload.picture,
-                      location: "New York, USA",
-                      focus: "Hypertrophy & Strength Protocol",
-                    });
-                    localStorage.setItem("fittrack_auth_state", "authenticated");
-                    localStorage.setItem("fittrack_auth_provider", "google");
-                    localStorage.setItem("fittrack_user_email", payload.email);
-                    if (payload.picture) {
-                      localStorage.setItem("fittrack_user_avatar", payload.picture);
-                    }
-                    toast.success(`Google Account connected: ${payload.email}`);
-                    setLocation("/overview");
-                  }
-                } catch (e) {
-                  console.error("JWT parse error:", e);
-                }
-              }
-            },
-            auto_select: false,
-          });
+  // Recent Google accounts storage
+  const [savedGoogleAccounts, setSavedGoogleAccounts] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("fittrack_google_accounts");
+      return stored ? JSON.parse(stored) : ["caniket2007@gmail.com"];
+    } catch {
+      return ["caniket2007@gmail.com"];
+    }
+  });
 
-          if (googleBtnRef.current) {
-            g.accounts.id.renderButton(googleBtnRef.current, {
-              theme: "outline",
-              size: "large",
-              text: "continue_with",
-              shape: "rectangular",
-              width: "100%",
-            });
-          }
-        } catch (err) {
-          // Fallback gracefully to custom Google dialog
-        }
-      }
-    };
+  const handleStartGoogleAuth = () => {
+    setAuthModalOpen(false);
+    setGoogleStep("email");
+    setGoogleEmail("");
+    setGooglePassword("");
+    setShowGooglePassword(false);
+    setGoogleModalOpen(true);
+  };
 
-    handleGoogleAuth();
-    const timer = setTimeout(handleGoogleAuth, 1000);
-    return () => clearTimeout(timer);
-  }, [googleModalOpen]);
+  const handleSelectGoogleChip = (selectedEmail: string) => {
+    setGoogleEmail(selectedEmail);
+    setGoogleStep("password");
+  };
+
+  const handleGoogleEmailNext = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = googleEmail.trim();
+    if (!trimmed) {
+      toast.error("Please enter your Google email address or phone number.");
+      return;
+    }
+    let finalEmail = trimmed;
+    if (!trimmed.includes("@") && !/^\+?\d{8,}$/.test(trimmed)) {
+      finalEmail = trimmed + "@gmail.com";
+      setGoogleEmail(finalEmail);
+    }
+    setGoogleStep("password");
+  };
+
+  const handleGooglePasswordNext = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGoogleLoading(true);
+    setTimeout(() => {
+      const email = googleEmail.trim() || "athlete@gmail.com";
+      const usernamePart = email.split("@")[0] || "Athlete";
+      const cleanName = usernamePart
+        .split(/[\._\-]/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+
+      saveAthleteProfile({
+        name: cleanName || "Google Athlete",
+        email: email,
+        location: "New York, USA",
+        focus: "Hypertrophy & Strength Protocol",
+      });
+
+      // Update remembered accounts
+      try {
+        const updatedAccounts = Array.from(new Set([email, ...savedGoogleAccounts]));
+        localStorage.setItem("fittrack_google_accounts", JSON.stringify(updatedAccounts));
+        setSavedGoogleAccounts(updatedAccounts);
+      } catch {}
+
+      localStorage.setItem("fittrack_auth_state", "authenticated");
+      localStorage.setItem("fittrack_auth_provider", "google");
+      localStorage.setItem("fittrack_user_email", email);
+      setIsGoogleLoading(false);
+      setGoogleModalOpen(false);
+      toast.success(`Google Account connected: ${email}`);
+      setLocation("/overview");
+    }, 550);
+  };
 
   // Cycle motivating quotes automatically
   useEffect(() => {
@@ -556,17 +571,39 @@ export default function Landing() {
                 />
               </div>
 
-              <div className="google-quick-accounts">
-                <div id="google-gsi-button" ref={googleBtnRef} className="google-gsi-wrap" />
+              <div className="google-account-chips">
+                <span>Choose an active account:</span>
+                {savedGoogleAccounts.map((accEmail) => (
+                  <button
+                    key={accEmail}
+                    type="button"
+                    className="google-chip-btn"
+                    onClick={() => handleSelectGoogleChip(accEmail)}
+                  >
+                    <div className="google-chip-avatar">
+                      {accEmail.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="google-chip-text">
+                      <strong>
+                        {accEmail
+                          .split("@")[0]
+                          .split(/[\._\-]/)
+                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                          .join(" ")}
+                      </strong>
+                      <small>{accEmail}</small>
+                    </div>
+                  </button>
+                ))}
               </div>
 
               <div className="google-links-row">
                 <button
                   type="button"
                   className="google-text-link"
-                  onClick={() => toast.info("Enter your registered Google email address (e.g. yourname@gmail.com).")}
+                  onClick={() => toast.info("Enter your registered Google email address (e.g. caniket2007@gmail.com).")}
                 >
-                  Need help signing in?
+                  Use another account
                 </button>
               </div>
 
