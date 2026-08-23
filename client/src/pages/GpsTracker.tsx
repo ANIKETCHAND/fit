@@ -230,7 +230,7 @@ export default function GpsTracker() {
   }, []);
 
   return (
-    <WorkflowLayout kicker="GPS / movement trace" title="Route your training signal" detail="Capture an outdoor movement route, inspect the telemetry, and save the completed trace to your athlete history.">
+    <WorkflowLayout kicker="GPS" title="Route your training signal" detail="Capture an outdoor movement route.">
       <motion.section className="gps-command-deck" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
         <div className="gps-route-stage">
           <div className="gps-map-head">
