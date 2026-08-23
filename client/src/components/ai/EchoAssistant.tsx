@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, X, Minus, Sparkles, MessageSquare, Bot } from "lucide-react";
+import { useLocation } from "wouter";
 import { getAthleteProfile } from "@/lib/user-store";
 import { useSidebar } from "@/lib/sidebar-store";
 import "./EchoAssistant.css";
@@ -79,6 +80,7 @@ type ChatMessage = {
 };
 
 export function RexiAssistant() {
+  const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -87,6 +89,11 @@ export function RexiAssistant() {
   const { open: isSidebarOpen } = useSidebar();
   const profile = getAthleteProfile();
   const firstName = profile.name.split(" ")[0];
+
+  // Do not show AI assistant on the public landing page
+  if (location === "/" || location === "/landing") {
+    return null;
+  }
 
   // Initialize greeting on first load
   useEffect(() => {
