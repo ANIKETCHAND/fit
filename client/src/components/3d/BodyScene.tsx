@@ -16,12 +16,12 @@ function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMo
   const controls = useRef<any>(null);
   const [hovered, setHovered] = useState<MuscleId | null>(null);
   const targetPosition = useMemo(() => {
-    const distance = isMobile ? 13.2 : 9.5;
-    if (view === "back") return new THREE.Vector3(0, 0.35, -distance);
-    if (view === "side") return new THREE.Vector3(distance - .2, 0.35, 0.15);
-    return new THREE.Vector3(0, 0.35, distance);
+    const distance = isMobile ? 11.5 : 8.5;
+    if (view === "back") return new THREE.Vector3(0, 0.1, -distance);
+    if (view === "side") return new THREE.Vector3(distance - 0.2, 0.1, 0.15);
+    return new THREE.Vector3(0, 0.1, distance);
   }, [isMobile, view]);
-  const targetLookAt = useMemo(() => new THREE.Vector3(0, 0.15, 0), []);
+  const targetLookAt = useMemo(() => new THREE.Vector3(0, 0.05, 0), []);
 
   useFrame(({ camera }, delta) => {
     const lerp = 1 - Math.exp(-delta * 5.6);
