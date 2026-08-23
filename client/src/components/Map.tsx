@@ -626,17 +626,6 @@ export function MapView({
               </div>
             )}
           </div>
-
-          {/* Google Maps Key Config Button */}
-          <button
-            type="button"
-            onClick={() => setShowKeyModal(true)}
-            className="pointer-events-auto bg-[#080c0a]/90 hover:bg-[#121a14] border border-white/15 px-2.5 py-1.5 rounded-md text-[10px] font-mono text-[#9eab9c] hover:text-[#c6ff3d] flex items-center gap-1.5 transition backdrop-blur-md shadow-lg cursor-pointer"
-            title="Configure Google Maps API Key"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-[#c6ff3d]" />
-            <span>Maps Key</span>
-          </button>
         </div>
       )}
 
@@ -669,64 +658,6 @@ export function MapView({
               </>
             )}
           </button>
-        </div>
-      )}
-
-      {/* Google Maps API Key Modal */}
-      {showKeyModal && (
-        <div className="absolute inset-0 z-[40] bg-[#080c0a]/90 backdrop-blur-sm grid place-items-center p-6">
-          <div className="bg-[#0f1712] border border-[#c6ff3d]/30 rounded-lg p-6 max-w-md w-full shadow-2xl">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2 text-[#c6ff3d] font-mono font-bold text-sm">
-                <KeyRound className="w-4 h-4" />
-                <span>Google Maps Configuration</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowKeyModal(false)}
-                className="text-[#9eab9c] hover:text-white text-xs font-mono cursor-pointer"
-              >
-                ✕ Close
-              </button>
-            </div>
-            <p className="text-xs text-[#9eab9c] mb-4 leading-relaxed">
-              OpenStreetMap / Leaflet is currently active and works out of the box with zero keys. To switch to official Google Maps, paste your Google Maps API Key below:
-            </p>
-            <div className="mb-4">
-              <label className="block text-[10px] font-mono text-[#a6d9ff] uppercase tracking-wider mb-1.5">
-                Google Maps API Key (Browser)
-              </label>
-              <input
-                type="text"
-                value={customApiKey}
-                onChange={(e) => setCustomApiKey(e.target.value)}
-                placeholder="AIzaSy..."
-                className="w-full bg-[#080c0a] border border-white/20 rounded px-3 py-2 text-xs font-mono text-white placeholder:text-white/30 focus:outline-none focus:border-[#c6ff3d]"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomApiKey("");
-                  localStorage.removeItem("fittrack_google_maps_key");
-                  setShowKeyModal(false);
-                  window.location.reload();
-                }}
-                className="text-[11px] font-mono text-red-400 hover:underline cursor-pointer"
-              >
-                Reset to OpenStreetMap
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveApiKey}
-                className="flex items-center gap-1.5 bg-[#c6ff3d] hover:bg-[#d8ff6b] text-[#080c0a] font-mono font-bold text-xs px-4 py-2 rounded transition cursor-pointer"
-              >
-                {keySaved ? <Check className="w-3.5 h-3.5" /> : null}
-                <span>{keySaved ? "Saved!" : "Save & Reload"}</span>
-              </button>
-            </div>
-          </div>
         </div>
       )}
 

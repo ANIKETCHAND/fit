@@ -3,7 +3,8 @@
 .gps-map-frame{position:relative;min-height:440px;overflow:hidden;background:#080c0a}
 .gps-map-frame .gps-google-map{height:100%!important;min-height:440px!important}
 .leaflet-container{width:100%!important;height:100%!important;min-height:440px!important;background:#080c0a!important}
-.leaflet-control-zoom{border:1px solid rgba(166,217,255,.3)!important;background:rgba(8,12,10,.9)!important;box-shadow:0 0 14px rgba(0,0,0,.6)!important;border-radius:6px!important}
+.leaflet-top.leaflet-left{top:54px!important;left:12px!important}
+.leaflet-control-zoom{margin:0!important;border:1px solid rgba(166,217,255,.3)!important;background:rgba(8,12,10,.9)!important;box-shadow:0 0 14px rgba(0,0,0,.6)!important;border-radius:6px!important}
 .leaflet-control-zoom a{color:#edf4e9!important;background:transparent!important;border-bottom:1px solid rgba(166,217,255,.2)!important}
 .leaflet-control-zoom a:hover{background:rgba(198,255,61,.15)!important;color:#c6ff3d!important}
 .gps-map-corners{position:absolute;z-index:15;inset:18px 20px auto;display:flex;justify-content:space-between;pointer-events:none;color:rgba(166,217,255,.82);font:600 9px/1 "Space Mono",monospace;letter-spacing:.15em}
