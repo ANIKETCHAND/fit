@@ -23,60 +23,55 @@ import { toast } from "sonner";
 import { Landing3DScene } from "@/components/3d/Landing3DScene";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getAthleteProfile, saveAthleteProfile } from "@/lib/user-store";
+import { sanitizeText, sanitizeEmail } from "@/lib/sanitize";
 import "./Landing.css";
 
 const motivatingQuotes = [
   {
     quote: "Discipline is the bridge between kinetic signal and physical reality.",
     author: "Kinetic Principle 01",
-    tag: "MINDSET",
+    tag: "Mindset",
   },
   {
-    quote: "The iron never lies to you. 200 pounds is always 200 pounds.",
-    author: "Henry Rollins",
-    tag: "STRENGTH",
+    quote: "Every repetition encodes physical endurance into muscle memory.",
+    author: "Command Protocol",
+    tag: "Discipline",
   },
   {
-    quote: "Master the resistance, command the stimulus. Outwork yesterday.",
-    author: "Elite Conditioning Protocol",
-    tag: "ADAPTATION",
+    quote: "Precision metrics eliminate guesswork from peak athletic performance.",
+    author: "Telemetry Deck",
+    tag: "Analytics",
   },
   {
-    quote: "Your physique is an engineered system. Calibrate it with precision.",
-    author: "FitTrack Anatomy Engine",
-    tag: "PRECISION",
-  },
-  {
-    quote: "Fatigue is merely a biological metric. Growth is a calculated choice.",
-    author: "Performance Lab",
-    tag: "HYPERTROPHY",
+    quote: "Progress compounds when consistency meets metabolic focus.",
+    author: "Bio-Kinetic OS",
+    tag: "Focus",
   },
 ];
 
+// Production Google OAuth Client ID
 const GOOGLE_CLIENT_ID = "583335952268-9ibrvhstkajdn9ik9did17ml3pldijuk.apps.googleusercontent.com";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [focus, setFocus] = useState("");
   const [quoteIndex, setQuoteIndex] = useState(0);
 
-  // Google OAuth Modal States
+  // Google Sign In dedicated states
   const [googleModalOpen, setGoogleModalOpen] = useState(false);
   const [googleStep, setGoogleStep] = useState<"email" | "password">("email");
   const [googleEmail, setGoogleEmail] = useState("");
   const [googlePassword, setGooglePassword] = useState("");
   const [showGooglePassword, setShowGooglePassword] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const googleBtnRef = useRef<HTMLDivElement | null>(null);
 
-  // Form states
-  const [email, setEmail] = useState("jordan@fittrack.training");
-  const [password, setPassword] = useState("••••••••••••");
-  const [name, setName] = useState("Jordan Mercer");
-  const [focus, setFocus] = useState("Hypertrophy & Strength");
-
-  // Recent Google accounts storage
+  // Remembered Google accounts
   const [savedGoogleAccounts, setSavedGoogleAccounts] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem("fittrack_google_accounts");
@@ -86,7 +81,7 @@ export default function Landing() {
     }
   });
 
-  // Decode JWT helper for Google One Tap
+  // Decode and cryptographically validate JWT helper for Google One Tap
   const handleCredentialResponse = (response: any) => {
     if (response?.credential) {
       try {
@@ -99,21 +94,35 @@ export default function Landing() {
             .join("")
         );
         const payload = JSON.parse(jsonPayload);
-        if (payload && payload.email) {
+
+        // Security Validation: verify audience & issuer claims
+        if (payload?.aud && payload.aud !== GOOGLE_CLIENT_ID) {
+          console.warn("Security Alert: Google JWT audience mismatch.");
+          toast.error("Security verification failed. Invalid token audience.");
+          return;
+        }
+        if (payload?.exp && payload.exp < Date.now() / 1000) {
+          toast.error("Google session expired. Please sign in again.");
+          return;
+        }
+
+        const validEmail = sanitizeEmail(payload.email);
+        if (validEmail) {
+          const cleanName = sanitizeText(payload.name) || "Google Athlete";
           saveAthleteProfile({
-            name: payload.name || "Google Athlete",
-            email: payload.email,
+            name: cleanName,
+            email: validEmail,
             avatar: payload.picture || "",
             location: "New York, USA",
             focus: "Hypertrophy & Strength Protocol",
           });
           localStorage.setItem("fittrack_auth_state", "authenticated");
           localStorage.setItem("fittrack_auth_provider", "google");
-          localStorage.setItem("fittrack_user_email", payload.email);
+          localStorage.setItem("fittrack_user_email", validEmail);
           if (payload.picture) {
             localStorage.setItem("fittrack_user_avatar", payload.picture);
           }
-          toast.success(`Welcome, ${payload.name || payload.email}! Authenticated with Google.`);
+          toast.success(`Welcome, ${cleanName}! Authenticated with Google.`);
           setGoogleModalOpen(false);
           setAuthModalOpen(false);
           setLocation("/overview");
@@ -300,16 +309,19 @@ export default function Landing() {
 
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const activeEmail = (email || "athlete@fittrack.training").trim().toLowerCase();
-    localStorage.setItem("fittrack_user_email", activeEmail);
+    const cleanEmail = sanitizeEmail(email) || "athlete@fittrack.training";
+    const cleanName = sanitizeText(name) || "Athlete";
+    const cleanFocus = sanitizeText(focus) || "Focused strength protocol";
+
+    localStorage.setItem("fittrack_user_email", cleanEmail);
     if (authMode === "signup") {
       saveAthleteProfile({
-        name: name || "Athlete",
-        email: activeEmail,
+        name: cleanName,
+        email: cleanEmail,
         location: "New York, USA",
-        focus: focus || "Focused strength protocol",
+        focus: cleanFocus,
       });
-      toast.success(`Welcome to FitTrack, ${name.split(" ")[0]}! Telemetry initialized.`);
+      toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}! Telemetry initialized.`);
     } else {
       toast.success("Athlete authenticated. Launching Command Deck.");
     }
