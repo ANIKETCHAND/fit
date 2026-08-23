@@ -108,16 +108,23 @@ export default function Landing() {
   const handleStartGoogleAuth = () => {
     setAuthModalOpen(false);
     setGoogleStep("email");
-    setGoogleEmail("jordan.mercer@gmail.com");
+    setGoogleEmail("");
     setGooglePassword("");
+    setShowGooglePassword(false);
     setGoogleModalOpen(true);
   };
 
   const handleGoogleEmailNext = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!googleEmail.trim()) {
-      toast.error("Please enter a valid Google email or phone number.");
+    const trimmed = googleEmail.trim();
+    if (!trimmed) {
+      toast.error("Please enter your Google email address or phone number.");
       return;
+    }
+    let finalEmail = trimmed;
+    if (!trimmed.includes("@") && !/^\+?\d{8,}$/.test(trimmed)) {
+      finalEmail = trimmed + "@gmail.com";
+      setGoogleEmail(finalEmail);
     }
     setGoogleStep("password");
   };
@@ -130,26 +137,28 @@ export default function Landing() {
     }
     setIsGoogleLoading(true);
     setTimeout(() => {
-      const usernamePart = googleEmail.split("@")[0] || "Athlete";
+      const email = googleEmail.trim() || "athlete@gmail.com";
+      const usernamePart = email.split("@")[0] || "Athlete";
       const cleanName = usernamePart
         .split(/[\._\-]/)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
         .join(" ");
 
       saveAthleteProfile({
         name: cleanName || "Google Athlete",
-        email: googleEmail,
+        email: email,
         location: "New York, USA",
         focus: "Hypertrophy & Strength Protocol",
       });
 
       localStorage.setItem("fittrack_auth_state", "authenticated");
       localStorage.setItem("fittrack_auth_provider", "google");
+      localStorage.setItem("fittrack_user_email", email);
       setIsGoogleLoading(false);
       setGoogleModalOpen(false);
-      toast.success(`Signed in as ${googleEmail}`);
+      toast.success(`Signed in with Google as ${email}`);
       setLocation("/overview");
-    }, 850);
+    }, 650);
   };
 
   const openAuth = (mode: "signin" | "signup") => {
@@ -221,6 +230,27 @@ export default function Landing() {
             <Fingerprint size={18} />
             Enter Platform / Sign In
             <ArrowRight size={16} />
+          </button>
+          <button className="hero-google-cta" onClick={handleStartGoogleAuth}>
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            Sign in with Google
           </button>
         </motion.div>
 
