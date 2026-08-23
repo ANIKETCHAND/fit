@@ -199,16 +199,6 @@ export default function Landing() {
 
       {/* 3. Hero Section */}
       <main className="landing-hero">
-        <motion.div
-          className="hero-pill-badge"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Sparkles size={13} />
-          <span>Kinetic Anatomy Lab // 4K Telemetry Platform</span>
-        </motion.div>
-
         <motion.h1
           className="hero-main-title"
           initial={{ opacity: 0, scale: 0.95 }}
