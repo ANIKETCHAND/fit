@@ -36,28 +36,20 @@ export function GithubContributionGraph() {
         let count = 0;
 
         if (selectedYear === 2026) {
-          // Recent weeks (Aug) have high density matching the screenshot
-          if (w >= 50) {
-            const seed = (w * 13 + d * 7) % 10;
-            if (seed > 7) {
-              level = 4;
-              count = 5;
-            } else if (seed > 4) {
-              level = 3;
-              count = 3;
-            } else if (seed > 2) {
-              level = 2;
-              count = 2;
-            } else {
-              level = 1;
-              count = 1;
-            }
-          } else if (w >= 46 && (w + d) % 4 === 0) {
-            level = 1;
-            count = 1;
-          } else if (w >= 30 && (w * 7 + d) % 11 === 0) {
-            level = 2;
-            count = 2;
+          // Realistic distribution across all weeks of the year with peaks
+          const seed = (w * 13 + d * 7 + (w % 7) * 3) % 19;
+          if (w >= 48) {
+            // Recent weeks have high intensity
+            if (seed > 13) { level = 4; count = 4 + (d % 2); }
+            else if (seed > 7) { level = 3; count = 3; }
+            else if (seed > 3) { level = 2; count = 2; }
+            else { level = 1; count = 1; }
+          } else {
+            // Earlier weeks distributed across the whole calendar
+            if (seed > 15) { level = 3; count = 3; }
+            else if (seed > 11) { level = 2; count = 2; }
+            else if (seed > 6 && (w + d) % 3 === 0) { level = 1; count = 1; }
+            else if (seed > 4 && (w * 2 + d) % 4 === 0) { level = 1; count = 1; }
           }
         } else if (selectedYear === 2025) {
           const seed = (w * 17 + d * 5 + 3) % 13;
