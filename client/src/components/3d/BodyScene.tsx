@@ -16,12 +16,12 @@ function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMo
   const controls = useRef<any>(null);
   const [hovered, setHovered] = useState<MuscleId | null>(null);
   const targetPosition = useMemo(() => {
-    const distance = isMobile ? 11.5 : 8.5;
-    if (view === "back") return new THREE.Vector3(0, 0.1, -distance);
-    if (view === "side") return new THREE.Vector3(distance - 0.2, 0.1, 0.15);
-    return new THREE.Vector3(0, 0.1, distance);
+    const distance = isMobile ? 13.2 : 9.5;
+    if (view === "back") return new THREE.Vector3(0, 0.35, -distance);
+    if (view === "side") return new THREE.Vector3(distance - .2, 0.35, 0.15);
+    return new THREE.Vector3(0, 0.35, distance);
   }, [isMobile, view]);
-  const targetLookAt = useMemo(() => new THREE.Vector3(0, 0.05, 0), []);
+  const targetLookAt = useMemo(() => new THREE.Vector3(0, 0.15, 0), []);
 
   useFrame(({ camera }, delta) => {
     const lerp = 1 - Math.exp(-delta * 5.6);
@@ -34,13 +34,12 @@ function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMo
     <color attach="background" args={["#070908"]} />
     <fog attach="fog" args={["#070908", 5.8, isMobile ? 17.5 : 10.5]} />
     <ambientLight intensity={1.8} color="#d5e8d8" />
-    <directionalLight position={[3.8, 5.2, 4]} intensity={4.8} color="#e9ffd9" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-    <directionalLight position={[-3, 3.5, -4]} intensity={3.6} color="#a6d9ff" />
-    <pointLight position={[-4, 1.5, 3]} intensity={5.2} distance={8} color="#76c44e" />
+    <directionalLight position={[3.8, 5.2, 4]} intensity={5.2} color="#e9ffd9" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+    <pointLight position={[-4, 1.5, 3]} intensity={7.2} distance={8} color="#76c44e" />
     <pointLight position={[3, -2.4, 3]} intensity={3.2} distance={6} color="#8ec4dd" />
     <group><HumanBody selected={selected} hovered={hovered} onHover={setHovered} onSelect={onSelected} /></group>
     {!reduceMotion && <Sparkles count={32} scale={[5.7, 8.7, 4.2]} size={1.25} speed={0.22} color="#c6ff3d" opacity={0.24} />}
-    <mesh position={[0, -4.2, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2.8, 48]} /><meshBasicMaterial color="#baff57" transparent opacity={0.055} /></mesh>
+    <mesh position={[0, -3.5, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2.38, 48]} /><meshBasicMaterial color="#baff57" transparent opacity={0.055} /></mesh>
     <OrbitControls ref={controls} enablePan={false} enableZoom minDistance={6.6} maxDistance={11.8} autoRotate={!reduceMotion && autoRotate} autoRotateSpeed={0.8} enableDamping dampingFactor={0.08} maxPolarAngle={Math.PI / 1.75} minPolarAngle={Math.PI / 3.2} />
   </>;
 }
