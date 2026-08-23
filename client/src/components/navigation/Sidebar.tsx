@@ -120,14 +120,6 @@ export function Sidebar() {
             <span>Support</span>
             {location === "/support" && <i />}
           </button>
-          <div className="coach-card">
-            <div className="coach-orb">A</div>
-            <div>
-              <span>Your coach</span>
-              <b>Alex Mercer</b>
-            </div>
-            <ChevronRight size={16} />
-          </div>
         </div>
       </aside>
 
