@@ -160,11 +160,7 @@
   background-color: #387032;
   border: 1px solid rgba(198, 255, 61, 0.3);
 }
-  background-color: #387032;
-  border: 1px solid rgba(198, 255, 61, 0.3);
-}
 
-.gh-cell.level-3,
 .gh-legend-cell.level-3 {
   background-color: #6fb833;
   border: 1px solid rgba(198, 255, 61, 0.45);
