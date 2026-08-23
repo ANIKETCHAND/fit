@@ -3,8 +3,8 @@ import { Send, X, Minus, Sparkles, MessageSquare, Bot } from "lucide-react";
 import { getAthleteProfile } from "@/lib/user-store";
 import "./EchoAssistant.css";
 
-// Vector Mascot SVG matching Echo's look
-export function EchoMascotIcon({ size = 32, animated = false }: { size?: number; animated?: boolean }) {
+// Vector Mascot SVG matching Rexi's look
+export function RexiMascotIcon({ size = 32, animated = false }: { size?: number; animated?: boolean }) {
   return (
     <svg
       width={size}
@@ -15,7 +15,7 @@ export function EchoMascotIcon({ size = 32, animated = false }: { size?: number;
       style={{ overflow: "visible" }}
     >
       {/* Outer Glow Halo */}
-      <circle cx="50" cy="52" r="38" fill="url(#echoGlow)" opacity="0.45" />
+      <circle cx="50" cy="52" r="38" fill="url(#rexiGlow)" opacity="0.45" />
 
       {/* Main Mascot Body (Ghost / Cyber Creature with curved horn/cap) */}
       <path
@@ -26,7 +26,7 @@ export function EchoMascotIcon({ size = 32, animated = false }: { size?: number;
            C 40 74, 36 82, 30 82 
            C 20 82, 18 66, 18 48 
            C 18 30, 32 14, 50 14 Z"
-        fill="url(#echoBodyGrad)"
+        fill="url(#rexiBodyGrad)"
         stroke="#baff57"
         strokeWidth="3.5"
       />
@@ -53,11 +53,11 @@ export function EchoMascotIcon({ size = 32, animated = false }: { size?: number;
       <ellipse cx="72" cy="56" rx="4.5" ry="2.5" fill="#84cc16" opacity="0.6" />
 
       <defs>
-        <radialGradient id="echoGlow" cx="50%" cy="50%" r="50%">
+        <radialGradient id="rexiGlow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#baff57" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="echoBodyGrad" x1="50" y1="10" x2="50" y2="84" gradientUnits="userSpaceOnUse">
+        <linearGradient id="rexiBodyGrad" x1="50" y1="10" x2="50" y2="84" gradientUnits="userSpaceOnUse">
           <stop stopColor="#d9f99d" />
           <stop offset="0.45" stopColor="#a3e635" />
           <stop offset="1" stopColor="#4d7c0f" />
@@ -67,14 +67,17 @@ export function EchoMascotIcon({ size = 32, animated = false }: { size?: number;
   );
 }
 
+// Alias for backwards compatibility
+export const EchoMascotIcon = RexiMascotIcon;
+
 type ChatMessage = {
   id: string;
-  sender: "echo" | "user";
+  sender: "rexi" | "user";
   text: string;
   chips?: string[];
 };
 
-export function EchoAssistant() {
+export function RexiAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -88,8 +91,8 @@ export function EchoAssistant() {
     setMessages([
       {
         id: "intro-1",
-        sender: "echo",
-        text: `Hello ${firstName}! I'm **Echo**, your intelligent FitTrack training & telemetry guide.\n\nHow can I help you today? You can ask me how to navigate features, calculate targets, understand muscle diagnostics, or optimize your workouts.`,
+        sender: "rexi",
+        text: `Hello ${firstName}! I'm **Rexi**, your intelligent FitTrack training & telemetry guide.\n\nHow can I help you today? You can ask me how to navigate features, calculate targets, understand muscle diagnostics, or optimize your workouts.`,
         chips: [
           "How do I use the 3D Body Map?",
           "How are daily calories calculated?",
@@ -127,14 +130,14 @@ export function EchoAssistant() {
       setMessages((prev) => [
         ...prev,
         {
-          id: `echo-${Date.now()}`,
-          sender: "echo",
+          id: `rexi-${Date.now()}`,
+          sender: "rexi",
           text: response.text,
           chips: response.chips,
         },
       ]);
       setIsTyping(false);
-    }, 600);
+    }, 550);
   };
 
   return (
@@ -143,28 +146,28 @@ export function EchoAssistant() {
       <button
         className="echo-mascot-trigger"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Ask Echo AI Assistant"
-        title="Ask Echo AI"
+        aria-label="Ask Rexi AI Assistant"
+        title="Ask Rexi AI"
       >
         <div className="echo-mascot-pulse" />
         <div className="echo-mascot-svg-wrap">
-          <EchoMascotIcon size={42} animated />
+          <RexiMascotIcon size={42} animated />
         </div>
-        <span className="echo-mascot-tooltip">Need help? Ask Echo AI</span>
+        <span className="echo-mascot-tooltip">Need help? Ask Rexi AI</span>
       </button>
 
       {/* TryHackMe-style AI Assistant Chat Dialog */}
       {isOpen && (
-        <aside className="echo-chat-dialog" aria-label="Echo AI Chat Assistant">
+        <aside className="echo-chat-dialog" aria-label="Rexi AI Chat Assistant">
           {/* Header */}
           <div className="echo-header">
             <div className="echo-header-left">
               <div className="echo-header-icon">
-                <EchoMascotIcon size={24} />
+                <RexiMascotIcon size={24} />
               </div>
               <div className="echo-title-group">
                 <div className="echo-title-row">
-                  <span className="echo-title">Echo</span>
+                  <span className="echo-title">Rexi</span>
                   <span className="echo-beta-badge">Beta</span>
                 </div>
                 <span className="echo-subtitle">Powered by FitTrack AI</span>
@@ -193,11 +196,11 @@ export function EchoAssistant() {
           {/* Messages Scroll Area */}
           <div className="echo-messages-container" ref={scrollRef}>
             {messages.map((msg) => (
-              <div key={msg.id} className={`echo-msg echo-msg-${msg.sender}`}>
-                {msg.sender === "echo" && (
+              <div key={msg.id} className={`echo-msg echo-msg-${msg.sender === "rexi" ? "assistant" : "user"}`}>
+                {msg.sender === "rexi" && (
                   <div className="echo-msg-sender-row">
-                    <EchoMascotIcon size={16} />
-                    <span>Echo</span>
+                    <RexiMascotIcon size={16} />
+                    <span>Rexi</span>
                   </div>
                 )}
                 <div className="echo-msg-bubble">
@@ -224,8 +227,8 @@ export function EchoAssistant() {
             {isTyping && (
               <div className="echo-msg echo-msg-assistant">
                 <div className="echo-msg-sender-row">
-                  <EchoMascotIcon size={16} />
-                  <span>Echo is thinking...</span>
+                  <RexiMascotIcon size={16} />
+                  <span>Rexi is thinking...</span>
                 </div>
                 <div className="echo-typing-indicator">
                   <span className="echo-typing-dot" />
@@ -247,7 +250,7 @@ export function EchoAssistant() {
             <input
               type="text"
               className="echo-input-field"
-              placeholder="Type your question for Echo..."
+              placeholder="Type your question for Rexi..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
             />
@@ -265,6 +268,9 @@ export function EchoAssistant() {
     </div>
   );
 }
+
+// Alias for backwards compatibility
+export const EchoAssistant = RexiAssistant;
 
 // Contextual AI Knowledge Generator
 function generateAIResponse(
