@@ -120,17 +120,6 @@ export function Sidebar() {
             <span>Support</span>
             {location === "/support" && <i />}
           </button>
-          <button
-            className="nav-item"
-            onClick={() => {
-              localStorage.removeItem("fittrack_auth_state");
-              route("/");
-            }}
-            title="Return to Landing Page"
-          >
-            <LogOut size={18} />
-            <span>Exit to Landing</span>
-          </button>
           <div className="coach-card">
             <div className="coach-orb">A</div>
             <div>
