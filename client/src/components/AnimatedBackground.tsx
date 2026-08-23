@@ -235,7 +235,7 @@ export function AnimatedBackground() {
   return (
     <div
       className="fixed inset-0 pointer-events-none overflow-hidden select-none"
-      style={{ zIndex: -1 }}
+      style={{ zIndex: 0 }}
       aria-hidden="true"
     >
       <canvas
