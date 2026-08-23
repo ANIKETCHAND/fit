@@ -1,5 +1,5 @@
 /** Kinetic Pixel Fitness library: animated movement cards flip to reveal cue-led coaching before staging a training movement. */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Filter, Search, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -48,6 +48,20 @@ export default function ExerciseLibrary() {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<Record<string, ExercisePreference>>(getExercisePreferences);
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress>(getExerciseProgress);
+
+  // Automatically check for 24h expiration on focus and periodic interval
+  useEffect(() => {
+    const checkExpiration = () => {
+      setExerciseProgress(getExerciseProgress());
+    };
+    checkExpiration();
+    const interval = setInterval(checkExpiration, 60000);
+    window.addEventListener("focus", checkExpiration);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", checkExpiration);
+    };
+  }, []);
 
   const persist = (next: Record<string, ExercisePreference>) => {
     setPreferences(next);

@@ -41,7 +41,37 @@ export const getAthleteProfile = () => safeRead<AthleteProfile>(athleteProfileKe
 export const saveAthleteProfile = (value: AthleteProfile) => write(athleteProfileKey, value);
 export const getConnectedDevices = () => safeRead<ConnectedDevice[]>(connectedDevicesKey, defaultConnectedDevices);
 export const saveConnectedDevices = (value: ConnectedDevice[]) => write(connectedDevicesKey, value);
-export const getExerciseProgress = () => safeRead<ExerciseProgress>(exerciseProgressKey, {});
+export const getExerciseProgress = (): ExerciseProgress => {
+  const raw = safeRead<ExerciseProgress>(exerciseProgressKey, {});
+  const now = Date.now();
+  let changed = false;
+  const cleaned: ExerciseProgress = {};
+
+  Object.entries(raw).forEach(([id, target]) => {
+    if (target.completed) {
+      if (target.completedAt) {
+        const completedTime = new Date(target.completedAt).getTime();
+        const is24hPassed = now - completedTime >= 24 * 60 * 60 * 1000;
+        const isPreviousDay = new Date(target.completedAt).toDateString() !== new Date().toDateString();
+        if (is24hPassed || isPreviousDay) {
+          cleaned[id] = { ...target, completed: false, completedAt: undefined };
+          changed = true;
+          return;
+        }
+      } else {
+        cleaned[id] = { ...target, completed: false, completedAt: undefined };
+        changed = true;
+        return;
+      }
+    }
+    cleaned[id] = target;
+  });
+
+  if (changed) {
+    write(exerciseProgressKey, cleaned);
+  }
+  return cleaned;
+};
 export const saveExerciseProgress = (value: ExerciseProgress) => write(exerciseProgressKey, value);
 export const getCalibrationSettings = () => safeRead<CalibrationSettings>(calibrationSettingsKey, defaultCalibrationSettings());
 export const saveCalibrationSettings = (value: CalibrationSettings) => write(calibrationSettingsKey, value);
