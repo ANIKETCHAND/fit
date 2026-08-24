@@ -105,11 +105,24 @@ export function ExerciseFlipCard({
         <section className="exercise-card-face exercise-card-front">
           <span className="exercise-card-top">
             <span className="protocol-tag">{exercise.level}</span>
+            <button
+              type="button"
+              className="card-video-tag"
+              onClick={(e) => {
+                e.stopPropagation();
+                onWatchVideo?.(exercise);
+              }}
+              title={`Watch Video Form for ${exercise.name}`}
+            >
+              <Play size={10} fill="currentColor" /> Video Guide
+            </button>
             <span>EX / 0{index + 1}</span>
           </span>
           <span className="exercise-card-copy">
             <span>{exercise.focus}</span>
-            <h2>{exercise.name}</h2>
+            <h2 className="flex items-center justify-between gap-2">
+              <span>{exercise.name}</span>
+            </h2>
           </span>
           <span className="exercise-prescription" aria-label={`${exercise.name} training prescription`}>
             <label onClick={(e) => e.stopPropagation()}>
@@ -140,6 +153,8 @@ export function ExerciseFlipCard({
               <b>{exercise.tempo}</b>
             </span>
           </span>
+
+          <div className="card-buttons-row">
             <button
               className="coaching-toggle"
               onClick={(e) => {
@@ -149,30 +164,19 @@ export function ExerciseFlipCard({
             >
               {viewed ? "Coaching reviewed" : "View coaching cues"}
             </button>
-            {onWatchVideo && (
-              <button
-                type="button"
-                className="coaching-toggle"
-                style={{
-                  marginTop: "6px",
-                  background: "rgba(198, 255, 61, 0.12)",
-                  borderColor: "rgba(198, 255, 61, 0.35)",
-                  color: "#c6ff3d",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onWatchVideo(exercise);
-                }}
-              >
-                <Play size={12} fill="currentColor" /> Watch Video Form
-              </button>
-            )}
-          </section>
-        )}
+            <button
+              type="button"
+              className="card-play-video-cta"
+              onClick={(e) => {
+                e.stopPropagation();
+                onWatchVideo?.(exercise);
+              }}
+            >
+              <Play size={12} fill="currentColor" /> Watch Video Form
+            </button>
+          </div>
+        </section>
+      )}
 
       <div className="exercise-card-actions">
         <div className="exercise-completion" onClick={(e) => e.stopPropagation()}>
@@ -182,9 +186,20 @@ export function ExerciseFlipCard({
             onCheckedChange={(checked) => onCompletionChange(checked === true)}
           />
           <label htmlFor={`complete-${exercise.id}`}>
-            {target.completed ? "Completed" : "Mark complete"}
+            {target.completed ? "Done" : "Complete"}
           </label>
         </div>
+        <button
+          type="button"
+          className="video-action-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onWatchVideo?.(exercise);
+          }}
+          title={`Watch ${exercise.name} video demonstration`}
+        >
+          <Play size={11} fill="currentColor" /> Video
+        </button>
         <button
           className="stage-movement"
           onClick={(e) => {
@@ -192,7 +207,7 @@ export function ExerciseFlipCard({
             onStage(exercise);
           }}
         >
-          Stage movement <ArrowUpRight size={15} />
+          Stage <ArrowUpRight size={13} />
         </button>
       </div>
     </article>
