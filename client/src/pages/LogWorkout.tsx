@@ -163,16 +163,35 @@ export default function LogWorkout() {
                     <span>0{index + 1}</span>
                   )}
                 </button>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-2">
                     <b>{lift.name}</b>
                     <button
                       type="button"
-                      onClick={() => setVideoExercise({ name: lift.name, focus: lift.focus })}
-                      className="inline-flex items-center gap-1 text-[9px] font-mono text-[#c6ff3d] hover:text-[#d8ff6b] bg-[#c6ff3d]/10 hover:bg-[#c6ff3d]/20 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setVideoExercise({ name: lift.name, focus: lift.focus });
+                      }}
+                      className="workout-video-play-btn hover:scale-105 transition-transform"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "5px 12px",
+                        background: "linear-gradient(135deg, rgba(198, 255, 61, 0.25) 0%, rgba(198, 255, 61, 0.1) 100%)",
+                        border: "1.5px solid #c6ff3d",
+                        borderRadius: "4px",
+                        color: "#c6ff3d",
+                        fontSize: "11px",
+                        fontFamily: "'Space Mono', monospace",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        cursor: "pointer",
+                        boxShadow: "0 0 10px rgba(198, 255, 61, 0.35)",
+                      }}
                       title={`Watch video demonstration for ${lift.name}`}
                     >
-                      <Play size={9} fill="currentColor" /> Form
+                      <Play size={11} fill="currentColor" /> Play Video Guide
                     </button>
                   </div>
                   <small>
