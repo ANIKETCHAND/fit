@@ -6,10 +6,15 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/navigation/Sidebar";
 
+import { getAthleteProfile } from "@/lib/user-store";
+
 type WorkflowLayoutProps = { kicker?: string; title: string; detail?: string; children: ReactNode };
 
 export function WorkflowLayout({ kicker, title, detail, children }: WorkflowLayoutProps) {
   const [, setLocation] = useLocation();
+  const profile = getAthleteProfile();
+  const initials = profile.name ? profile.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AT";
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -31,7 +36,7 @@ export function WorkflowLayout({ kicker, title, detail, children }: WorkflowLayo
             <button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}>
               <Bell size={18} />
             </button>
-            <button className="avatar-button" aria-label="Profile">JM<ChevronDown size={14} /></button>
+            <button className="avatar-button" aria-label="Profile" onClick={() => setLocation("/profile")}>{initials}<ChevronDown size={14} /></button>
           </div>
         </header>
         <motion.section

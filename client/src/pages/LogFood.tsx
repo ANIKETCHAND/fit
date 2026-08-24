@@ -273,33 +273,98 @@ export default function LogFood() {
         </div>
 
         <aside className="workflow-panel fuel-summary">
-          <div className="summary-orbit">
-            <Flame size={22} />
-            <span>Added fuel</span>
-            <strong>{picked.kcal}</strong>
-            <small>kcal</small>
-          </div>
-          <div className="macro-stack">
-            <div>
-              <span>Protein</span>
-              <b>{picked.p}g</b>
-              <i style={{ width: `${Math.min(picked.p * 2.2, 100)}%` }} />
+          {/* Animated Multi-Segment Macro Radial Gauge */}
+          <div className="relative w-full flex flex-col items-center justify-center p-4 bg-[#0a100c] border border-[rgba(237,244,233,0.08)] rounded-xl mb-4">
+            <div className="relative w-36 h-36 flex items-center justify-center">
+              <svg className="w-36 h-36 -rotate-90 transform" viewBox="0 0 120 120">
+                {/* Background tracks */}
+                <circle cx="60" cy="60" r="48" className="stroke-[rgba(255,255,255,0.06)] fill-none" strokeWidth="6" />
+                <circle cx="60" cy="60" r="38" className="stroke-[rgba(255,255,255,0.06)] fill-none" strokeWidth="6" />
+                <circle cx="60" cy="60" r="28" className="stroke-[rgba(255,255,255,0.06)] fill-none" strokeWidth="6" />
+
+                {/* Protein Arc (Green) */}
+                <motion.circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  className="stroke-[#c6ff3d] fill-none"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 48}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 48 }}
+                  animate={{ strokeDashoffset: (2 * Math.PI * 48) - (Math.min(picked.p / 60, 1) * (2 * Math.PI * 48)) }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  style={{ filter: "drop-shadow(0 0 6px rgba(198,255,61,0.6))" }}
+                />
+
+                {/* Carbs Arc (Cyan) */}
+                <motion.circle
+                  cx="60"
+                  cy="60"
+                  r="38"
+                  className="stroke-[#a6d9ff] fill-none"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 38}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 38 }}
+                  animate={{ strokeDashoffset: (2 * Math.PI * 38) - (Math.min(picked.c / 80, 1) * (2 * Math.PI * 38)) }}
+                  transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+                  style={{ filter: "drop-shadow(0 0 6px rgba(166,217,255,0.6))" }}
+                />
+
+                {/* Fats Arc (Amber) */}
+                <motion.circle
+                  cx="60"
+                  cy="60"
+                  r="28"
+                  className="stroke-[#ffd998] fill-none"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 28}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 28 }}
+                  animate={{ strokeDashoffset: (2 * Math.PI * 28) - (Math.min(picked.f / 30, 1) * (2 * Math.PI * 28)) }}
+                  transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+                  style={{ filter: "drop-shadow(0 0 6px rgba(255,217,152,0.6))" }}
+                />
+              </svg>
+
+              {/* Center Calorie Display */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <Flame size={18} className="text-[#c6ff3d] animate-pulse mb-0.5" />
+                <strong className="text-xl font-bold font-mono text-[#edf4e9] leading-none">{picked.kcal}</strong>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-[#8b9c8a] mt-0.5">kcal</span>
+              </div>
             </div>
-            <div>
-              <span>Carbs</span>
-              <b>{picked.c}g</b>
-              <i style={{ width: `${Math.min(picked.c * 1.4, 100)}%` }} />
-            </div>
-            <div>
-              <span>Fats</span>
-              <b>{picked.f}g</b>
-              <i style={{ width: `${Math.min(picked.f * 4, 100)}%` }} />
+
+            {/* Macro Legend Pills */}
+            <div className="grid grid-cols-3 gap-2 w-full mt-3 pt-3 border-t border-[rgba(237,244,233,0.06)] text-center">
+              <div className="bg-[#0e1611] py-1.5 px-2 rounded border border-[#c6ff3d]/20">
+                <span className="text-[8px] uppercase tracking-wider text-[#c6ff3d] font-mono block">Protein</span>
+                <strong className="text-xs font-mono text-[#edf4e9]">{picked.p}g</strong>
+              </div>
+              <div className="bg-[#0e1611] py-1.5 px-2 rounded border border-[#a6d9ff]/20">
+                <span className="text-[8px] uppercase tracking-wider text-[#a6d9ff] font-mono block">Carbs</span>
+                <strong className="text-xs font-mono text-[#edf4e9]">{picked.c}g</strong>
+              </div>
+              <div className="bg-[#0e1611] py-1.5 px-2 rounded border border-[#ffd998]/20">
+                <span className="text-[8px] uppercase tracking-wider text-[#ffd998] font-mono block">Fats</span>
+                <strong className="text-xs font-mono text-[#edf4e9]">{picked.f}g</strong>
+              </div>
             </div>
           </div>
-          <div className="summary-note">
-            <i />
-            Target pace remains on track
+
+          {/* Visual Metabolic Telemetry Badges */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="bg-[#0d1410] border border-[rgba(237,244,233,0.07)] rounded-md px-2.5 py-1.5 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff3d] animate-pulse"></span>
+              <span className="text-[9px] font-mono text-[#edf4e9]">Anabolic Synthesis</span>
+            </div>
+            <div className="bg-[#0d1410] border border-[rgba(237,244,233,0.07)] rounded-md px-2.5 py-1.5 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#a6d9ff]"></span>
+              <span className="text-[9px] font-mono text-[#edf4e9]">Glycogen Refuel</span>
+            </div>
           </div>
+
           <button
             className="commit-button"
             disabled={saveEntry.isPending}

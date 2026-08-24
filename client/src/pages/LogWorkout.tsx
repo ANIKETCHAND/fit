@@ -69,5 +69,223 @@ export default function LogWorkout() {
     saveWorkout.mutate({ title: `${primaryFocus} hypertrophy protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date() });
   };
 
-  return <><WorkflowLayout kicker="Training / strength log" title="Record the work" detail="Capture load, effort, and recovery intervals before the signal fades. Complete the full protocol to advance your daily training streak."><motion.section className="workflow-grid workout-grid" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}><div className="workflow-panel exercise-board"><div className="workout-head"><div><span className="panel-label">{primaryFocus} / hypertrophy</span><b className="workout-status"><Activity size={12} />Strength protocol</b></div><div className="workout-head-actions"><span className="protocol-tag">46 min protocol</span><button className="library-link" onClick={() => setLocation("/exercise-library")}><LibraryBig size={14} />Library</button></div></div>{staged && <button className="staged-movement" onClick={() => setLocation("/exercise-library")}><i />Staged movement: <b>{staged}</b><span>Review ↗</span></button>}<div className="set-ledger-label"><span>Set ledger</span><span>Rest clock</span><span>Load</span></div>{lifts.map((lift, index) => <div key={lift.name} className={complete.includes(index) ? "lift-row complete" : "lift-row"}><button className="set-toggle" aria-label={`Mark ${lift.name} complete`} onClick={() => toggle(index)}>{complete.includes(index) ? <Check size={15} /> : <span>0{index + 1}</span>}</button><div><b>{lift.name}</b><small>{lift.prescription} · RPE 8 · rest {lift.rest}</small></div><button className="load-control" aria-label={`Decrease ${lift.name} load`} onClick={() => index === 0 && setLoad(Math.max(0, load - 2.5))}><Minus size={13} /></button><strong>{index === 0 ? load : lift.load}<small>kg</small></strong><button className="load-control" aria-label={`Increase ${lift.name} load`} onClick={() => index === 0 && setLoad(load + 2.5)}><Plus size={13} /></button></div>)}<button className="text-action" onClick={() => setLocation("/exercise-library")}><Plus size={15} />Browse exercise library</button></div><aside className="workflow-panel training-readout"><div className="focus-anatomy"><div className="focus-anatomy-head"><span className="panel-label">Focus region</span><span>MUS / 01</span></div><div className="pectoral-scan"><i className="pectoral-left" /><i className="pectoral-right" /><b>PEC<br />MAJOR</b><span className="scan-beam" /></div><div className="focus-meta"><span><i />Readiness 82</span><span>{primaryFocus} volume</span></div></div><div className="training-gauge"><Dumbbell size={22} /><span>Protocol completion</span><strong>{completion}%</strong><i><b style={{ width: `${completion}%` }} /></i></div><div className="readout-line"><span>Estimated volume</span><b>{Math.round(volume).toLocaleString()} kg</b></div><div className="readout-line"><span>Focus signal</span><b className="lime">{primaryFocus}</b></div><button className="commit-button" disabled={saveWorkout.isPending} onClick={save}><TimerReset size={16} />{saveWorkout.isPending ? "Saving protocol" : "Save training"} <span>↗</span></button>{saveWorkout.isPending && <BackendFeedback tone="loading" title="Secure training commit" detail="Writing this completed protocol to your athlete ledger." />}</aside></motion.section></WorkflowLayout>{streakCelebrating && <StreakFireOverlay streak={streakCelebrating} onContinue={afterStreak} />}{celebrating && <BadgeUnlockOverlay achievement={celebrating} onClose={finish} onShare={() => { setSharing(celebrating); setCelebrating(null); }} />}{sharing && <BadgeShareSheet achievement={sharing} onClose={finish} />}</>;
+  return (
+    <>
+      <WorkflowLayout
+        kicker="Training / Strength Telemetry"
+        title="Record the work"
+        detail="Capture load, effort, and recovery intervals before the signal fades. Complete the full protocol to advance your daily training streak."
+      >
+        <motion.section
+          className="workflow-grid workout-grid"
+          variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}
+        >
+          <div className="workflow-panel exercise-board">
+            <div className="workout-head">
+              <div>
+                <span className="panel-label">{primaryFocus} / hypertrophy</span>
+                <b className="workout-status">
+                  <Activity size={12} className="text-[#c6ff3d] animate-pulse" />
+                  Strength protocol
+                </b>
+              </div>
+              <div className="workout-head-actions">
+                <span className="protocol-tag">46 min protocol</span>
+                <button className="library-link" onClick={() => setLocation("/exercise-library")}>
+                  <LibraryBig size={14} />
+                  Library
+                </button>
+              </div>
+            </div>
+
+            {staged && (
+              <button className="staged-movement" onClick={() => setLocation("/exercise-library")}>
+                <i />
+                Staged movement: <b>{staged}</b>
+                <span>Review ↗</span>
+              </button>
+            )}
+
+            {/* Live ECG Heartbeat Pulse Bar */}
+            <div className="bg-[#0a100c] border border-[rgba(237,244,233,0.08)] rounded-lg p-2.5 my-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c6ff3d] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c6ff3d]"></span>
+                </span>
+                <span className="text-[10px] font-mono text-[#edf4e9] uppercase tracking-wider">Live Work Output</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg className="w-24 h-5 text-[#c6ff3d]" viewBox="0 0 100 20" fill="none">
+                  <motion.path
+                    d="M0 10 L25 10 L32 2 L40 18 L48 6 L55 13 L62 10 L100 10"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  />
+                </svg>
+                <span className="text-[10px] font-mono text-[#c6ff3d]">138 BPM</span>
+              </div>
+            </div>
+
+            <div className="set-ledger-label">
+              <span>Set ledger</span>
+              <span>Rest clock</span>
+              <span>Load</span>
+            </div>
+
+            {lifts.map((lift, index) => (
+              <motion.div
+                key={lift.name}
+                className={complete.includes(index) ? "lift-row complete" : "lift-row"}
+                whileTap={{ scale: 0.99 }}
+              >
+                <button
+                  className="set-toggle relative overflow-hidden"
+                  aria-label={`Mark ${lift.name} complete`}
+                  onClick={() => toggle(index)}
+                >
+                  {complete.includes(index) ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    >
+                      <Check size={16} className="text-[#080c0a]" />
+                    </motion.div>
+                  ) : (
+                    <span>0{index + 1}</span>
+                  )}
+                </button>
+                <div>
+                  <b>{lift.name}</b>
+                  <small>
+                    {lift.prescription} · RPE 8 · rest {lift.rest}
+                  </small>
+                </div>
+                <button
+                  className="load-control"
+                  aria-label={`Decrease ${lift.name} load`}
+                  onClick={() => index === 0 && setLoad(Math.max(0, load - 2.5))}
+                >
+                  <Minus size={13} />
+                </button>
+                <strong>
+                  {index === 0 ? load : lift.load}
+                  <small>kg</small>
+                </strong>
+                <button
+                  className="load-control"
+                  aria-label={`Increase ${lift.name} load`}
+                  onClick={() => index === 0 && setLoad(load + 2.5)}
+                >
+                  <Plus size={13} />
+                </button>
+              </motion.div>
+            ))}
+
+            <button className="text-action" onClick={() => setLocation("/exercise-library")}>
+              <Plus size={15} />
+              Browse exercise library
+            </button>
+          </div>
+
+          <aside className="workflow-panel training-readout">
+            <div className="focus-anatomy">
+              <div className="focus-anatomy-head">
+                <span className="panel-label">Focus region</span>
+                <span className="text-[#c6ff3d] font-mono text-[10px]">ACTIVE</span>
+              </div>
+              <div className="pectoral-scan">
+                <i className="pectoral-left" />
+                <i className="pectoral-right" />
+                <b>
+                  PEC
+                  <br />
+                  MAJOR
+                </b>
+                <span className="scan-beam" />
+              </div>
+              <div className="focus-meta">
+                <span>
+                  <i />
+                  Readiness 82%
+                </span>
+                <span>{primaryFocus} volume</span>
+              </div>
+            </div>
+
+            {/* Circular Protocol Completion Dial */}
+            <div className="bg-[#0b120e] border border-[rgba(237,244,233,0.08)] rounded-xl p-4 flex items-center gap-4 my-2">
+              <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
+                <svg className="w-16 h-16 -rotate-90 transform" viewBox="0 0 60 60">
+                  <circle cx="30" cy="30" r="24" className="stroke-[rgba(255,255,255,0.08)] fill-none" strokeWidth="5" />
+                  <motion.circle
+                    cx="30"
+                    cy="30"
+                    r="24"
+                    className="stroke-[#c6ff3d] fill-none"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 24}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 24 }}
+                    animate={{ strokeDashoffset: (2 * Math.PI * 24) - ((completion / 100) * (2 * Math.PI * 24)) }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    style={{ filter: "drop-shadow(0 0 6px rgba(198,255,61,0.6))" }}
+                  />
+                </svg>
+                <span className="absolute text-xs font-bold font-mono text-[#edf4e9]">{completion}%</span>
+              </div>
+              <div>
+                <span className="text-[9px] uppercase tracking-wider text-[#8b9c8a] font-mono block">Progress</span>
+                <strong className="text-xs text-[#edf4e9] font-mono block">
+                  {complete.length} of {lifts.length} sets completed
+                </strong>
+                <span className="text-[10px] text-[#c6ff3d] font-mono">
+                  {completion === 100 ? "Ready to commit protocol" : "Sets remaining"}
+                </span>
+              </div>
+            </div>
+
+            <div className="readout-line">
+              <span>Estimated volume</span>
+              <b>{Math.round(volume).toLocaleString()} kg</b>
+            </div>
+            <div className="readout-line">
+              <span>Focus signal</span>
+              <b className="lime">{primaryFocus}</b>
+            </div>
+
+            <button className="commit-button" disabled={saveWorkout.isPending} onClick={save}>
+              <TimerReset size={16} />
+              {saveWorkout.isPending ? "Saving protocol" : "Save training"} <span>↗</span>
+            </button>
+            {saveWorkout.isPending && (
+              <BackendFeedback
+                tone="loading"
+                title="Secure training commit"
+                detail="Writing this completed protocol to your athlete ledger."
+              />
+            )}
+          </aside>
+        </motion.section>
+      </WorkflowLayout>
+      {streakCelebrating && <StreakFireOverlay streak={streakCelebrating} onContinue={afterStreak} />}
+      {celebrating && (
+        <BadgeUnlockOverlay
+          achievement={celebrating}
+          onClose={finish}
+          onShare={() => {
+            setSharing(celebrating);
+            setCelebrating(null);
+          }}
+        />
+      )}
+      {sharing && <BadgeShareSheet achievement={sharing} onClose={finish} />}
+    </>
+  );
 }
