@@ -197,55 +197,69 @@
   font-size: 9px;
 }
 
-.exercise-card--compact .card-video-tag {
-  background: rgba(198, 255, 61, 0.15);
-  border: 1px solid rgba(198, 255, 61, 0.4);
+.exercise-card--compact .exercise-title-play-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(198, 255, 61, 0.2);
+  border: 1px solid #c6ff3d;
   color: #c6ff3d;
-  font: 700 8px "Space Mono", monospace;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 3px;
-  cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.exercise-card--compact .card-video-tag:hover {
+.exercise-card--compact .exercise-title-play-btn:hover {
   background: #c6ff3d;
   color: #080c0a;
-  box-shadow: 0 0 10px rgba(198, 255, 61, 0.6);
+  box-shadow: 0 0 12px #c6ff3d;
+  transform: scale(1.1);
 }
 
-.exercise-card--compact .card-buttons-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.exercise-card--compact .card-play-video-cta {
-  min-height: 28px;
-  padding: 0 8px;
-  background: rgba(198, 255, 61, 0.12);
-  border: 1px solid rgba(198, 255, 61, 0.35);
+.exercise-card--compact .card-video-banner-btn {
+  width: 100%;
+  min-height: 36px;
+  margin: 8px 0 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(198, 255, 61, 0.22) 0%, rgba(198, 255, 61, 0.08) 100%);
+  border: 1.5px solid #c6ff3d;
+  border-radius: 4px;
   color: #c6ff3d;
-  font: 700 8px "Space Mono", monospace;
+  font: 700 10px "Space Mono", monospace;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  border-radius: 2px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  transition: all 0.15s ease;
+  gap: 8px;
+  box-shadow: 0 0 14px rgba(198, 255, 61, 0.25);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.exercise-card--compact .card-play-video-cta:hover {
+.exercise-card--compact .card-video-banner-btn:hover {
   background: #c6ff3d;
   color: #080c0a;
-  box-shadow: 0 0 12px rgba(198, 255, 61, 0.5);
+  box-shadow: 0 0 22px rgba(198, 255, 61, 0.7);
+  transform: translateY(-1px);
+}
+
+.exercise-card--compact .video-play-pulse-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(198, 255, 61, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.exercise-card--compact .card-video-banner-btn:hover .video-play-pulse-icon {
+  background: #080c0a;
+  color: #c6ff3d;
 }
 
 .exercise-card--compact .exercise-card-actions {

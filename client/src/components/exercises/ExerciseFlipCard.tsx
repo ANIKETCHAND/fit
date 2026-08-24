@@ -122,6 +122,17 @@ export function ExerciseFlipCard({
             <span>{exercise.focus}</span>
             <h2 className="flex items-center justify-between gap-2">
               <span>{exercise.name}</span>
+              <button
+                type="button"
+                className="exercise-title-play-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onWatchVideo?.(exercise);
+                }}
+                title={`Play ${exercise.name} video tutorial`}
+              >
+                <Play size={13} fill="currentColor" />
+              </button>
             </h2>
           </span>
           <span className="exercise-prescription" aria-label={`${exercise.name} training prescription`}>
@@ -154,27 +165,30 @@ export function ExerciseFlipCard({
             </span>
           </span>
 
-          <div className="card-buttons-row">
-            <button
-              className="coaching-toggle"
-              onClick={(e) => {
-                e.stopPropagation();
-                flip();
-              }}
-            >
-              {viewed ? "Coaching reviewed" : "View coaching cues"}
-            </button>
-            <button
-              type="button"
-              className="card-play-video-cta"
-              onClick={(e) => {
-                e.stopPropagation();
-                onWatchVideo?.(exercise);
-              }}
-            >
-              <Play size={12} fill="currentColor" /> Watch Video Form
-            </button>
-          </div>
+          {/* Prominent Full-Width Neon Video Play Button */}
+          <button
+            type="button"
+            className="card-video-banner-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onWatchVideo?.(exercise);
+            }}
+          >
+            <span className="video-play-pulse-icon">
+              <Play size={13} fill="currentColor" />
+            </span>
+            <span>▶ PLAY FORM VIDEO GUIDE</span>
+          </button>
+
+          <button
+            className="coaching-toggle"
+            onClick={(e) => {
+              e.stopPropagation();
+              flip();
+            }}
+          >
+            {viewed ? "Coaching reviewed" : "View coaching cues"}
+          </button>
         </section>
       )}
 
