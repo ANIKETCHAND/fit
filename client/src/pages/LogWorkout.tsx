@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Activity, Check, Dumbbell, LibraryBig, Minus, Plus, TimerReset } from "lucide-react";
+import { Activity, Check, Dumbbell, LibraryBig, Minus, Play, Plus, TimerReset } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -8,6 +8,7 @@ import { BackendFeedback } from "@/components/feedback/BackendFeedback";
 import { BadgeUnlockOverlay } from "@/components/achievements/BadgeUnlockOverlay";
 import { BadgeShareSheet } from "@/components/achievements/BadgeShareSheet";
 import { StreakFireOverlay } from "@/components/streaks/StreakFireOverlay";
+import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 import { achievementStorageKey, achievements, libraryExercises, type Achievement } from "@/lib/rewards-data";
 import { advanceStreak, pushMilestoneNotification, getScopedKey, type DailyStreak } from "@/lib/user-store";
 import { trpc } from "@/lib/trpc";
@@ -36,6 +37,7 @@ export default function LogWorkout() {
   const primaryFocus = lifts[0].focus;
   const [complete, setComplete] = useState<number[]>([]);
   const [load, setLoad] = useState(lifts[0].load);
+  const [videoExercise, setVideoExercise] = useState<{ name: string; focus?: string } | null>(null);
   const [celebrating, setCelebrating] = useState<Achievement | null>(null);
   const [sharing, setSharing] = useState<Achievement | null>(null);
   const [streakCelebrating, setStreakCelebrating] = useState<DailyStreak | null>(null);
@@ -162,7 +164,17 @@ export default function LogWorkout() {
                   )}
                 </button>
                 <div>
-                  <b>{lift.name}</b>
+                  <div className="flex items-center gap-2">
+                    <b>{lift.name}</b>
+                    <button
+                      type="button"
+                      onClick={() => setVideoExercise({ name: lift.name, focus: lift.focus })}
+                      className="inline-flex items-center gap-1 text-[9px] font-mono text-[#c6ff3d] hover:text-[#d8ff6b] bg-[#c6ff3d]/10 hover:bg-[#c6ff3d]/20 px-1.5 py-0.5 rounded transition-all cursor-pointer"
+                      title={`Watch video demonstration for ${lift.name}`}
+                    >
+                      <Play size={9} fill="currentColor" /> Form
+                    </button>
+                  </div>
                   <small>
                     {lift.prescription} · RPE 8 · rest {lift.rest}
                   </small>
@@ -286,6 +298,11 @@ export default function LogWorkout() {
         />
       )}
       {sharing && <BadgeShareSheet achievement={sharing} onClose={finish} />}
+      <ExerciseVideoModal
+        exercise={videoExercise}
+        open={Boolean(videoExercise)}
+        onClose={() => setVideoExercise(null)}
+      />
     </>
   );
 }

@@ -1,10 +1,10 @@
-/** Kinetic Pixel Fitness library: animated movement cards flip to reveal cue-led coaching before staging a training movement. */
 import { useEffect, useMemo, useState } from "react";
 import { Filter, Search, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
 import { ExerciseFlipCard } from "@/components/exercises/ExerciseFlipCard";
+import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 import { libraryExercises, type LibraryExercise } from "@/lib/rewards-data";
 import {
   getExercisePreferences,
@@ -46,6 +46,7 @@ export default function ExerciseLibrary() {
   const [focus, setFocus] = useState("All signals");
   const [query, setQuery] = useState("");
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [videoExercise, setVideoExercise] = useState<LibraryExercise | null>(null);
   const [preferences, setPreferences] = useState<Record<string, ExercisePreference>>(getExercisePreferences);
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress>(getExerciseProgress);
 
@@ -335,9 +336,16 @@ export default function ExerciseLibrary() {
             onFavorite={() => toggleFavorite(exercise.id)}
             onHide={() => hideExercise(exercise.id)}
             onViewed={() => markViewed(exercise.id)}
+            onWatchVideo={(ex) => setVideoExercise(ex)}
           />
         ))}
       </section>
+
+      <ExerciseVideoModal
+        exercise={videoExercise}
+        open={Boolean(videoExercise)}
+        onClose={() => setVideoExercise(null)}
+      />
 
       {filtered.length === 0 && (
         <div className="library-empty" style={{ textAlign: "center", padding: "40px 20px" }}>

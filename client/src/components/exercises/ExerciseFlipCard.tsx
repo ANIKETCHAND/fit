@@ -1,7 +1,7 @@
 /* Kinetic Anatomy Lab workout card: compact evidence panel with retained coaching and staging controls. */
 /* Kinetic Anatomy Lab: data-first movement cards; no decorative exercise scene. */
 import { useState } from "react";
-import { ArrowUpRight, EyeOff, Heart } from "lucide-react";
+import { ArrowUpRight, EyeOff, Heart, Play } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { LibraryExercise } from "@/lib/rewards-data";
 import type { ExerciseTarget } from "@/lib/user-store";
@@ -21,6 +21,7 @@ type ExerciseFlipCardProps = {
   onFavorite: () => void;
   onHide: () => void;
   onViewed: () => void;
+  onWatchVideo?: (exercise: LibraryExercise) => void;
 };
 
 export function ExerciseFlipCard({
@@ -37,6 +38,7 @@ export function ExerciseFlipCard({
   onFavorite,
   onHide,
   onViewed,
+  onWatchVideo,
 }: ExerciseFlipCardProps) {
   const [flipped, setFlipped] = useState(false);
   const flip = () => {
@@ -138,17 +140,39 @@ export function ExerciseFlipCard({
               <b>{exercise.tempo}</b>
             </span>
           </span>
-          <button
-            className="coaching-toggle"
-            onClick={(e) => {
-              e.stopPropagation();
-              flip();
-            }}
-          >
-            {viewed ? "Coaching reviewed" : "View coaching cues"}
-          </button>
-        </section>
-      )}
+            <button
+              className="coaching-toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                flip();
+              }}
+            >
+              {viewed ? "Coaching reviewed" : "View coaching cues"}
+            </button>
+            {onWatchVideo && (
+              <button
+                type="button"
+                className="coaching-toggle"
+                style={{
+                  marginTop: "6px",
+                  background: "rgba(198, 255, 61, 0.12)",
+                  borderColor: "rgba(198, 255, 61, 0.35)",
+                  color: "#c6ff3d",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onWatchVideo(exercise);
+                }}
+              >
+                <Play size={12} fill="currentColor" /> Watch Video Form
+              </button>
+            )}
+          </section>
+        )}
 
       <div className="exercise-card-actions">
         <div className="exercise-completion" onClick={(e) => e.stopPropagation()}>

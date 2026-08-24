@@ -1,11 +1,14 @@
 /** Kinetic Anatomy Lab: highly visual diagnostic panel featuring animated fuel gauges, LED strain meters, and fiber telemetry. */
-import { ArrowUpRight, CalendarDays, Dumbbell, Flame, Play, Sparkles, Zap } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, CalendarDays, Dumbbell, Flame, Play, Sparkles, Video, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import type { MuscleInfo } from "@/lib/fitness-data";
 import { useLocation } from "wouter";
+import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 
 export function MuscleInfo({ muscle }: { muscle: MuscleInfo }) {
   const [, setLocation] = useLocation();
+  const [selectedVideo, setSelectedVideo] = useState<{ name: string; focus?: string } | null>(null);
 
   // Compute visual telemetry metrics
   const score = muscle.score || 80;
@@ -164,15 +167,22 @@ export function MuscleInfo({ muscle }: { muscle: MuscleInfo }) {
       <div className="exercise-list">
         {muscle.exercises.map((exercise, index) => (
           <motion.div
-            className="exercise-row group hover:border-[#c6ff3d]/40 transition-colors"
+            className="exercise-row group hover:border-[#c6ff3d]/40 transition-colors cursor-pointer"
             key={exercise.name}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06 }}
+            onClick={() => setSelectedVideo({ name: exercise.name, focus: muscle.label })}
+            title={`Watch video demonstration for ${exercise.name}`}
           >
             <span className="exercise-index text-[#c6ff3d] font-mono">0{index + 1}</span>
             <div className="exercise-details flex-1">
-              <strong className="group-hover:text-[#c6ff3d] transition-colors">{exercise.name}</strong>
+              <strong className="group-hover:text-[#c6ff3d] transition-colors flex items-center justify-between">
+                <span>{exercise.name}</span>
+                <span className="text-[9px] font-mono text-[#c6ff3d] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                  <Play size={10} fill="currentColor" /> Watch Form
+                </span>
+              </strong>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="inline-block bg-[rgba(198,255,61,0.1)] text-[#c6ff3d] px-1.5 py-0.5 rounded text-[8px] font-mono">
                   {exercise.sets} sets
@@ -195,6 +205,13 @@ export function MuscleInfo({ muscle }: { muscle: MuscleInfo }) {
         </div>
         <span className="workout-time">45 min</span>
       </button>
+
+      {/* Video Demonstration Modal */}
+      <ExerciseVideoModal
+        exercise={selectedVideo}
+        open={Boolean(selectedVideo)}
+        onClose={() => setSelectedVideo(null)}
+      />
     </motion.aside>
   );
 }
