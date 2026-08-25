@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Play, Pause, RotateCcw, Sparkles, Volume2, VolumeX, X, Zap, Gauge } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Gauge } from "lucide-react";
 
 export interface ExerciseVideoTarget {
   id?: string;
@@ -29,6 +28,7 @@ const exerciseVideoMap: Record<string, string> = {
   "incline-dumbbell-press": "/videos/incline-db-press.mp4",
   "cable-fly": "/videos/cable-fly.mp4",
   "cable-chest-fly": "/videos/cable-fly.mp4",
+  "chest-dips": "/videos/bench-press.mp4",
   "lat-pulldown": "/videos/lat-pulldown.mp4",
   "chest-row": "/videos/lat-pulldown.mp4",
   "barbell-row": "/videos/lat-pulldown.mp4",
@@ -107,32 +107,24 @@ export function ExerciseVideoModal({ exercise, open, onClose }: ExerciseVideoMod
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-xl p-0 bg-[#080d0a] border border-[#c6ff3d]/30 text-[#edf4e9] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-        <DialogHeader className="p-4 pb-2 border-b border-[rgba(237,244,233,0.08)] flex flex-row items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c6ff3d] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c6ff3d]"></span>
-              </span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-[#a6d9ff]">
-                Form Biomechanics Lab
-              </span>
-            </div>
-            <DialogTitle className="font-sans text-lg font-bold text-[#edf4e9] tracking-tight">
-              {exercise.name}
-            </DialogTitle>
+      <DialogContent className="max-w-md sm:max-w-lg p-0 bg-[#080d0a] border border-[#c6ff3d]/40 text-[#edf4e9] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.9)]">
+        <DialogHeader className="p-4 pb-3 border-b border-[rgba(237,244,233,0.08)] pr-12">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c6ff3d] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c6ff3d]"></span>
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#c6ff3d]">
+              Video Guidance
+            </span>
           </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#8b9c8a] hover:text-white transition-colors"
-          >
-            <X size={15} />
-          </button>
+          <DialogTitle className="font-sans text-xl font-bold text-[#edf4e9] tracking-tight">
+            {exercise.name}
+          </DialogTitle>
         </DialogHeader>
 
-        {/* Video Player Display */}
-        <div className="relative aspect-[9/16] sm:aspect-video w-full max-h-[380px] bg-[#000000] flex items-center justify-center overflow-hidden">
+        {/* Video Player Display - Clean and Focused */}
+        <div className="relative w-full aspect-[9/14] sm:aspect-[9/13] max-h-[480px] bg-[#000000] flex items-center justify-center overflow-hidden">
           {videoSrc && !videoError ? (
             <video
               ref={videoRef}
@@ -149,13 +141,13 @@ export function ExerciseVideoModal({ exercise, open, onClose }: ExerciseVideoMod
               <Zap className="w-10 h-10 text-[#c6ff3d] animate-pulse" />
               <strong className="text-sm text-[#edf4e9]">Kinetic Form Telemetry</strong>
               <p className="text-xs text-[#8b9c8a] max-w-xs">
-                Visual demonstration stream calibrated. Check coaching cues below.
+                Visual demonstration stream active.
               </p>
             </div>
           )}
 
           {/* Floating Controls Bar */}
-          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between bg-[#080d0a]/85 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 z-10">
+          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between bg-[#080d0a]/90 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 z-10">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -189,36 +181,6 @@ export function ExerciseVideoModal({ exercise, open, onClose }: ExerciseVideoMod
             <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#c6ff3d]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#c6ff3d] animate-pulse"></span>
               <span>LOOPING</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Coaching Technique Telemetry */}
-        <div className="p-4 pt-3 bg-[#0a110d] border-t border-[rgba(237,244,233,0.08)]">
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[#0e1712] border border-[#c6ff3d]/20 rounded-md p-2.5">
-              <span className="text-[8px] font-mono uppercase tracking-wider text-[#c6ff3d] block mb-1">
-                01 / Setup
-              </span>
-              <p className="text-[11px] text-[#edf4e9] leading-snug font-sans">
-                {exercise.coaching?.setup || "Pin shoulder blades down & brace core before unracking load."}
-              </p>
-            </div>
-            <div className="bg-[#0e1712] border border-[#a6d9ff]/20 rounded-md p-2.5">
-              <span className="text-[8px] font-mono uppercase tracking-wider text-[#a6d9ff] block mb-1">
-                02 / Execution Cue
-              </span>
-              <p className="text-[11px] text-[#edf4e9] leading-snug font-sans">
-                {exercise.coaching?.cue || "Control eccentric 2-3s, explode through contraction arc."}
-              </p>
-            </div>
-            <div className="bg-[#0e1712] border border-[#ffd998]/20 rounded-md p-2.5">
-              <span className="text-[8px] font-mono uppercase tracking-wider text-[#ffd998] block mb-1">
-                03 / Pro Tip
-              </span>
-              <p className="text-[11px] text-[#edf4e9] leading-snug font-sans">
-                {exercise.coaching?.tip || "Keep joints aligned; avoid momentum swing."}
-              </p>
             </div>
           </div>
         </div>

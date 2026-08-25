@@ -201,8 +201,8 @@ async function deleteGpsSession(userId, sessionId) {
 
 // server/_core/cookies.ts
 function isSecureRequest(req) {
-  if (req.protocol === "https") return true;
-  const forwardedProto = req.headers?.["x-forwarded-proto"];
+  if (req?.protocol === "https") return true;
+  const forwardedProto = req?.headers?.["x-forwarded-proto"];
   if (!forwardedProto) return false;
   const protoList = Array.isArray(forwardedProto) ? forwardedProto : typeof forwardedProto === "string" ? forwardedProto.split(",") : [];
   return protoList.some((proto) => proto.trim().toLowerCase() === "https");
