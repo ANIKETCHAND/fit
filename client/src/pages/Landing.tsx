@@ -123,6 +123,7 @@ export default function Landing() {
             location: "New York, USA",
             focus: "Hypertrophy & Strength Protocol",
           });
+          localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
           toast.success(`Welcome, ${cleanName}! Authenticated with Google.`);
           setGoogleModalOpen(false);
           setAuthModalOpen(false);
@@ -175,6 +176,7 @@ export default function Landing() {
                     setSavedGoogleAccounts(updated);
                   } catch {}
 
+                  localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
                   setIsGoogleLoading(false);
                   setGoogleModalOpen(false);
                   setAuthModalOpen(false);
@@ -301,6 +303,7 @@ export default function Landing() {
 
       setIsGoogleLoading(false);
       setGoogleModalOpen(false);
+      localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
       toast.success(`Google Account connected: ${email}`);
       setLocation("/overview");
     }, 550);
@@ -322,6 +325,7 @@ export default function Landing() {
 
     localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_user_email", cleanEmail);
+    localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
     if (name) {
       localStorage.setItem("fittrack_user_name", cleanName);
     }
@@ -343,6 +347,7 @@ export default function Landing() {
   const handleQuickDemo = () => {
     localStorage.setItem("fittrack_user_email", "demo@fittrack.training");
     localStorage.setItem("fittrack_auth_state", "authenticated");
+    localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
     toast.success("Welcome, Athlete! Launching overview workspace.");
     setLocation("/overview");
   };

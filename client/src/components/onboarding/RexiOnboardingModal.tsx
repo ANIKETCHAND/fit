@@ -18,17 +18,33 @@ export function RexiOnboardingModal() {
   const firstName = rawName.split(" ")[0] || "Athlete";
 
   useEffect(() => {
-    // Check if onboarding has been completed
-    try {
-      const completed = localStorage.getItem(getScopedKey("fittrack_onboarding_completed"));
-      if (!completed) {
-        const timer = setTimeout(() => {
+    const checkAndOpen = () => {
+      try {
+        const trigger = localStorage.getItem("fittrack_trigger_rexi_welcome");
+        const welcomed = sessionStorage.getItem("fittrack_rexi_welcomed");
+        if (trigger === "true" || !welcomed) {
+          localStorage.removeItem("fittrack_trigger_rexi_welcome");
           setIsOpen(true);
-        }, 500);
-        return () => clearTimeout(timer);
+        }
+      } catch {
+        setIsOpen(true);
       }
-    } catch {}
-  }, []);
+    };
+
+    const timer = setTimeout(checkAndOpen, 200);
+
+    const handleOpen = () => {
+      setIsTransitioning(false);
+      setSelectedLevel(null);
+      setIsOpen(true);
+    };
+
+    window.addEventListener("fittrack_open_rexi_onboarding", handleOpen);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("fittrack_open_rexi_onboarding", handleOpen);
+    };
+  }, [location]);
 
   const handleSelectLevel = (level: "beginner" | "intermediate" | "advanced") => {
     setSelectedLevel(level);
@@ -36,7 +52,7 @@ export function RexiOnboardingModal() {
 
     try {
       saveExperienceMode(level === "beginner" ? "beginner" : "advanced");
-      localStorage.setItem(getScopedKey("fittrack_onboarding_completed"), "true");
+      sessionStorage.setItem("fittrack_rexi_welcomed", "true");
       localStorage.setItem("fittrack_just_onboarded", "true");
     } catch {}
 
