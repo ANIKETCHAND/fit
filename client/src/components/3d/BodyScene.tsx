@@ -1,66 +1,141 @@
-/** Kinetic Anatomy Lab: performant React Three Fiber stage with smooth camera positions and muscle selection. */
-/* Carbon Command Deck: the 3D body is a layered muscle instrument with scan paths, fiber cues, and direct interaction. */
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Sparkles } from "@react-three/drei";
-import { useMemo, useRef, useState } from "react";
-import * as THREE from "three";
+/** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
+/* Interactive 3D anatomical viewer powered by the Male Anatomy Study model with viewpoint controls and telemetry HUD */
+import { useState, useMemo } from "react";
 import { useReducedMotion } from "framer-motion";
 import { BodyControls, type BodyView } from "./BodyControls";
-import { HumanBody } from "./HumanBody";
 import type { MuscleId } from "@/lib/fitness-data";
+import { muscleLibrary } from "@/lib/fitness-data";
 import { useIsMobile } from "@/hooks/useMobile";
+import { Activity, Eye, Layers, Sparkles, Zap } from "lucide-react";
 
-type SceneInnerProps = { view: BodyView; autoRotate: boolean; reduceMotion: boolean; selected: MuscleId; onSelected: (id: MuscleId) => void; isMobile: boolean; };
+type BodySceneProps = {
+  selected: MuscleId;
+  onSelected: (id: MuscleId) => void;
+};
 
-function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMobile }: SceneInnerProps) {
-  const controls = useRef<any>(null);
-  const [hovered, setHovered] = useState<MuscleId | null>(null);
-  const targetPosition = useMemo(() => {
-    const distance = isMobile ? 13.2 : 9.5;
-    if (view === "back") return new THREE.Vector3(0, 0.35, -distance);
-    if (view === "side") return new THREE.Vector3(distance - .2, 0.35, 0.15);
-    return new THREE.Vector3(0, 0.35, distance);
-  }, [isMobile, view]);
-  const targetLookAt = useMemo(() => new THREE.Vector3(0, 0.15, 0), []);
-
-  useFrame(({ camera }, delta) => {
-    const lerp = 1 - Math.exp(-delta * 5.6);
-    camera.position.lerp(targetPosition, lerp);
-    controls.current?.target.lerp(targetLookAt, lerp);
-    controls.current?.update();
-  });
-
-  return <>
-    <color attach="background" args={["#070908"]} />
-    <fog attach="fog" args={["#070908", 5.8, isMobile ? 17.5 : 10.5]} />
-    <ambientLight intensity={1.8} color="#d5e8d8" />
-    <directionalLight position={[3.8, 5.2, 4]} intensity={5.2} color="#e9ffd9" castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-    <pointLight position={[-4, 1.5, 3]} intensity={7.2} distance={8} color="#76c44e" />
-    <pointLight position={[3, -2.4, 3]} intensity={3.2} distance={6} color="#8ec4dd" />
-    <group><HumanBody selected={selected} hovered={hovered} onHover={setHovered} onSelect={onSelected} /></group>
-    {!reduceMotion && <Sparkles count={32} scale={[5.7, 8.7, 4.2]} size={1.25} speed={0.22} color="#c6ff3d" opacity={0.24} />}
-    <mesh position={[0, -3.5, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[2.38, 48]} /><meshBasicMaterial color="#baff57" transparent opacity={0.055} /></mesh>
-    <OrbitControls ref={controls} enablePan={false} enableZoom minDistance={6.6} maxDistance={11.8} autoRotate={!reduceMotion && autoRotate} autoRotateSpeed={0.8} enableDamping dampingFactor={0.08} maxPolarAngle={Math.PI / 1.75} minPolarAngle={Math.PI / 3.2} />
-  </>;
-}
-
-type BodySceneProps = { selected: MuscleId; onSelected: (id: MuscleId) => void; };
+// Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
+const BASE_EMBED_URL = "https://sketchfab.com/models/8b6b4d5daad74da8bd821eef5a0a8511/embed";
 
 export function BodyScene({ selected, onSelected }: BodySceneProps) {
   const [view, setView] = useState<BodyView>("front");
   const [autoRotate, setAutoRotate] = useState(false);
-  const reduceMotion = useReducedMotion() ?? false;
+  const [activeTab, setActiveTab] = useState<"simulation" | "layers">("simulation");
   const isMobile = useIsMobile();
-  const reset = () => { setView("front"); setAutoRotate(false); };
-  return <section className="body-stage" aria-label="Interactive 3D anatomy explorer">
-    <div className="stage-topline"><span><i />Anatomy map</span><span className="stage-coordinate">X 31.5 / Y 14.2 / Z 08.7</span></div>
-    <div className="scan-grid" aria-hidden="true" /><div className={`anatomy-fiber-map focus-${selected}`} aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="anatomy-ruler ruler-vertical" aria-hidden="true"><i /><i /><i /><i /><i /></div><div className="anatomy-ruler ruler-horizontal" aria-hidden="true"><i /><i /><i /><i /><i /></div><div className="body-crosshair crosshair-x" aria-hidden="true" /><div className="body-crosshair crosshair-y" aria-hidden="true" />
-    <div className="body-halo halo-one" aria-hidden="true" /><div className="body-halo halo-two" aria-hidden="true" />
-    <div className="anatomy-callout callout-chest" aria-hidden="true"><span>01</span><b>PECTORAL<br />SIGNAL</b><i /></div>
-    <div className="anatomy-callout callout-core" aria-hidden="true"><span>02</span><b>CORE<br />LOAD</b><i /></div><div className="anatomy-coordinate-tag tag-one" aria-hidden="true">F-18.03</div><div className="anatomy-coordinate-tag tag-two" aria-hidden="true">T-06.21</div>
-    <Canvas dpr={[1, 1.45]} shadows camera={{ position: [0, 0.35, isMobile ? 13.2 : 9.5], fov: isMobile ? 45 : 36 }} gl={{ antialias: true, powerPreference: "high-performance" }}>
-      <SceneInner view={view} autoRotate={autoRotate} reduceMotion={reduceMotion} selected={selected} onSelected={onSelected} isMobile={isMobile} />
-    </Canvas>
-    <BodyControls view={view} autoRotate={autoRotate} onView={setView} onReset={reset} onToggleRotate={() => setAutoRotate((state) => !state)} />
-  </section>;
+  const reduceMotion = useReducedMotion() ?? false;
+
+  const currentMuscle = muscleLibrary[selected] || muscleLibrary["chest"];
+
+  const reset = () => {
+    setView("front");
+    setAutoRotate(false);
+  };
+
+  // Construct optimized embed URL with dark theme, transparency, zero watermarks, and smooth interaction
+  const embedSrc = useMemo(() => {
+    const params = new URLSearchParams({
+      autostart: "1",
+      internal: "1",
+      tracking: "0",
+      ui_infos: "0",
+      ui_snapshots: "0",
+      ui_stop: "0",
+      ui_watermark: "0",
+      ui_color: "c6ff3d",
+      ui_theme: "dark",
+      transparent: "1",
+      scrollwheel: "1",
+      camera: "0",
+      autospin: autoRotate ? "0.2" : "0",
+    });
+    return `${BASE_EMBED_URL}?${params.toString()}`;
+  }, [autoRotate]);
+
+  return (
+    <section className="body-stage" aria-label="Interactive 3D anatomy explorer">
+      {/* Topline Coordinate Readout */}
+      <div className="stage-topline">
+        <span className="flex items-center gap-1.5">
+          <i className="w-1.5 h-1.5 rounded-full bg-[#c6ff3d] animate-pulse" />
+          3D Anatomy Simulation
+        </span>
+        <span className="stage-coordinate font-mono text-[10px] text-[#8b9c8a]">
+          X 31.5 / Y 14.2 / Z 08.7
+        </span>
+      </div>
+
+      {/* Kinetic Scan Grids & Crosshairs */}
+      <div className="scan-grid" aria-hidden="true" />
+      <div className={`anatomy-fiber-map focus-${selected}`} aria-hidden="true">
+        <i /><i /><i /><i /><i /><i /><i /><i />
+      </div>
+      <div className="anatomy-ruler ruler-vertical" aria-hidden="true">
+        <i /><i /><i /><i /><i />
+      </div>
+      <div className="anatomy-ruler ruler-horizontal" aria-hidden="true">
+        <i /><i /><i /><i /><i />
+      </div>
+      <div className="body-crosshair crosshair-x" aria-hidden="true" />
+      <div className="body-crosshair crosshair-y" aria-hidden="true" />
+      <div className="body-halo halo-one" aria-hidden="true" />
+      <div className="body-halo halo-two" aria-hidden="true" />
+
+      {/* Dynamic Anatomy Telemetry HUD Overlays */}
+      <div className="anatomy-callout callout-chest" aria-hidden="true">
+        <span>01</span>
+        <b>
+          {currentMuscle.anatomicalName.toUpperCase()}
+          <br />
+          ACTIVE SIGNAL
+        </b>
+        <i />
+      </div>
+      <div className="anatomy-callout callout-core" aria-hidden="true">
+        <span>02</span>
+        <b>
+          LOAD INDEX
+          <br />
+          {currentMuscle.relativeMass}% MASS
+        </b>
+        <i />
+      </div>
+
+      <div className="anatomy-coordinate-tag tag-one" aria-hidden="true">
+        SIM-8B6B
+      </div>
+      <div className="anatomy-coordinate-tag tag-two" aria-hidden="true">
+        T-06.21
+      </div>
+
+      {/* Interactive 3D Anatomy Simulation Viewport */}
+      <div className="relative w-full h-full min-h-[460px] sm:min-h-[520px] flex items-center justify-center overflow-hidden z-[2]">
+        <iframe
+          key={`${view}-${autoRotate ? "rot" : "norot"}`}
+          title="Male Anatomy Study 3D Simulation"
+          src={embedSrc}
+          className="w-full h-full border-0 absolute inset-0 pointer-events-auto"
+          allow="autoplay; fullscreen; xr-spatial-tracking"
+          allowFullScreen
+          loading="lazy"
+          style={{ background: "transparent" }}
+        />
+
+        {/* Floating Active Target Badge */}
+        <div className="absolute top-12 left-4 z-10 pointer-events-none bg-[#080d0a]/80 backdrop-blur-md border border-[#c6ff3d]/30 rounded px-2.5 py-1 flex items-center gap-2">
+          <Zap size={11} className="text-[#c6ff3d] animate-pulse" />
+          <span className="font-mono text-[9px] uppercase tracking-wider text-[#edf4e9]">
+            Focus: <b className="text-[#c6ff3d]">{currentMuscle.commonName}</b>
+          </span>
+        </div>
+      </div>
+
+      {/* Interactive Controls & View Angle Switcher */}
+      <BodyControls
+        view={view}
+        autoRotate={autoRotate}
+        onView={setView}
+        onReset={reset}
+        onToggleRotate={() => setAutoRotate((state) => !state)}
+      />
+    </section>
+  );
 }
