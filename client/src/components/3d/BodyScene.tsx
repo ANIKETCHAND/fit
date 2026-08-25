@@ -1,5 +1,5 @@
 /** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
-/* Interactive 3D anatomical viewer with centered full-body framing [0, 0, 1.45], 360-degree orbit, and zero white loading screen */
+/* Interactive 3D anatomical viewer with centered full-body framing [0, 0, 1.85], 360-degree orbit, and zero white loading screen */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { BodyControls, type BodyView } from "./BodyControls";
 import type { MuscleId } from "@/lib/fitness-data";
@@ -14,26 +14,26 @@ type BodySceneProps = {
 // Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
 const MODEL_UID = "8b6b4d5daad74da8bd821eef5a0a8511";
 
-// Anatomically Centered Full-Body Target [0, 0, 1.45] (brings torso & head down into the center of the viewport)
-const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.45];
+// Dead-Center Target [0, 0, 1.85] with Distance 4.1 (centers head-to-pedestal symmetrically in the stage)
+const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.85];
 
 const viewPositions: Record<BodyView, { eye: [number, number, number]; target: [number, number, number] }> = {
-  front: { eye: [0, -3.5, 1.45], target: FIXED_CENTER_TARGET },
-  back: { eye: [0, 3.5, 1.45], target: FIXED_CENTER_TARGET },
-  side: { eye: [3.5, 0, 1.45], target: FIXED_CENTER_TARGET },
+  front: { eye: [0, -4.1, 1.85], target: FIXED_CENTER_TARGET },
+  back: { eye: [0, 4.1, 1.85], target: FIXED_CENTER_TARGET },
+  side: { eye: [4.1, 0, 1.85], target: FIXED_CENTER_TARGET },
 };
 
 const musclePositions: Record<string, { eye: [number, number, number]; target: [number, number, number] }> = {
-  chest: { eye: [0, -2.6, 1.55], target: [0, 0, 1.55] },
-  back: { eye: [0, 2.6, 1.55], target: [0, 0, 1.55] },
-  shoulders: { eye: [1.6, -2.1, 1.65], target: [0, 0, 1.65] },
-  biceps: { eye: [2.0, -1.5, 1.45], target: [0.3, 0, 1.45] },
-  triceps: { eye: [2.0, 1.5, 1.45], target: [0.3, 0, 1.45] },
-  core: { eye: [0, -2.5, 1.3], target: [0, 0, 1.3] },
-  glutes: { eye: [0, 2.7, 1.1], target: [0, 0, 1.1] },
-  quads: { eye: [0, -2.9, 0.8], target: [0, 0, 0.8] },
-  hamstrings: { eye: [0, 2.9, 0.8], target: [0, 0, 0.8] },
-  calves: { eye: [0, -2.9, 0.4], target: [0, 0, 0.4] },
+  chest: { eye: [0, -3.0, 1.85], target: [0, 0, 1.85] },
+  back: { eye: [0, 3.0, 1.85], target: [0, 0, 1.85] },
+  shoulders: { eye: [1.8, -2.4, 1.95], target: [0, 0, 1.95] },
+  biceps: { eye: [2.2, -1.8, 1.75], target: [0.3, 0, 1.75] },
+  triceps: { eye: [2.2, 1.8, 1.75], target: [0.3, 0, 1.75] },
+  core: { eye: [0, -2.9, 1.55], target: [0, 0, 1.55] },
+  glutes: { eye: [0, 3.1, 1.35], target: [0, 0, 1.35] },
+  quads: { eye: [0, -3.3, 1.05], target: [0, 0, 1.05] },
+  hamstrings: { eye: [0, 3.3, 1.05], target: [0, 0, 1.05] },
+  calves: { eye: [0, -3.3, 0.65], target: [0, 0, 0.65] },
 };
 
 export function BodyScene({ selected }: BodySceneProps) {
@@ -121,7 +121,7 @@ export function BodyScene({ selected }: BodySceneProps) {
                 }
               }
 
-              // Set initial centered camera framing at [0, -3.5, 1.45] looking at [0, 0, 1.45]
+              // Set initial dead-center camera framing at [0, -4.1, 1.85] looking at [0, 0, 1.85]
               const front = viewPositions.front;
               api.setCameraLookAt(front.eye, front.target, 0.1, () => {
                 setTimeout(() => {
