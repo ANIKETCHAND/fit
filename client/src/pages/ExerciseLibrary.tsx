@@ -195,7 +195,7 @@ export default function ExerciseLibrary() {
   return (
     <WorkflowLayout title="Study the pattern">
       <section className="library-toolbar">
-        <div className="library-search">
+        <div className="library-search" style={{ width: "100%" }}>
           <Search size={16} />
           <input
             value={query}
@@ -203,7 +203,7 @@ export default function ExerciseLibrary() {
               setQuery(event.target.value);
               setSelectedExerciseId(null);
             }}
-            placeholder="Search movement, muscle, or equipment (e.g. lat, bench, quad)"
+            placeholder="Search movements..."
           />
           {query && (
             <button
@@ -218,33 +218,6 @@ export default function ExerciseLibrary() {
             </button>
           )}
         </div>
-        <div className="library-filters">
-          <Filter size={14} />
-          {filterTabs.map((item) => (
-            <button
-              key={item}
-              className={focus === item ? "selected" : ""}
-              onClick={() => {
-                setFocus(item);
-                setSelectedExerciseId(null);
-              }}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <button
-          className="library-tune"
-          onClick={() => {
-            setFocus("All signals");
-            setQuery("");
-            setSelectedExerciseId(null);
-            toast("Showing all movement library exercises");
-          }}
-        >
-          <SlidersHorizontal size={16} />
-          Reset filters
-        </button>
       </section>
 
       <section className="exercise-library-grid">
