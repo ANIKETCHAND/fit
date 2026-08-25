@@ -1,5 +1,5 @@
 /** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
-/* Interactive 3D anatomical viewer with calibrated central framing [0, 0, 1.62], 360-degree orbit, and zero white loading screen */
+/* Clean 3D anatomical viewer with all external redirect badges/watermarks removed and centered full-body framing */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { BodyControls, type BodyView } from "./BodyControls";
 import type { MuscleId } from "@/lib/fitness-data";
@@ -14,21 +14,21 @@ type BodySceneProps = {
 // Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
 const MODEL_UID = "8b6b4d5daad74da8bd821eef5a0a8511";
 
-// Balanced Center Target [0, 0, 1.62] with Distance 3.75 (centers whole body with equal top and bottom margin)
-const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.62];
+// Centered Full-Body Framing: Z=1.65, Distance=3.85
+const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.65];
 
 const viewPositions: Record<BodyView, { eye: [number, number, number]; target: [number, number, number] }> = {
-  front: { eye: [0, -3.75, 1.62], target: FIXED_CENTER_TARGET },
-  back: { eye: [0, 3.75, 1.62], target: FIXED_CENTER_TARGET },
-  side: { eye: [3.75, 0, 1.62], target: FIXED_CENTER_TARGET },
+  front: { eye: [0, -3.85, 1.65], target: FIXED_CENTER_TARGET },
+  back: { eye: [0, 3.85, 1.65], target: FIXED_CENTER_TARGET },
+  side: { eye: [3.85, 0, 1.65], target: FIXED_CENTER_TARGET },
 };
 
 const musclePositions: Record<string, { eye: [number, number, number]; target: [number, number, number] }> = {
-  chest: { eye: [0, -2.8, 1.7], target: [0, 0, 1.7] },
-  back: { eye: [0, 2.8, 1.7], target: [0, 0, 1.7] },
-  shoulders: { eye: [1.7, -2.2, 1.8], target: [0, 0, 1.8] },
-  biceps: { eye: [2.1, -1.6, 1.6], target: [0.3, 0, 1.6] },
-  triceps: { eye: [2.1, 1.6, 1.6], target: [0.3, 0, 1.6] },
+  chest: { eye: [0, -2.8, 1.75], target: [0, 0, 1.75] },
+  back: { eye: [0, 2.8, 1.75], target: [0, 0, 1.75] },
+  shoulders: { eye: [1.7, -2.2, 1.85], target: [0, 0, 1.85] },
+  biceps: { eye: [2.1, -1.6, 1.65], target: [0.3, 0, 1.65] },
+  triceps: { eye: [2.1, 1.6, 1.65], target: [0.3, 0, 1.65] },
   core: { eye: [0, -2.7, 1.45], target: [0, 0, 1.45] },
   glutes: { eye: [0, 2.9, 1.25], target: [0, 0, 1.25] },
   quads: { eye: [0, -3.1, 0.95], target: [0, 0, 0.95] },
@@ -87,7 +87,7 @@ export function BodyScene({ selected }: BodySceneProps) {
     }
   };
 
-  // Initialize Sketchfab Viewer API with dark theme (#070908) and calibrated center framing
+  // Initialize Sketchfab Viewer API with dark theme (#070908) and zero UI badges/redirects
   useEffect(() => {
     if (!iframeRef.current) return;
 
@@ -121,7 +121,7 @@ export function BodyScene({ selected }: BodySceneProps) {
                 }
               }
 
-              // Set balanced center camera framing at [0, -3.75, 1.62] looking at [0, 0, 1.62]
+              // Set balanced center camera framing at [0, -3.85, 1.65] looking at [0, 0, 1.65]
               const front = viewPositions.front;
               api.setCameraLookAt(front.eye, front.target, 0.1, () => {
                 setTimeout(() => {
@@ -136,12 +136,18 @@ export function BodyScene({ selected }: BodySceneProps) {
           autostart: 1,
           transparent: 1,
           ui_theme: "dark",
-          ui_infos: 0,
-          ui_watermark: 0,
-          ui_loading: 0,
+          ui_infos: 0, // Suppress model info badge
+          ui_watermark: 0, // Suppress Sketchfab watermark
+          ui_loading: 0, // Suppress white loading screen
+          ui_controls: 0, // Suppress default controls
+          ui_general_controls: 0,
+          ui_help: 0,
+          ui_settings: 0,
+          ui_vr: 0,
+          ui_ar: 0,
+          ui_annotations: 0,
           ui_color: "c6ff3d",
           ui_stop: 0,
-          ui_controls: 1,
           scrollwheel: 1,
           autospin: 0,
           double_click: 0,
@@ -179,6 +185,10 @@ export function BodyScene({ selected }: BodySceneProps) {
       ui_stop: "0",
       ui_watermark: "0",
       ui_loading: "0",
+      ui_controls: "0",
+      ui_general_controls: "0",
+      ui_help: "0",
+      ui_settings: "0",
       ui_color: "c6ff3d",
       ui_theme: "dark",
       transparent: "1",
@@ -231,6 +241,24 @@ export function BodyScene({ selected }: BodySceneProps) {
             </span>
           </div>
         </div>
+
+        {/* Mask out top-left author badge & redirect link */}
+        <div
+          className="absolute top-0 left-0 w-48 h-12 z-20 pointer-events-none"
+          style={{ background: "#070908" }}
+        />
+
+        {/* Mask out top-right share & external links */}
+        <div
+          className="absolute top-0 right-0 w-36 h-12 z-20 pointer-events-none"
+          style={{ background: "#070908" }}
+        />
+
+        {/* Mask out bottom-left Sketchfab blue cube button & watermark */}
+        <div
+          className="absolute bottom-0 left-0 w-16 h-14 z-20 pointer-events-none"
+          style={{ background: "#070908" }}
+        />
 
         <iframe
           ref={iframeRef}
