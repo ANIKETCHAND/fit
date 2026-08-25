@@ -1,5 +1,5 @@
 /** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
-/* Interactive 3D anatomical viewer with centered full-body framing [0, 0, 1.85], 360-degree orbit, and zero white loading screen */
+/* Interactive 3D anatomical viewer with dynamic center calibration, 360-degree orbit, and zero white loading screen */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { BodyControls, type BodyView } from "./BodyControls";
 import type { MuscleId } from "@/lib/fitness-data";
@@ -14,28 +14,6 @@ type BodySceneProps = {
 // Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
 const MODEL_UID = "8b6b4d5daad74da8bd821eef5a0a8511";
 
-// Dead-Center Target [0, 0, 1.85] with Distance 4.1 (centers head-to-pedestal symmetrically in the stage)
-const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.85];
-
-const viewPositions: Record<BodyView, { eye: [number, number, number]; target: [number, number, number] }> = {
-  front: { eye: [0, -4.1, 1.85], target: FIXED_CENTER_TARGET },
-  back: { eye: [0, 4.1, 1.85], target: FIXED_CENTER_TARGET },
-  side: { eye: [4.1, 0, 1.85], target: FIXED_CENTER_TARGET },
-};
-
-const musclePositions: Record<string, { eye: [number, number, number]; target: [number, number, number] }> = {
-  chest: { eye: [0, -3.0, 1.85], target: [0, 0, 1.85] },
-  back: { eye: [0, 3.0, 1.85], target: [0, 0, 1.85] },
-  shoulders: { eye: [1.8, -2.4, 1.95], target: [0, 0, 1.95] },
-  biceps: { eye: [2.2, -1.8, 1.75], target: [0.3, 0, 1.75] },
-  triceps: { eye: [2.2, 1.8, 1.75], target: [0.3, 0, 1.75] },
-  core: { eye: [0, -2.9, 1.55], target: [0, 0, 1.55] },
-  glutes: { eye: [0, 3.1, 1.35], target: [0, 0, 1.35] },
-  quads: { eye: [0, -3.3, 1.05], target: [0, 0, 1.05] },
-  hamstrings: { eye: [0, 3.3, 1.05], target: [0, 0, 1.05] },
-  calves: { eye: [0, -3.3, 0.65], target: [0, 0, 0.65] },
-};
-
 export function BodyScene({ selected }: BodySceneProps) {
   const [view, setView] = useState<BodyView>("front");
   const [autoRotate, setAutoRotate] = useState(false);
@@ -43,9 +21,13 @@ export function BodyScene({ selected }: BodySceneProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const apiRef = useRef<any>(null);
 
+  // Store the model's natural center coordinates from api.getCameraLookAt
+  const centerTargetRef = useRef<[number, number, number]>([0, 0, 0]);
+  const centerDistanceRef = useRef<number>(4.0);
+
   const currentMuscle = muscleLibrary[selected] || muscleLibrary["chest"];
 
-  // Helper to move 3D camera smoothly around the fixed central axis
+  // Helper to move 3D camera smoothly
   const moveCamera = useCallback((eye: [number, number, number], target: [number, number, number], duration = 1.0) => {
     if (apiRef.current && typeof apiRef.current.setCameraLookAt === "function") {
       try {
@@ -56,16 +38,23 @@ export function BodyScene({ selected }: BodySceneProps) {
     }
   }, []);
 
-  // Handle Front / Back / Side button clicks with locked center axis
+  // Handle Front / Back / Side button clicks with calibrated center axis
   const handleViewChange = (newView: BodyView) => {
     setView(newView);
     setAutoRotate(false);
     if (apiRef.current?.setAutospin) {
       apiRef.current.setAutospin(0);
     }
-    const preset = viewPositions[newView];
-    if (preset) {
-      moveCamera(preset.eye, preset.target, 1.2);
+
+    const [cx, cy, cz] = centerTargetRef.current;
+    const dist = centerDistanceRef.current;
+
+    if (newView === "front") {
+      moveCamera([cx, cy - dist, cz], [cx, cy, cz], 1.0);
+    } else if (newView === "back") {
+      moveCamera([cx, cy + dist, cz], [cx, cy, cz], 1.0);
+    } else if (newView === "side") {
+      moveCamera([cx + dist, cy, cz], [cx, cy, cz], 1.0);
     }
   };
 
@@ -75,8 +64,13 @@ export function BodyScene({ selected }: BodySceneProps) {
     if (apiRef.current?.setAutospin) {
       apiRef.current.setAutospin(0);
     }
-    const frontPreset = viewPositions.front;
-    moveCamera(frontPreset.eye, frontPreset.target, 1.0);
+    if (apiRef.current && typeof apiRef.current.recenterCamera === "function") {
+      apiRef.current.recenterCamera(() => {});
+    } else {
+      const [cx, cy, cz] = centerTargetRef.current;
+      const dist = centerDistanceRef.current;
+      moveCamera([cx, cy - dist, cz], [cx, cy, cz], 1.0);
+    }
   };
 
   const handleToggleRotate = () => {
@@ -87,7 +81,7 @@ export function BodyScene({ selected }: BodySceneProps) {
     }
   };
 
-  // Initialize Sketchfab Viewer API with dark theme (#070908) and centered camera framing
+  // Initialize Sketchfab Viewer API with dark theme (#070908) and dynamic center calibration
   useEffect(() => {
     if (!iframeRef.current) return;
 
@@ -112,7 +106,25 @@ export function BodyScene({ selected }: BodySceneProps) {
               // Set background to dark carbon theme #070908
               api.setBackground({ color: [0.027, 0.035, 0.031], transparent: true }, () => {});
 
-              // Lock pan constraint to keep body centered on axis
+              // Recenter camera automatically to model bounding center
+              if (typeof api.recenterCamera === "function") {
+                api.recenterCamera(() => {
+                  // Capture centered look-at position
+                  if (typeof api.getCameraLookAt === "function") {
+                    api.getCameraLookAt((err: any, camera: any) => {
+                      if (!err && camera && camera.target && camera.position) {
+                        centerTargetRef.current = [camera.target[0], camera.target[1], camera.target[2]];
+                        const dx = camera.position[0] - camera.target[0];
+                        const dy = camera.position[1] - camera.target[1];
+                        const dz = camera.position[2] - camera.target[2];
+                        centerDistanceRef.current = Math.sqrt(dx * dx + dy * dy + dz * dz) || 4.0;
+                      }
+                    });
+                  }
+                });
+              }
+
+              // Lock pan constraint so model stays centered
               if (typeof api.setCameraConstraints === "function") {
                 try {
                   api.setCameraConstraints({ pan: false });
@@ -121,13 +133,9 @@ export function BodyScene({ selected }: BodySceneProps) {
                 }
               }
 
-              // Set initial dead-center camera framing at [0, -4.1, 1.85] looking at [0, 0, 1.85]
-              const front = viewPositions.front;
-              api.setCameraLookAt(front.eye, front.target, 0.1, () => {
-                setTimeout(() => {
-                  if (isMounted) setViewerReady(true);
-                }, 300);
-              });
+              setTimeout(() => {
+                if (isMounted) setViewerReady(true);
+              }, 400);
             });
           },
           error: () => {
@@ -138,14 +146,14 @@ export function BodyScene({ selected }: BodySceneProps) {
           ui_theme: "dark",
           ui_infos: 0,
           ui_watermark: 0,
-          ui_loading: 0, // Suppress default white loading screen
+          ui_loading: 0,
           ui_color: "c6ff3d",
           ui_stop: 0,
           ui_controls: 1,
           scrollwheel: 1,
           autospin: 0,
-          double_click: 0, // Prevent accidental pivot shifts on double tap
-          orbit_constraint_pan: 1, // Disable panning drift off-axis
+          double_click: 0,
+          orbit_constraint_pan: 1,
         });
       } catch {
         if (isMounted) setViewerReady(true);
@@ -159,16 +167,7 @@ export function BodyScene({ selected }: BodySceneProps) {
     };
   }, []);
 
-  // When selected muscle tab changes (Chest, Back, Legs, Shoulders, etc.), smoothly orbit 360° to that muscle
-  useEffect(() => {
-    if (!viewerReady) return;
-    const targetPose = musclePositions[selected] || musclePositions.chest;
-    if (targetPose) {
-      moveCamera(targetPose.eye, targetPose.target, 1.2);
-    }
-  }, [selected, viewerReady, moveCamera]);
-
-  // Construct iframe fallback URL with disabled pan and locked center parameters
+  // Construct iframe fallback URL
   const iframeSrc = useMemo(() => {
     const params = new URLSearchParams({
       autostart: "1",
