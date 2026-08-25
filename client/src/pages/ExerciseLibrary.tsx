@@ -30,15 +30,6 @@ const muscleAliases: Record<string, string[]> = {
 const filterTabs = [
   "All signals",
   "Favorites",
-  "Coached",
-  "Pectorals",
-  "Lats",
-  "Deltoids",
-  "Biceps",
-  "Triceps",
-  "Quadriceps",
-  "Hamstrings",
-  "Core",
 ];
 
 export default function ExerciseLibrary() {
