@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Filter, Search, SlidersHorizontal, X } from "lucide-react";
+import { Heart, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
@@ -220,21 +220,17 @@ export default function ExerciseLibrary() {
         </div>
         <div className="library-filters">
           <button
-            className={focus === "All signals" ? "selected" : ""}
-            onClick={() => {
-              setFocus("All signals");
-              setSelectedExerciseId(null);
-            }}
-          >
-            All
-          </button>
-          <button
             className={focus === "Favorites" ? "selected" : ""}
             onClick={() => {
-              setFocus("Favorites");
+              const next = focus === "Favorites" ? "All signals" : "Favorites";
+              setFocus(next);
               setSelectedExerciseId(null);
+              if (next === "Favorites") toast("Showing favorite movements");
             }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            aria-label="Filter by favorites"
           >
+            <Heart size={13} fill={focus === "Favorites" ? "currentColor" : "none"} />
             Favorites
           </button>
         </div>
