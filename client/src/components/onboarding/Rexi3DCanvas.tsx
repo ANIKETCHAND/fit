@@ -1,62 +1,60 @@
-/* FitTrack: Procedural 3D Animated Rexi Mascot in Three.js */
+/* FitTrack: 3D Animated Rexi Mascot in Three.js */
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 interface Rexi3DCanvasProps {
   isCelebrating?: boolean;
-  onJumpComplete?: () => void;
+  step?: "greeting" | "ask_level";
 }
 
-export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
+export function Rexi3DCanvas({ isCelebrating = false, step = "greeting" }: Rexi3DCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    const width = container.clientWidth || 280;
-    const height = container.clientHeight || 220;
+    const width = container.clientWidth || 320;
+    const height = container.clientHeight || (step === "greeting" ? 260 : 180);
 
     // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
-    camera.position.set(0, 0.4, 4.2);
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
+    camera.position.set(0, 0.3, 4.0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.3;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMappingExposure = 1.35;
     container.appendChild(renderer.domElement);
 
     // 2. Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0x224422, 1.8);
+    const ambientLight = new THREE.AmbientLight(0x1a331a, 2.2);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xc6ff3d, 3.2);
+    const keyLight = new THREE.DirectionalLight(0xc6ff3d, 3.5);
     keyLight.position.set(3, 5, 4);
     scene.add(keyLight);
 
-    const rimLight = new THREE.PointLight(0x38bdf8, 4.5, 12);
+    const rimLight = new THREE.PointLight(0x38bdf8, 4.0, 10);
     rimLight.position.set(-3, 2, -2);
     scene.add(rimLight);
 
-    const bottomGlow = new THREE.PointLight(0xbaff57, 3.0, 8);
-    bottomGlow.position.set(0, -1.2, 1.5);
+    const bottomGlow = new THREE.PointLight(0xbaff57, 3.2, 8);
+    bottomGlow.position.set(0, -1.0, 1.5);
     scene.add(bottomGlow);
 
     // 3. Materials
     const bodyMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xa8f53a,
       emissive: 0x225511,
-      emissiveIntensity: 0.25,
-      roughness: 0.18,
+      emissiveIntensity: 0.3,
+      roughness: 0.15,
       metalness: 0.05,
-      clearcoat: 0.8,
-      clearcoatRoughness: 0.15,
-      sheen: 0.6,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.1,
+      sheen: 0.7,
       sheenColor: new THREE.Color(0xd9f99d),
     });
 
@@ -71,33 +69,26 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     });
 
     const cheekMaterial = new THREE.MeshStandardMaterial({
-      color: 0x65a30d,
-      roughness: 0.4,
+      color: 0x4d7c0f,
+      roughness: 0.3,
       transparent: true,
-      opacity: 0.7,
-    });
-
-    const goldBadgeMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      metalness: 0.8,
-      roughness: 0.2,
+      opacity: 0.6,
     });
 
     // 4. Construct Rexi Character Hierarchy
     const rootGroup = new THREE.Group();
     scene.add(rootGroup);
 
-    // Main Body Character Group
+    // Character container
     const character = new THREE.Group();
     rootGroup.add(character);
 
-    // Body (Squishy rounded capsule / sphere)
+    // Cute Pear-shaped Body
     const bodyGeometry = new THREE.SphereGeometry(0.85, 36, 36);
-    // Taper slightly for cute pear shape
     const posAttr = bodyGeometry.attributes.position;
     for (let i = 0; i < posAttr.count; i++) {
       let y = posAttr.getY(i);
-      let factor = y < 0 ? 1.08 - y * 0.12 : 0.98 + y * 0.04;
+      let factor = y < 0 ? 1.08 - y * 0.12 : 0.96 + y * 0.04;
       posAttr.setX(i, posAttr.getX(i) * factor);
       posAttr.setZ(i, posAttr.getZ(i) * factor);
     }
@@ -119,7 +110,7 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     const hornMesh = new THREE.Mesh(hornGeometry, bodyMaterial);
     character.add(hornMesh);
 
-    // Horn Tip Glow Sphere
+    // Horn Glowing Tip
     const tipGeometry = new THREE.SphereGeometry(0.12, 16, 16);
     const tipMaterial = new THREE.MeshBasicMaterial({ color: 0xc6ff3d });
     const tipMesh = new THREE.Mesh(tipGeometry, tipMaterial);
@@ -130,30 +121,26 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     const eyeGeometry = new THREE.SphereGeometry(0.13, 24, 24);
     eyeGeometry.scale(1, 1.45, 0.6);
 
-    // Left Eye
     const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
     leftEye.position.set(-0.3, 0.95, 0.72);
     leftEye.rotation.y = -0.15;
     character.add(leftEye);
 
-    // Left Eye Highlight 1
     const highlightGeo = new THREE.SphereGeometry(0.04, 12, 12);
     const leftHigh = new THREE.Mesh(highlightGeo, eyeHighlightMaterial);
     leftHigh.position.set(-0.28, 1.02, 0.8);
     character.add(leftHigh);
 
-    // Right Eye
     const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
     rightEye.position.set(0.3, 0.95, 0.72);
     rightEye.rotation.y = 0.15;
     character.add(rightEye);
 
-    // Right Eye Highlight 1
     const rightHigh = new THREE.Mesh(highlightGeo, eyeHighlightMaterial);
     rightHigh.position.set(0.32, 1.02, 0.8);
     character.add(rightHigh);
 
-    // Cute Cheeks
+    // Cheeks
     const cheekGeo = new THREE.SphereGeometry(0.09, 16, 16);
     cheekGeo.scale(1.2, 0.7, 0.5);
     const leftCheek = new THREE.Mesh(cheekGeo, cheekMaterial);
@@ -164,7 +151,7 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     rightCheek.position.set(0.48, 0.76, 0.64);
     character.add(rightCheek);
 
-    // Cute Floating Hands/Paws
+    // Floating Paws
     const handGeo = new THREE.SphereGeometry(0.18, 20, 20);
     handGeo.scale(1, 0.85, 1.2);
 
@@ -176,7 +163,7 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     rightHand.position.set(0.85, 0.65, 0.35);
     character.add(rightHand);
 
-    // Ground Shadow Blob (Fades & shrinks when jumping)
+    // Ground Shadow Blob
     const shadowGeo = new THREE.PlaneGeometry(1.6, 1.2);
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
@@ -202,7 +189,7 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     ringMesh.position.y = -0.38;
     rootGroup.add(ringMesh);
 
-    // 5. Mouse Parallax Tracking
+    // Mouse Tracking
     const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
     const handleMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect();
@@ -211,7 +198,7 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
     };
     window.addEventListener("mousemove", handleMouseMove);
 
-    // 6. Animation Loop: High Energy 3D Jumping & Squash-Stretch
+    // 5. Animation Loop
     let clock = new THREE.Clock();
     let animId: number;
     let entranceProgress = 0;
@@ -221,13 +208,13 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
       const delta = clock.getDelta();
       const time = clock.getElapsedTime();
 
-      // Mouse Lerp
+      // Mouse smoothing
       mouse.x += (mouse.targetX - mouse.x) * 0.08;
       mouse.y += (mouse.targetY - mouse.y) * 0.08;
 
-      // Entrance drop-in
+      // Entrance Drop-in
       if (entranceProgress < 1) {
-        entranceProgress = Math.min(1, entranceProgress + delta * 2.2);
+        entranceProgress = Math.min(1, entranceProgress + delta * 2.4);
         const ease = Math.sin((entranceProgress * Math.PI) / 2);
         rootGroup.position.y = (1 - ease) * 3;
         rootGroup.rotation.y = (1 - ease) * Math.PI * 2;
@@ -243,8 +230,6 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
       character.position.y = currentJumpY;
 
       // Squash and Stretch:
-      // When near ground (rawJump < 0.25) -> Squash (X/Z wider, Y shorter)
-      // When at peak (rawJump > 0.6) -> Stretch (Y taller, X/Z narrower)
       if (rawJump < 0.2) {
         const squash = (1 - rawJump / 0.2) * 0.18;
         character.scale.set(1 + squash, 1 - squash * 1.3, 1 + squash);
@@ -253,16 +238,16 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
         character.scale.set(1 - stretch * 0.6, 1 + stretch, 1 - stretch * 0.6);
       }
 
-      // Ground Shadow dynamics
+      // Shadow scaling
       const shadowScale = Math.max(0.4, 1 - rawJump * 0.55);
       shadowMesh.scale.set(shadowScale, shadowScale, 1);
       shadowMat.opacity = Math.max(0.15, 0.5 - rawJump * 0.35);
 
-      // Energy Ring Rotation
+      // Energy Ring
       ringMesh.rotation.z = time * 1.5;
       ringMat.opacity = 0.25 + Math.sin(time * 3) * 0.15;
 
-      // Cute Floating Paw Wave
+      // Waving Paws
       leftHand.position.y = 0.65 + Math.sin(time * 6) * 0.12;
       leftHand.position.x = -0.85 + Math.cos(time * 3) * 0.05;
       rightHand.position.y = 0.65 + Math.cos(time * 6) * 0.12;
@@ -271,12 +256,11 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
       // Horn Wiggle
       hornMesh.rotation.z = Math.sin(time * 5) * 0.08;
 
-      // If Celebrating: Full 3D Backflip Spin!
+      // If Celebrating: Joyful Backflip
       if (isCelebrating) {
         character.rotation.x = time * 8;
         character.rotation.y = time * 4;
       } else {
-        // Look towards user mouse
         character.rotation.y = mouse.x * 0.45;
         character.rotation.x = -mouse.y * 0.25;
       }
@@ -294,12 +278,14 @@ export function Rexi3DCanvas({ isCelebrating = false }: Rexi3DCanvasProps) {
       }
       renderer.dispose();
     };
-  }, [isCelebrating]);
+  }, [isCelebrating, step]);
 
   return (
     <div
       ref={mountRef}
-      className="w-full h-[220px] flex items-center justify-center relative cursor-grab active:cursor-grabbing"
+      className={`w-full flex items-center justify-center relative cursor-grab active:cursor-grabbing ${
+        step === "greeting" ? "h-[250px]" : "h-[180px]"
+      }`}
     />
   );
 }
