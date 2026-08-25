@@ -1,4 +1,4 @@
-/* Kinetic Anatomy Lab workout card: compact evidence panel with retained coaching and staging controls. */
+/* Kinetic Anatomy Lab workout card: compact evidence panel with clean title and video launcher */
 import { useState } from "react";
 import { ArrowUpRight, EyeOff, Heart, Play } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -81,7 +81,6 @@ export function ExerciseFlipCard({
         <section className="exercise-card-face exercise-coaching-panel" aria-label={`${exercise.name} coaching cues`}>
           <span className="exercise-card-top">
             <span className="protocol-tag">Coach cue</span>
-            <span>TIP / 0{index + 1}</span>
           </span>
           <span className="coaching-copy">
             <small>Set the position</small>
@@ -103,12 +102,7 @@ export function ExerciseFlipCard({
         </section>
       ) : (
         <section className="exercise-card-face exercise-card-front">
-          <span className="exercise-card-top">
-            <span className="protocol-tag">{exercise.level}</span>
-            <span>EX / 0{index + 1}</span>
-          </span>
           <span className="exercise-card-copy">
-            <span>{exercise.focus}</span>
             <h2>{exercise.name}</h2>
           </span>
 
