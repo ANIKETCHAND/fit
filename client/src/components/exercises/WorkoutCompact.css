@@ -1,373 +1,347 @@
-/* Kinetic Anatomy Lab: information-only workout cards with editable targets and clear completion state. */
+/* Kinetic Anatomy Lab: Luxury Tier Workout Cards ($100M Fitness App Standards) */
 .exercise-library-grid {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   grid-auto-flow: row !important;
   align-items: stretch !important;
-  gap: 16px !important;
+  gap: 20px !important;
 }
 
-.exercise-card,
-.exercise-card.exercise-card--compact,
-.exercise-card.exercise-card--compact:first-child,
-.exercise-card:nth-child(n) {
+@media (max-width: 1024px) {
+  .exercise-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .exercise-library-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
+
+/* Luxury Card Container */
+.exercise-card.exercise-card--luxury {
+  position: relative !important;
   grid-column: auto !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  transform: none !important;
-  min-height: 280px !important;
+  margin: 0 !important;
+  min-height: 290px !important;
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
-  overflow: hidden;
-  border: 1px solid rgba(226, 245, 225, 0.12);
-  background: #101610;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  border-radius: 4px;
+  background: linear-gradient(180deg, #101712 0%, #0a0f0c 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px -6px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.exercise-card--compact.is-complete {
-  border-color: rgba(198, 255, 61, 0.42);
-  box-shadow: inset 3px 0 0 #c6ff3d, 0 4px 20px rgba(0, 0, 0, 0.25);
+.exercise-card.exercise-card--luxury:hover {
+  border-color: rgba(198, 255, 61, 0.45) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.7), 0 0 25px rgba(198, 255, 61, 0.14) !important;
 }
 
-.exercise-card--compact.is-active {
-  border-color: rgba(198, 255, 61, 0.8) !important;
-  box-shadow: 0 0 16px rgba(198, 255, 61, 0.22), inset 0 0 0 1px rgba(198, 255, 61, 0.4) !important;
+.exercise-card.exercise-card--luxury.is-active {
+  border-color: rgba(198, 255, 61, 0.9) !important;
+  box-shadow: 0 0 24px rgba(198, 255, 61, 0.25), inset 0 0 0 1px rgba(198, 255, 61, 0.4) !important;
 }
 
-.anchor-body .active-glow {
+.exercise-card.exercise-card--luxury.is-complete {
+  border-color: rgba(198, 255, 61, 0.5) !important;
+  box-shadow: inset 4px 0 0 #c6ff3d, 0 10px 30px -6px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Top Preference Bar */
+.exercise-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.header-action-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 9px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 6px !important;
+  color: #8b9c8a !important;
+  font: 700 8.5px "Space Mono", monospace !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.header-action-pill:hover {
+  color: #c6ff3d !important;
+  border-color: rgba(198, 255, 61, 0.4) !important;
+  background: rgba(198, 255, 61, 0.08) !important;
+}
+
+.header-action-pill.active {
+  color: #c6ff3d !important;
+  border-color: rgba(198, 255, 61, 0.5) !important;
+  background: rgba(198, 255, 61, 0.12) !important;
+}
+
+/* Card Body */
+.exercise-card-body {
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex: 1 !important;
+}
+
+/* Exercise Title */
+.exercise-title-container {
+  margin: 0 !important;
+}
+
+.exercise-title {
+  margin: 0 !important;
+  font-family: "Chakra Petch", "Manrope", sans-serif !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.2 !important;
+  color: #ffffff !important;
+  text-transform: uppercase !important;
+}
+
+/* Metric Capsules Grid */
+.exercise-metrics-capsule-grid {
+  display: grid !important;
+  grid-template-columns: 0.9fr 0.9fr 1.3fr 1fr !important;
+  gap: 6px !important;
+}
+
+.metric-capsule {
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 8px !important;
+  padding: 6px 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  transition: all 0.15s ease !important;
+}
+
+.metric-capsule:hover {
+  border-color: rgba(198, 255, 61, 0.3) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.metric-label {
+  color: #728471 !important;
+  font: 700 7px "Space Mono", monospace !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.metric-value {
+  color: #eaf5e7 !important;
+  font: 700 10.5px "Space Mono", monospace !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 100% !important;
+}
+
+.metric-input {
+  width: 100% !important;
+  color: #c6ff3d !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px dashed rgba(198, 255, 61, 0.4) !important;
+  border-radius: 0 !important;
+  font: 700 11px "Space Mono", monospace !important;
+  text-align: center !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+.metric-input:focus {
+  border-bottom-color: #c6ff3d !important;
+  color: #ffffff !important;
+}
+
+/* $100M Hero Action Button */
+.card-video-glow-btn {
+  width: 100% !important;
+  min-height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: linear-gradient(135deg, rgba(198, 255, 61, 0.16) 0%, rgba(198, 255, 61, 0.05) 100%) !important;
+  border: 1.5px solid rgba(198, 255, 61, 0.55) !important;
+  border-radius: 10px !important;
+  color: #c6ff3d !important;
+  font: 700 10.5px "Space Mono", monospace !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 16px rgba(198, 255, 61, 0.15) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.card-video-glow-btn:hover {
   background: #c6ff3d !important;
-  box-shadow: 0 0 10px #c6ff3d, 0 0 18px rgba(198, 255, 61, 0.6) !important;
+  color: #080d0a !important;
+  border-color: #c6ff3d !important;
+  box-shadow: 0 0 28px rgba(198, 255, 61, 0.65) !important;
+  transform: translateY(-1px) scale(1.01) !important;
 }
 
-.exercise-card--compact .exercise-preference-row {
-  position: relative;
-  z-index: 6;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: rgba(226, 245, 225, 0.1);
-  border-bottom: 1px solid rgba(226, 245, 225, 0.1);
+.video-icon-circle {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  background: rgba(198, 255, 61, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: currentColor !important;
 }
 
-.exercise-card--compact .exercise-preference-row button {
-  min-height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: #aab6a8;
-  background: #111811;
-  border: 0;
-  font: 700 7px "Space Mono", monospace;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.15s ease;
+.card-video-glow-btn:hover .video-icon-circle {
+  background: #080d0a !important;
+  color: #c6ff3d !important;
 }
 
-.exercise-card--compact .exercise-preference-row button:hover {
-  color: #f6e59a;
-  background: #172016;
+/* Coaching Link Trigger */
+.coaching-link-trigger {
+  align-self: center !important;
+  padding: 2px 6px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: #8b9c8a !important;
+  font: 600 8.5px "Space Mono", monospace !important;
+  letter-spacing: 0.04em !important;
+  cursor: pointer !important;
+  transition: color 0.15s ease !important;
 }
 
-.exercise-card--compact .exercise-card-face {
-  position: relative;
-  inset: auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 0;
-  padding: 12px 14px;
-  background: #101610 !important;
-  background-image: none !important;
-  transform: none !important;
-  backface-visibility: visible !important;
+.coaching-link-trigger:hover {
+  color: #c6ff3d !important;
 }
 
-.exercise-card--compact .exercise-card-face::before,
-.exercise-card--compact .exercise-card-face::after,
-.exercise-card--compact .exercise-card-front::before,
-.exercise-card--compact .exercise-card-front::after {
-  content: none !important;
-  display: none !important;
-  background-image: none !important;
+/* Coaching View (Flipped) */
+.coaching-view {
+  gap: 10px !important;
 }
 
-.exercise-card--compact .exercise-card-front {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.coaching-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding-bottom: 4px !important;
+  border-bottom: 1px solid rgba(198, 255, 61, 0.2) !important;
 }
 
-.exercise-card--compact .exercise-card-copy h2 {
-  margin: 2px 0 4px;
-  font-size: 22px;
-  line-height: 1;
-  color: #edf5e9;
+.coaching-grid {
+  display: grid !important;
+  gap: 8px !important;
 }
 
-.exercise-card--compact .exercise-prescription {
-  display: grid;
-  grid-template-columns: 0.55fr 0.8fr 1.25fr 0.65fr;
-  gap: 6px;
-  margin-top: 4px;
-  padding: 8px 0;
-  border-top: 1px solid rgba(226, 245, 225, 0.09);
-  border-bottom: 1px solid rgba(226, 245, 225, 0.09);
+.cue-box {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 6px !important;
+  padding: 6px 8px !important;
 }
 
-.exercise-card--compact .exercise-prescription span,
-.exercise-card--compact .exercise-prescription label {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
+.cue-label {
+  display: block !important;
+  color: #c6ff3d !important;
+  font: 700 7.5px "Space Mono", monospace !important;
+  margin-bottom: 2px !important;
 }
 
-.exercise-card--compact .exercise-prescription small {
-  color: #788376;
-  font: 700 6px "Space Mono", monospace;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.cue-text {
+  margin: 0 !important;
+  color: #dbe8d8 !important;
+  font-size: 10px !important;
+  line-height: 1.3 !important;
 }
 
-.exercise-card--compact .exercise-prescription b {
-  overflow: hidden;
-  color: #e2f5e1;
-  font: 700 9px "Space Mono", monospace;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.coaching-flip-btn {
+  padding: 6px 12px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  font: 700 9px "Space Mono", monospace !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
 }
 
-.exercise-card--compact .exercise-prescription input {
-  min-width: 0;
-  width: 100%;
-  padding: 2px 0;
-  border: 0;
-  border-bottom: 1px solid rgba(226, 245, 225, 0.32);
-  border-radius: 0;
-  color: #e2f5e1;
-  background: transparent;
-  font: 700 10px "Space Mono", monospace;
-  outline: none;
+.coaching-flip-btn:hover {
+  background: #c6ff3d !important;
+  color: #080d0a !important;
 }
 
-.exercise-card--compact .exercise-prescription input:focus {
-  border-color: #c6ff3d;
-  color: #c6ff3d;
+/* Card Footer Tray */
+.exercise-card-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 0 0 16px 16px !important;
 }
 
-.exercise-card--compact .coaching-toggle {
-  justify-self: start;
-  padding: 0;
-  border: 0;
-  color: #98a395;
-  background: transparent;
-  font: 700 7px "Space Mono", monospace;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  cursor: pointer;
+.completion-checkbox-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
 }
 
-.exercise-card--compact .coaching-toggle:hover {
-  color: #c6ff3d;
+.completion-label {
+  color: #8b9c8a !important;
+  font: 700 8.5px "Space Mono", monospace !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+  transition: color 0.15s ease !important;
 }
 
-.exercise-card--compact .exercise-coaching-panel {
-  grid-template-rows: auto 1fr auto;
-  gap: 5px;
+.completion-checkbox-wrapper:hover .completion-label {
+  color: #ffffff !important;
 }
 
-.exercise-card--compact .coaching-copy {
-  display: grid;
-  gap: 3px;
-  margin: auto 0 4px;
+.stage-action-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 5px 10px !important;
+  background: rgba(198, 255, 61, 0.12) !important;
+  border: 1px solid rgba(198, 255, 61, 0.35) !important;
+  border-radius: 8px !important;
+  color: #c6ff3d !important;
+  font: 700 9px "Space Mono", monospace !important;
+  letter-spacing: 0.06em !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.exercise-card--compact .coaching-copy b,
-.exercise-card--compact .coaching-copy strong {
-  font: 700 14px "Barlow Condensed", sans-serif;
-}
-
-.exercise-card--compact .coaching-copy p {
-  margin: 0;
-  color: #aab6a8;
-  font-size: 9px;
-}
-
-.exercise-card--compact .exercise-title-play-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgba(198, 255, 61, 0.2);
-  border: 1px solid #c6ff3d;
-  color: #c6ff3d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.exercise-card--compact .exercise-title-play-btn:hover {
-  background: #c6ff3d;
-  color: #080c0a;
-  box-shadow: 0 0 12px #c6ff3d;
-  transform: scale(1.1);
-}
-
-.exercise-card--compact .card-video-banner-btn {
-  width: 100%;
-  min-height: 36px;
-  margin: 8px 0 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, rgba(198, 255, 61, 0.22) 0%, rgba(198, 255, 61, 0.08) 100%);
-  border: 1.5px solid #c6ff3d;
-  border-radius: 4px;
-  color: #c6ff3d;
-  font: 700 10px "Space Mono", monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 0 14px rgba(198, 255, 61, 0.25);
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.exercise-card--compact .card-video-banner-btn:hover {
-  background: #c6ff3d;
-  color: #080c0a;
-  box-shadow: 0 0 22px rgba(198, 255, 61, 0.7);
-  transform: translateY(-1px);
-}
-
-.exercise-card--compact .video-play-pulse-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(198, 255, 61, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: currentColor;
-}
-
-.exercise-card--compact .card-video-banner-btn:hover .video-play-pulse-icon {
-  background: #080c0a;
-  color: #c6ff3d;
-}
-
-.exercise-card--compact .exercise-card-actions {
-  display: grid;
-  grid-template-columns: 0.9fr 1fr 0.9fr;
-  border-top: 1px solid rgba(226, 245, 225, 0.11);
-  margin-top: auto;
-}
-
-.exercise-card--compact .exercise-completion {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 8px;
-  border-right: 1px solid rgba(226, 245, 225, 0.11);
-  color: #9eab9c;
-  font: 700 7px "Space Mono", monospace;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.exercise-card--compact .exercise-completion [data-slot="checkbox"] {
-  width: 13px;
-  height: 13px;
-  border-color: rgba(226, 245, 225, 0.45);
-  border-radius: 2px;
-  background: #111811;
-}
-
-.exercise-card--compact .exercise-completion [data-state="checked"] {
-  border-color: #c6ff3d;
-  background: #c6ff3d;
-  color: #101610;
-}
-
-.exercise-card--compact.is-complete .exercise-completion label {
-  color: #c6ff3d;
-}
-
-.exercise-card--compact .video-action-btn {
-  min-height: 40px;
-  padding: 0 8px;
-  border: 0;
-  border-right: 1px solid rgba(226, 245, 225, 0.11);
-  background: rgba(198, 255, 61, 0.08);
-  color: #c6ff3d;
-  font-size: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  transition: all 0.15s ease;
-}
-
-.exercise-card--compact .video-action-btn:hover {
-  background: #c6ff3d;
-  color: #080c0a;
-  box-shadow: 0 0 10px rgba(198, 255, 61, 0.4);
-}
-
-.exercise-card--compact .stage-movement {
-  min-height: 40px;
-  padding: 0 8px;
-  border: 0;
-  background: #101610;
-  font-size: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: #d7e4d4;
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.exercise-card--compact .stage-movement:hover {
-  background: #172016;
-  color: #fff;
-}
-
-@media (max-width: 1180px) {
-  .exercise-library-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (max-width: 800px) {
-  .exercise-library-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  .exercise-card.exercise-card--compact,
-  .exercise-card.exercise-card--compact:first-child {
-    min-height: 250px !important;
-  }
-  .exercise-card--compact .exercise-card-copy h2 {
-    font-size: 21px;
-  }
-  .exercise-card--compact .exercise-prescription {
-    grid-template-columns: 0.55fr 0.8fr 1.15fr 0.62fr;
-  }
-  .exercise-card--compact .exercise-prescription b {
-    font-size: 8px;
-  }
+.stage-action-pill:hover {
+  background: #c6ff3d !important;
+  color: #080d0a !important;
+  box-shadow: 0 0 16px rgba(198, 255, 61, 0.45) !important;
+  transform: translateY(-1px) !important;
 }
