@@ -148,7 +148,7 @@ export function ExerciseFlipCard({
             <span className="video-play-pulse-icon">
               <Play size={13} fill="currentColor" />
             </span>
-            <span>▶ PLAY FORM VIDEO GUIDE</span>
+            <span>PLAY FORM VIDEO GUIDE</span>
           </button>
 
           <button
