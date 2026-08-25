@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
 import { EchoAssistant } from "./components/ai/EchoAssistant";
+import { RexiOnboardingModal } from "./components/onboarding/RexiOnboardingModal";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import LogFood from "./pages/LogFood";
@@ -55,6 +56,7 @@ function App() {
           <Toaster />
           <Router />
           <EchoAssistant />
+          <RexiOnboardingModal />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

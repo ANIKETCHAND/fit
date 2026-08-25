@@ -140,3 +140,9 @@ export const saveStreak = (value: StreakData) => write(streakKey, value);
 export const saveDailyStreak = saveStreak;
 export const advanceStreak = () => { const current = getStreak(); const today = dateKey(); if (current.lastCompletedDate === today) return { streak: current, advanced: false, alreadyRecorded: true }; const difference = current.lastCompletedDate ? dayDifference(current.lastCompletedDate, today) : 99; const next: StreakData = { count: difference === 1 ? current.count + 1 : 1, lastCompletedDate: today }; saveStreak(next); return { streak: next, advanced: true, alreadyRecorded: false }; };
 export const recordDailyWorkout = advanceStreak;
+
+const experienceModeKey = "fittrack-experience-mode";
+export const getExperienceMode = (): "beginner" | "advanced" => safeRead<"beginner" | "advanced">(experienceModeKey, "beginner");
+export const saveExperienceMode = (mode: "beginner" | "advanced") => write(experienceModeKey, mode);
+
+
