@@ -1,5 +1,5 @@
 /** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
-/* Interactive 3D anatomical viewer with centered full-body axis [0, 0, 0.88], 360-degree orbit, and zero panning drift */
+/* Interactive 3D anatomical viewer with centered full-body axis [0, 0, 0.88], dark carbon background, and zero white loading screen */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { BodyControls, type BodyView } from "./BodyControls";
 import type { MuscleId } from "@/lib/fitness-data";
@@ -87,7 +87,7 @@ export function BodyScene({ selected }: BodySceneProps) {
     }
   };
 
-  // Initialize Sketchfab Viewer API with locked center pivot axis and disabled pan drift
+  // Initialize Sketchfab Viewer API with dark theme (#070908) and custom loader suppression
   useEffect(() => {
     if (!iframeRef.current) return;
 
@@ -108,7 +108,6 @@ export function BodyScene({ selected }: BodySceneProps) {
             api.start();
             api.addEventListener("viewerready", () => {
               if (!isMounted) return;
-              setViewerReady(true);
 
               // Set background to dark carbon theme #070908
               api.setBackground({ color: [0.027, 0.035, 0.031], transparent: true }, () => {});
@@ -124,15 +123,23 @@ export function BodyScene({ selected }: BodySceneProps) {
 
               // Set initial center axis camera at [0, -2.85, 0.88] looking at [0, 0, 0.88]
               const front = viewPositions.front;
-              api.setCameraLookAt(front.eye, front.target, 0.1, () => {});
+              api.setCameraLookAt(front.eye, front.target, 0.1, () => {
+                // Short delay to ensure WebGL frame has drawn before fading out dark cover
+                setTimeout(() => {
+                  if (isMounted) setViewerReady(true);
+                }, 300);
+              });
             });
           },
-          error: () => {},
+          error: () => {
+            if (isMounted) setViewerReady(true);
+          },
           autostart: 1,
           transparent: 1,
           ui_theme: "dark",
           ui_infos: 0,
           ui_watermark: 0,
+          ui_loading: 0, // Suppress default white loading screen
           ui_color: "c6ff3d",
           ui_stop: 0,
           ui_controls: 1,
@@ -142,7 +149,7 @@ export function BodyScene({ selected }: BodySceneProps) {
           orbit_constraint_pan: 1, // Disable panning drift off-axis
         });
       } catch {
-        /* fallback to native iframe */
+        if (isMounted) setViewerReady(true);
       }
     };
 
@@ -172,6 +179,7 @@ export function BodyScene({ selected }: BodySceneProps) {
       ui_snapshots: "0",
       ui_stop: "0",
       ui_watermark: "0",
+      ui_loading: "0",
       ui_color: "c6ff3d",
       ui_theme: "dark",
       transparent: "1",
@@ -208,8 +216,23 @@ export function BodyScene({ selected }: BodySceneProps) {
         </span>
       </div>
 
-      {/* Clean 3D Anatomy Simulation Viewport — Fixed Center Pivot */}
+      {/* Clean 3D Anatomy Simulation Viewport */}
       <div className="relative w-full h-full min-h-[460px] sm:min-h-[520px] bg-[#070908] flex items-center justify-center overflow-hidden z-[2]">
+        {/* Dark Carbon Theme Loading Mask — Covers the iframe completely until 3D model is ready */}
+        <div
+          className={`absolute inset-0 bg-[#070908] z-30 flex flex-col items-center justify-center transition-opacity duration-700 ${
+            viewerReady ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+          style={{ background: "#070908" }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-[#c6ff3d]/20 border-t-[#c6ff3d] animate-spin" />
+            <span className="font-mono text-[11px] uppercase tracking-widest text-[#8b9c8a]">
+              Calibrating 3D Anatomy...
+            </span>
+          </div>
+        </div>
+
         <iframe
           ref={iframeRef}
           id="sketchfab-frame"
