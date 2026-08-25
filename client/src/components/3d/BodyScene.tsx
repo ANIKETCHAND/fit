@@ -1,5 +1,5 @@
 /** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
-/* Interactive 3D anatomical viewer with centered full-body axis [0, 0, 0.88], dark carbon background, and zero white loading screen */
+/* Interactive 3D anatomical viewer with centered full-body framing [0, 0, 1.45], 360-degree orbit, and zero white loading screen */
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { BodyControls, type BodyView } from "./BodyControls";
 import type { MuscleId } from "@/lib/fitness-data";
@@ -14,26 +14,26 @@ type BodySceneProps = {
 // Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
 const MODEL_UID = "8b6b4d5daad74da8bd821eef5a0a8511";
 
-// Anatomically Centered Full-Body Target [0, 0, 0.88] (centers torso & entire physique vertically)
-const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 0.88];
+// Anatomically Centered Full-Body Target [0, 0, 1.45] (brings torso & head down into the center of the viewport)
+const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.45];
 
 const viewPositions: Record<BodyView, { eye: [number, number, number]; target: [number, number, number] }> = {
-  front: { eye: [0, -2.85, 0.88], target: FIXED_CENTER_TARGET },
-  back: { eye: [0, 2.85, 0.88], target: FIXED_CENTER_TARGET },
-  side: { eye: [2.85, 0, 0.88], target: FIXED_CENTER_TARGET },
+  front: { eye: [0, -3.5, 1.45], target: FIXED_CENTER_TARGET },
+  back: { eye: [0, 3.5, 1.45], target: FIXED_CENTER_TARGET },
+  side: { eye: [3.5, 0, 1.45], target: FIXED_CENTER_TARGET },
 };
 
 const musclePositions: Record<string, { eye: [number, number, number]; target: [number, number, number] }> = {
-  chest: { eye: [0, -2.2, 1.15], target: [0, 0, 1.15] },
-  back: { eye: [0, 2.2, 1.15], target: [0, 0, 1.15] },
-  shoulders: { eye: [1.4, -1.8, 1.25], target: [0, 0, 1.25] },
-  biceps: { eye: [1.8, -1.2, 1.0], target: [0.3, 0, 1.0] },
-  triceps: { eye: [1.8, 1.2, 1.0], target: [0.3, 0, 1.0] },
-  quads: { eye: [0, -2.5, 0.55], target: [0, 0, 0.55] },
-  hamstrings: { eye: [0, 2.5, 0.55], target: [0, 0, 0.55] },
-  glutes: { eye: [0, 2.3, 0.8], target: [0, 0, 0.8] },
-  core: { eye: [0, -2.1, 0.9], target: [0, 0, 0.9] },
-  calves: { eye: [0, -2.4, 0.25], target: [0, 0, 0.25] },
+  chest: { eye: [0, -2.6, 1.55], target: [0, 0, 1.55] },
+  back: { eye: [0, 2.6, 1.55], target: [0, 0, 1.55] },
+  shoulders: { eye: [1.6, -2.1, 1.65], target: [0, 0, 1.65] },
+  biceps: { eye: [2.0, -1.5, 1.45], target: [0.3, 0, 1.45] },
+  triceps: { eye: [2.0, 1.5, 1.45], target: [0.3, 0, 1.45] },
+  core: { eye: [0, -2.5, 1.3], target: [0, 0, 1.3] },
+  glutes: { eye: [0, 2.7, 1.1], target: [0, 0, 1.1] },
+  quads: { eye: [0, -2.9, 0.8], target: [0, 0, 0.8] },
+  hamstrings: { eye: [0, 2.9, 0.8], target: [0, 0, 0.8] },
+  calves: { eye: [0, -2.9, 0.4], target: [0, 0, 0.4] },
 };
 
 export function BodyScene({ selected }: BodySceneProps) {
@@ -87,7 +87,7 @@ export function BodyScene({ selected }: BodySceneProps) {
     }
   };
 
-  // Initialize Sketchfab Viewer API with dark theme (#070908) and custom loader suppression
+  // Initialize Sketchfab Viewer API with dark theme (#070908) and centered camera framing
   useEffect(() => {
     if (!iframeRef.current) return;
 
@@ -121,10 +121,9 @@ export function BodyScene({ selected }: BodySceneProps) {
                 }
               }
 
-              // Set initial center axis camera at [0, -2.85, 0.88] looking at [0, 0, 0.88]
+              // Set initial centered camera framing at [0, -3.5, 1.45] looking at [0, 0, 1.45]
               const front = viewPositions.front;
               api.setCameraLookAt(front.eye, front.target, 0.1, () => {
-                // Short delay to ensure WebGL frame has drawn before fading out dark cover
                 setTimeout(() => {
                   if (isMounted) setViewerReady(true);
                 }, 300);
@@ -218,7 +217,7 @@ export function BodyScene({ selected }: BodySceneProps) {
 
       {/* Clean 3D Anatomy Simulation Viewport */}
       <div className="relative w-full h-full min-h-[460px] sm:min-h-[520px] bg-[#070908] flex items-center justify-center overflow-hidden z-[2]">
-        {/* Dark Carbon Theme Loading Mask — Covers the iframe completely until 3D model is ready */}
+        {/* Dark Carbon Theme Loading Mask */}
         <div
           className={`absolute inset-0 bg-[#070908] z-30 flex flex-col items-center justify-center transition-opacity duration-700 ${
             viewerReady ? "opacity-0 pointer-events-none" : "opacity-100"
