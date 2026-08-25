@@ -256,69 +256,6 @@ export default function ExerciseLibrary() {
         </button>
       </section>
 
-      <section className="library-scan-anchor" aria-label="Movement scan reference">
-        <div className={`anchor-body highlight-${activeMuscleFocus}`}>
-          <i
-            className={`anchor-head ${activeMuscleFocus === "shoulders" ? "active-glow" : ""}`}
-            onClick={() => {
-              setFocus("Deltoids");
-              setSelectedExerciseId(null);
-            }}
-            title="Select Shoulders / Deltoids"
-            style={{ cursor: "pointer" }}
-          />
-          <i
-            className={`anchor-torso ${activeMuscleFocus === "lats" ? "active-glow" : ""}`}
-            onClick={() => {
-              setFocus("Lats");
-              setSelectedExerciseId(null);
-            }}
-            title="Select Back / Lats"
-            style={{ cursor: "pointer" }}
-          />
-          <i
-            className={`anchor-pec left ${activeMuscleFocus === "pecs" || activeMuscleFocus === "arms" ? "active-glow" : ""}`}
-            onClick={() => {
-              setFocus("Pectorals");
-              setSelectedExerciseId(null);
-            }}
-            title="Select Chest / Pectorals"
-            style={{ cursor: "pointer" }}
-          />
-          <i
-            className={`anchor-pec right ${activeMuscleFocus === "pecs" || activeMuscleFocus === "arms" ? "active-glow" : ""}`}
-            onClick={() => {
-              setFocus("Pectorals");
-              setSelectedExerciseId(null);
-            }}
-            title="Select Chest / Pectorals"
-            style={{ cursor: "pointer" }}
-          />
-          <i
-            className={`anchor-core ${activeMuscleFocus === "core" || activeMuscleFocus === "legs" ? "active-glow" : ""}`}
-            onClick={() => {
-              setFocus("Core");
-              setSelectedExerciseId(null);
-            }}
-            title="Select Core / Abs"
-            style={{ cursor: "pointer" }}
-          />
-        </div>
-        <div>
-          <span className="panel-label">
-            {activeExercise ? `Selected movement: ${activeExercise.name}` : "Target muscle"}
-          </span>
-          <b style={{ color: "#c6ff3d", letterSpacing: "0.04em" }}>
-            <em>{targetMuscleLabel}</em>
-          </b>
-        </div>
-        <div className="anchor-readouts">
-          <span><i />{filtered.length} {filtered.length === 1 ? "Movement" : "Movements"} found</span>
-          <span><i />Joint line stable</span>
-          <span><i />Load ready</span>
-        </div>
-      </section>
-
       <section className="exercise-library-grid">
         {filtered.map((exercise, index) => (
           <ExerciseFlipCard
