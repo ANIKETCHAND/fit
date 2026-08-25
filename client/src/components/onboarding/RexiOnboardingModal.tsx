@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bot, Check, Flame, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { RexiMascotIcon } from "@/components/ai/EchoAssistant";
+import { Rexi3DCanvas } from "./Rexi3DCanvas";
 import { getAthleteProfile, saveExperienceMode, getScopedKey } from "@/lib/user-store";
 
 export function RexiOnboardingModal() {
@@ -22,10 +22,9 @@ export function RexiOnboardingModal() {
     try {
       const completed = localStorage.getItem(getScopedKey("fittrack_onboarding_completed"));
       if (!completed) {
-        // Delay 600ms for smooth entrance after page load
         const timer = setTimeout(() => {
           setIsOpen(true);
-        }, 600);
+        }, 500);
         return () => clearTimeout(timer);
       }
     } catch {}
@@ -44,11 +43,11 @@ export function RexiOnboardingModal() {
     const levelTitle = level === "beginner" ? "Beginner" : level === "intermediate" ? "Intermediate" : "Pro";
     toast.success(`Experience level set to ${levelTitle}!`);
 
-    // Redirect to Settings page after short animation
+    // Redirect to Settings page after celebratory jump animation
     setTimeout(() => {
       setIsOpen(false);
       setLocation("/settings");
-    }, 1200);
+    }, 1400);
   };
 
   if (!isOpen) return null;
@@ -61,31 +60,27 @@ export function RexiOnboardingModal() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
-          className="w-full max-w-lg bg-[#0c120e] border border-[#c6ff3d]/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(198,255,61,0.2)] text-white relative overflow-hidden"
+          className="w-full max-w-lg bg-[#0c120e] border border-[#c6ff3d]/30 rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(198,255,61,0.2)] text-white relative overflow-hidden"
         >
           {/* Background Ambient Glow */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#c6ff3d]/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#38bdf8]/15 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Rexi Mascot Header */}
-          <div className="flex flex-col items-center text-center mb-6">
-            <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
-              className="mb-3 relative"
-            >
-              <RexiMascotIcon size={72} animated />
-              <span className="absolute -bottom-1 -right-1 bg-[#c6ff3d] text-black text-[9px] font-bold font-mono px-2 py-0.5 rounded-full uppercase tracking-wider shadow-md">
-                AI Coach
+          {/* 3D Animated Jumping Rexi Mascot */}
+          <div className="flex flex-col items-center text-center -mt-2 mb-4">
+            <div className="w-full h-[190px] relative flex items-center justify-center">
+              <Rexi3DCanvas isCelebrating={isTransitioning} />
+              <span className="absolute bottom-1 right-6 bg-[#c6ff3d] text-black text-[9px] font-bold font-mono px-2 py-0.5 rounded-full uppercase tracking-wider shadow-md pointer-events-none">
+                3D AI Guide
               </span>
-            </motion.div>
+            </div>
 
-            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight mt-1">
               Hello, <span className="text-[#c6ff3d]">{firstName}</span>! 👋
             </h2>
 
-            <p className="text-xs sm:text-sm text-[#a2b59f] mt-1.5 max-w-sm">
-              I'm <strong className="text-white">Rexi</strong>, your FitTrack guide. Are you a <b>Beginner</b>, <b>Intermediate</b>, or <b>Pro</b>?
+            <p className="text-xs sm:text-sm text-[#a2b59f] mt-1 max-w-sm">
+              I'm <strong className="text-white">Rexi</strong>! What is your training experience level?
             </p>
           </div>
 
