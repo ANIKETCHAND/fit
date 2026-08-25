@@ -195,7 +195,7 @@ export default function ExerciseLibrary() {
   return (
     <WorkflowLayout title="Study the pattern">
       <section className="library-toolbar">
-        <div className="library-search" style={{ width: "100%" }}>
+        <div className="library-search">
           <Search size={16} />
           <input
             value={query}
@@ -217,6 +217,26 @@ export default function ExerciseLibrary() {
               <X size={14} />
             </button>
           )}
+        </div>
+        <div className="library-filters">
+          <button
+            className={focus === "All signals" ? "selected" : ""}
+            onClick={() => {
+              setFocus("All signals");
+              setSelectedExerciseId(null);
+            }}
+          >
+            All
+          </button>
+          <button
+            className={focus === "Favorites" ? "selected" : ""}
+            onClick={() => {
+              setFocus("Favorites");
+              setSelectedExerciseId(null);
+            }}
+          >
+            Favorites
+          </button>
         </div>
       </section>
 
