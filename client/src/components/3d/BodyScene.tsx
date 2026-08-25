@@ -1,12 +1,10 @@
 /** Kinetic Anatomy Lab: High-Definition 3D Male Anatomy Simulation Integration */
-/* Interactive 3D anatomical viewer powered by the Male Anatomy Study model with viewpoint controls and telemetry HUD */
-import { useState, useMemo } from "react";
-import { useReducedMotion } from "framer-motion";
+/* Interactive 3D anatomical viewer with dark carbon theme background, viewpoint controls, and live telemetry HUD */
+import { useState, useMemo, useEffect, useRef } from "react";
 import { BodyControls, type BodyView } from "./BodyControls";
 import type { MuscleId } from "@/lib/fitness-data";
 import { muscleLibrary } from "@/lib/fitness-data";
-import { useIsMobile } from "@/hooks/useMobile";
-import { Activity, Eye, Layers, Sparkles, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 
 type BodySceneProps = {
   selected: MuscleId;
@@ -14,24 +12,82 @@ type BodySceneProps = {
 };
 
 // Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
-const BASE_EMBED_URL = "https://sketchfab.com/models/8b6b4d5daad74da8bd821eef5a0a8511/embed";
+const MODEL_UID = "8b6b4d5daad74da8bd821eef5a0a8511";
 
-export function BodyScene({ selected, onSelected }: BodySceneProps) {
+export function BodyScene({ selected }: BodySceneProps) {
   const [view, setView] = useState<BodyView>("front");
   const [autoRotate, setAutoRotate] = useState(false);
-  const [activeTab, setActiveTab] = useState<"simulation" | "layers">("simulation");
-  const isMobile = useIsMobile();
-  const reduceMotion = useReducedMotion() ?? false;
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const apiRef = useRef<any>(null);
 
   const currentMuscle = muscleLibrary[selected] || muscleLibrary["chest"];
 
   const reset = () => {
     setView("front");
     setAutoRotate(false);
+    if (apiRef.current?.recenterCamera) {
+      apiRef.current.recenterCamera();
+    }
   };
 
-  // Construct optimized embed URL with dark theme, transparency, zero watermarks, and smooth interaction
-  const embedSrc = useMemo(() => {
+  // Initialize Sketchfab Viewer API to enforce dark carbon background (#070908)
+  useEffect(() => {
+    if (!iframeRef.current) return;
+
+    let isMounted = true;
+
+    const initViewer = () => {
+      if (!(window as any).Sketchfab) {
+        // Retry if script is still loading
+        setTimeout(initViewer, 200);
+        return;
+      }
+
+      try {
+        const client = new (window as any).Sketchfab(iframeRef.current);
+        client.init(MODEL_UID, {
+          success: (api: any) => {
+            if (!isMounted) return;
+            apiRef.current = api;
+            api.start();
+            api.addEventListener("viewerready", () => {
+              // #070908 normalized RGB: [7/255, 9/255, 8/255] = [0.027, 0.035, 0.031]
+              api.setBackground({ color: [0.027, 0.035, 0.031], transparent: true }, () => {});
+            });
+          },
+          error: () => {},
+          autostart: 1,
+          transparent: 1,
+          ui_theme: "dark",
+          ui_infos: 0,
+          ui_watermark: 0,
+          ui_color: "c6ff3d",
+          ui_stop: 0,
+          ui_controls: 1,
+          scrollwheel: 1,
+          autospin: autoRotate ? 0.2 : 0,
+        });
+      } catch {
+        /* fallback to native iframe */
+      }
+    };
+
+    initViewer();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Update autospin when autoRotate state changes
+  useEffect(() => {
+    if (apiRef.current?.setAutospin) {
+      apiRef.current.setAutospin(autoRotate ? 0.2 : 0);
+    }
+  }, [autoRotate]);
+
+  // Construct iframe fallback URL with dark theme parameters
+  const iframeSrc = useMemo(() => {
     const params = new URLSearchParams({
       autostart: "1",
       internal: "1",
@@ -44,14 +100,13 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
       ui_theme: "dark",
       transparent: "1",
       scrollwheel: "1",
-      camera: "0",
       autospin: autoRotate ? "0.2" : "0",
     });
-    return `${BASE_EMBED_URL}?${params.toString()}`;
+    return `https://sketchfab.com/models/${MODEL_UID}/embed?${params.toString()}`;
   }, [autoRotate]);
 
   return (
-    <section className="body-stage" aria-label="Interactive 3D anatomy explorer">
+    <section className="body-stage" aria-label="Interactive 3D anatomy explorer" style={{ background: "#070908" }}>
       {/* Topline Coordinate Readout */}
       <div className="stage-topline">
         <span className="flex items-center gap-1.5">
@@ -106,21 +161,21 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
         T-06.21
       </div>
 
-      {/* Interactive 3D Anatomy Simulation Viewport */}
-      <div className="relative w-full h-full min-h-[460px] sm:min-h-[520px] flex items-center justify-center overflow-hidden z-[2]">
+      {/* Interactive 3D Anatomy Simulation Viewport with dark carbon backdrop */}
+      <div className="relative w-full h-full min-h-[460px] sm:min-h-[520px] bg-[#070908] flex items-center justify-center overflow-hidden z-[2]">
         <iframe
-          key={`${view}-${autoRotate ? "rot" : "norot"}`}
+          ref={iframeRef}
+          id="sketchfab-frame"
           title="Male Anatomy Study 3D Simulation"
-          src={embedSrc}
+          src={iframeSrc}
           className="w-full h-full border-0 absolute inset-0 pointer-events-auto"
           allow="autoplay; fullscreen; xr-spatial-tracking"
           allowFullScreen
-          loading="lazy"
-          style={{ background: "transparent" }}
+          style={{ background: "#070908" }}
         />
 
         {/* Floating Active Target Badge */}
-        <div className="absolute top-12 left-4 z-10 pointer-events-none bg-[#080d0a]/80 backdrop-blur-md border border-[#c6ff3d]/30 rounded px-2.5 py-1 flex items-center gap-2">
+        <div className="absolute top-12 left-4 z-10 pointer-events-none bg-[#080d0a]/85 backdrop-blur-md border border-[#c6ff3d]/30 rounded px-2.5 py-1 flex items-center gap-2">
           <Zap size={11} className="text-[#c6ff3d] animate-pulse" />
           <span className="font-mono text-[9px] uppercase tracking-wider text-[#edf4e9]">
             Focus: <b className="text-[#c6ff3d]">{currentMuscle.commonName}</b>
