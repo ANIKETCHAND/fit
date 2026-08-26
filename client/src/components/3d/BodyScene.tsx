@@ -275,7 +275,7 @@ export function BodyScene({ selected }: BodySceneProps) {
         <div className="absolute top-12 left-4 z-10 pointer-events-none bg-[#080d0a]/85 backdrop-blur-md border border-[#c6ff3d]/30 rounded px-2.5 py-1 flex items-center gap-2 shadow-lg">
           <Zap size={11} className="text-[#c6ff3d] animate-pulse" />
           <span className="font-mono text-[9px] uppercase tracking-wider text-[#edf4e9]">
-            Active Region: <b className="text-[#c6ff3d]">{currentMuscle.commonName}</b>
+            Active Region: <b className="text-[#c6ff3d]">{currentMuscle.label}</b>
           </span>
         </div>
       </div>

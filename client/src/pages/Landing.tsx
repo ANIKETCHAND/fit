@@ -119,7 +119,7 @@ export default function Landing() {
           saveAthleteProfile({
             name: cleanName,
             email: validEmail,
-            avatar: payload.picture || "",
+            photoDataUrl: payload.picture || "",
             location: "New York, USA",
             focus: "Hypertrophy & Strength Protocol",
           });
@@ -165,7 +165,7 @@ export default function Landing() {
                   saveAthleteProfile({
                     name: googleName,
                     email: googleEmailClean,
-                    avatar: userData.picture || "",
+                    photoDataUrl: userData.picture || "",
                     location: "New York, USA",
                     focus: "Hypertrophy & Strength Protocol",
                   });

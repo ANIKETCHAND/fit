@@ -1,8 +1,10 @@
+/* FitTrack: Rexi AI Conversational Assistant (Powered by Live Context Engine) */
 import { useState, useRef, useEffect } from "react";
-import { Send, X, Minus, Sparkles, MessageSquare, Bot } from "lucide-react";
+import { Send, X, Minus, Sparkles, Trash2, Copy, Check, Bot, RefreshCw, Zap } from "lucide-react";
 import { useLocation } from "wouter";
-import { getAthleteProfile } from "@/lib/user-store";
 import { useSidebar } from "@/lib/sidebar-store";
+import { getLiveRexiContext, generateRexiChatResponse } from "@/lib/rexi-ai-engine";
+import { toast } from "sonner";
 import "./EchoAssistant.css";
 
 // Vector Mascot SVG matching Rexi's look
@@ -16,10 +18,7 @@ export function RexiMascotIcon({ size = 32, animated = false }: { size?: number;
       xmlns="http://www.w3.org/2000/svg"
       style={{ overflow: "visible" }}
     >
-      {/* Outer Glow Halo */}
       <circle cx="50" cy="52" r="38" fill="url(#rexiGlow)" opacity="0.45" />
-
-      {/* Main Mascot Body (Ghost / Cyber Creature with curved horn/cap) */}
       <path
         d="M 50 14 
            C 68 14, 82 28, 82 48 
@@ -32,8 +31,6 @@ export function RexiMascotIcon({ size = 32, animated = false }: { size?: number;
         stroke="#baff57"
         strokeWidth="3.5"
       />
-
-      {/* Curled Top Horn/Tail Tip */}
       <path
         d="M 50 14 C 42 10, 36 2, 28 6 C 22 10, 26 18, 38 18"
         fill="#baff57"
@@ -41,19 +38,12 @@ export function RexiMascotIcon({ size = 32, animated = false }: { size?: number;
         strokeWidth="2.5"
         strokeLinecap="round"
       />
-
-      {/* Left Eye */}
       <ellipse cx="36" cy="46" rx="5.5" ry="9" fill="#070e0a" />
       <ellipse cx="38" cy="43" rx="2" ry="3.5" fill="#ffffff" />
-
-      {/* Right Eye */}
       <ellipse cx="64" cy="46" rx="5.5" ry="9" fill="#070e0a" />
       <ellipse cx="66" cy="43" rx="2" ry="3.5" fill="#ffffff" />
-
-      {/* Subtle Cheek Blushes */}
       <ellipse cx="28" cy="56" rx="4.5" ry="2.5" fill="#84cc16" opacity="0.6" />
       <ellipse cx="72" cy="56" rx="4.5" ry="2.5" fill="#84cc16" opacity="0.6" />
-
       <defs>
         <radialGradient id="rexiGlow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#baff57" stopOpacity="0.8" />
@@ -69,7 +59,6 @@ export function RexiMascotIcon({ size = 32, animated = false }: { size?: number;
   );
 }
 
-// Alias for backwards compatibility
 export const EchoMascotIcon = RexiMascotIcon;
 
 type ChatMessage = {
@@ -77,6 +66,7 @@ type ChatMessage = {
   sender: "rexi" | "user";
   text: string;
   chips?: string[];
+  timestamp: string;
 };
 
 export function RexiAssistant() {
@@ -84,67 +74,127 @@ export function RexiAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { open: isSidebarOpen } = useSidebar();
-  const profile = getAthleteProfile();
-  const firstName = profile.name.split(" ")[0];
 
-  // Initialize greeting on first load
+  const liveContext = getLiveRexiContext(location);
+  const firstName = liveContext.athleteName.split(" ")[0] || "Athlete";
+
+  // Initial greeting
   useEffect(() => {
-    setMessages([
-      {
-        id: "intro-1",
-        sender: "rexi",
-        text: `Hello ${firstName}! I'm **Rexi**, your intelligent FitTrack training & telemetry guide.\n\nHow can I help you today? You can ask me how to navigate features, calculate targets, understand muscle diagnostics, or optimize your workouts.`,
-        chips: [
-          "How do I use the 3D Body Map?",
-          "How are daily calories calculated?",
-          "Guide me through Workouts & Logging",
-          "Am I on the right track?",
-        ],
-      },
-    ]);
-  }, [firstName]);
+    if (messages.length === 0) {
+      setMessages([
+        {
+          id: "intro-1",
+          sender: "rexi",
+          text: `Hello **${firstName}**! 👋 I'm **Rexi**, your personal AI fitness intelligence coach powered by real-time telemetry.\n\nI have live context of your biometrics (**${liveContext.massKg}kg**, **${liveContext.goalProtein}g Protein Goal**), your Indian nutrition ledger, and training history.\n\nAsk me **anything**—from workout splits, macro advice, creatine dosage, to app features or general science!`,
+          chips: [
+            "What should I eat for dinner?",
+            "Explain Creatine Monohydrate dosage",
+            "How do I use the 3D Anatomy Map?",
+            "How to track progressive overload?",
+          ],
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    }
+  }, [firstName, liveContext.massKg, liveContext.goalProtein]);
 
-  // Scroll to bottom when messages update
+  // Auto scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const query = (textToSend || inputMessage).trim();
-    if (!query) return;
+    if (!query || isTyping) return;
 
-    // Add user message
+    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const userMsgId = `user-${Date.now()}`;
     const newMessages: ChatMessage[] = [
       ...messages,
-      { id: userMsgId, sender: "user", text: query },
+      { id: userMsgId, sender: "user", text: query, timestamp: timeStr },
     ];
     setMessages(newMessages);
     setInputMessage("");
     setIsTyping(true);
 
-    // Generate intelligent contextual response
-    setTimeout(() => {
-      const response = generateAIResponse(query, firstName);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+
+    // Generate intelligent contextual response with streaming effect
+    try {
+      const response = await generateRexiChatResponse(query, liveContext, newMessages);
+      const rexiMsgId = `rexi-${Date.now()}`;
+      
+      // Simulate smooth streaming
+      let currentText = "";
+      const fullText = response.text;
+      const streamChunkSize = Math.max(2, Math.floor(fullText.length / 25));
+
       setMessages((prev) => [
         ...prev,
         {
-          id: `rexi-${Date.now()}`,
+          id: rexiMsgId,
           sender: "rexi",
-          text: response.text,
+          text: "",
           chips: response.chips,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
+
+      let idx = 0;
+      const interval = setInterval(() => {
+        if (idx < fullText.length) {
+          idx += streamChunkSize;
+          currentText = fullText.slice(0, idx);
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === rexiMsgId ? { ...msg, text: currentText } : msg))
+          );
+        } else {
+          clearInterval(interval);
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === rexiMsgId ? { ...msg, text: fullText } : msg))
+          );
+          setIsTyping(false);
+        }
+      }, 20);
+    } catch (err) {
       setIsTyping(false);
-    }, 550);
+      toast.error("Rexi encountered an error. Please try again.");
+    }
   };
 
-  // Do not show AI assistant on the public landing page (evaluated after all hooks)
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success("Copied answer to clipboard!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: `intro-${Date.now()}`,
+        sender: "rexi",
+        text: `Chat cleared! Ready for your next question, **${firstName}**! 🚀`,
+        chips: [
+          "What should I eat today?",
+          "Explain Creatine dosage",
+          "How do I use the 3D Body Map?",
+        ],
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+    toast.info("Chat history cleared.");
+  };
+
   if (location === "/" || location === "/landing") {
     return null;
   }
@@ -156,33 +206,46 @@ export function RexiAssistant() {
         className="echo-mascot-trigger"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Ask Rexi AI Assistant"
-        title="Ask Rexi AI"
+        title="Ask Rexi AI (ChatGPT & Gemini for Fitness)"
       >
         <div className="echo-mascot-pulse" />
         <div className="echo-mascot-svg-wrap">
-          <RexiMascotIcon size={42} animated />
+          <RexiMascotIcon size={44} animated />
         </div>
-        <span className="echo-mascot-tooltip">Need help? Ask Rexi AI</span>
+        <span className="echo-mascot-tooltip">Ask Rexi AI Anything</span>
       </button>
 
-      {/* TryHackMe-style AI Assistant Chat Dialog */}
+      {/* ChatGPT / Gemini Style AI Assistant Chat Dialog */}
       {isOpen && (
         <aside className="echo-chat-dialog" aria-label="Rexi AI Chat Assistant">
           {/* Header */}
           <div className="echo-header">
             <div className="echo-header-left">
               <div className="echo-header-icon">
-                <RexiMascotIcon size={24} />
+                <RexiMascotIcon size={28} />
               </div>
               <div className="echo-title-group">
                 <div className="echo-title-row">
-                  <span className="echo-title">Rexi</span>
-                  <span className="echo-beta-badge">Beta</span>
+                  <span className="echo-title">Rexi AI</span>
+                  <span className="echo-beta-badge flex items-center gap-1">
+                    <Zap size={10} />
+                    <span>Live Context</span>
+                  </span>
                 </div>
-                <span className="echo-subtitle">Powered by FitTrack AI</span>
+                <span className="echo-subtitle">
+                  {firstName} ({liveContext.massKg}kg • {liveContext.remainingProtein}g P Left)
+                </span>
               </div>
             </div>
             <div className="echo-header-actions">
+              <button
+                className="echo-header-btn"
+                onClick={handleClearChat}
+                aria-label="Clear chat"
+                title="Clear Chat"
+              >
+                <Trash2 size={15} />
+              </button>
               <button
                 className="echo-header-btn"
                 onClick={() => setIsOpen(false)}
@@ -208,8 +271,20 @@ export function RexiAssistant() {
               <div key={msg.id} className={`echo-msg echo-msg-${msg.sender === "rexi" ? "assistant" : "user"}`}>
                 {msg.sender === "rexi" && (
                   <div className="echo-msg-sender-row">
-                    <RexiMascotIcon size={16} />
-                    <span>Rexi</span>
+                    <div className="flex items-center gap-1.5">
+                      <RexiMascotIcon size={16} />
+                      <span className="font-bold text-white text-xs">Rexi</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-[#5a6b58]">{msg.timestamp}</span>
+                      <button
+                        onClick={() => handleCopy(msg.text, msg.id)}
+                        className="text-[#8b9c8a] hover:text-white transition-colors"
+                        title="Copy answer"
+                      >
+                        {copiedId === msg.id ? <Check size={12} className="text-[#c6ff3d]" /> : <Copy size={12} />}
+                      </button>
+                    </div>
                   </div>
                 )}
                 <div className="echo-msg-bubble">
@@ -224,6 +299,7 @@ export function RexiAssistant() {
                         key={idx}
                         className="echo-chip-btn"
                         onClick={() => handleSend(chip)}
+                        disabled={isTyping}
                       >
                         {chip}
                       </button>
@@ -256,20 +332,31 @@ export function RexiAssistant() {
               handleSend();
             }}
           >
-            <input
-              type="text"
-              className="echo-input-field"
-              placeholder="Type your question for Rexi..."
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={(e) => {
+                setInputMessage(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(100, e.target.scrollHeight)}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask Rexi anything about workouts, diet, science, or life..."
+              className="echo-input"
             />
             <button
               type="submit"
-              className="echo-send-btn"
               disabled={!inputMessage.trim() || isTyping}
+              className="echo-send-btn"
               aria-label="Send message"
             >
-              <Send size={16} />
+              <Send size={15} />
             </button>
           </form>
         </aside>
@@ -278,76 +365,14 @@ export function RexiAssistant() {
   );
 }
 
-// Alias for backwards compatibility
 export const EchoAssistant = RexiAssistant;
 
-// Contextual AI Knowledge Generator
-function generateAIResponse(
-  query: string,
-  firstName: string
-): { text: string; chips?: string[] } {
-  const q = query.toLowerCase();
-
-  if (q.includes("3d") || q.includes("body map") || q.includes("anatomy") || q.includes("muscle")) {
-    return {
-      text: `**Interactive 3D Anatomy Explorer:**\n\n• **Selection & Raycasting:** Click or hover any muscle group (Chest, Core, Shoulders, Biceps, Triceps, Back, Glutes, Quads, Calves) to view real-time readiness telemetry, fatigue scores, and recovery state.\n• **View Angles:** Use the **FRONT**, **BACK**, and **SIDE** buttons in the bottom control dock to inspect muscle groups.\n• **Auto-Orbit:** Toggle the continuous rotate button for a cinematic 3D scan.\n• **Recommended Protocols:** Selecting a muscle displays scientifically backed exercises, optimal sets/reps, and current weekly volume on the right diagnostic card!`,
-      chips: ["How are daily calories calculated?", "Where do I log workouts?", "Explain readiness score"],
-    };
-  }
-
-  if (q.includes("calori") || q.includes("kcl") || q.includes("nutrition") || q.includes("food") || q.includes("protein") || q.includes("macro") || q.includes("target")) {
-    return {
-      text: `**Autonomous Precision Fueling & Daily Targets:**\n\n• **Dynamic Metabolic Calculation:** Your daily targets adjust automatically based on your **height**, **weight**, **age**, **gender**, and **activity level** using the Mifflin-St Jeor formula.\n• **Macronutrient Split:**\n  - **Protein:** ~2.0g per kg of body weight for optimal muscle recovery.\n  - **Carbs:** ~45% of total intake for glycogen replenishment.\n  - **Fats:** ~25-30% for hormonal balance.\n• **Logging Meals:** Visit the **Nutrition** tab (/log-food) to log breakfast, lunch, dinner, and snacks with automated macro breakdowns!`,
-      chips: ["How do I log a workout?", "How do streak milestones work?", "Show me my profile analytics"],
-    };
-  }
-
-  if (q.includes("workout") || q.includes("exercise") || q.includes("training") || q.includes("bench") || q.includes("squat") || q.includes("log-workout") || q.includes("session")) {
-    return {
-      text: `**Workouts & Training Execution:**\n\n• **Exercise Library (/exercise-library):** Browse 40+ structured movements across Chest, Back, Shoulders, Arms, Core, and Legs with form cues.\n• **Logging Sets & Volume (/log-workout):** Record reps, load (kg), and RPE to track progressive overload.\n• **Live Command Timer (/start-session):** Use the focused workout timer with countdown intervals and rest period notifications.\n• **Muscle Diagnostic:** Click any muscle on the home screen to instantly start a tailored workout protocol!`,
-      chips: ["How do I track GPS runs?", "What are achievements?", "Explain 3D Body Map"],
-    };
-  }
-
-  if (q.includes("stuck") || q.includes("help") || q.includes("guide") || q.includes("right track") || q.includes("how to use") || q.includes("features")) {
-    return {
-      text: `Here is a quick tour of **FitTrack Performance OS** for you, ${firstName}:\n\n1. **Command Center (/overview):** Daily continuity streak, vital telemetry rings, and interactive 3D body stage.\n2. **Workouts (/exercise-library & /log-workout):** Muscle-targeted protocols, progressive overload tracking, and live timers.\n3. **Fueling (/log-food):** Daily calorie target ledger with protein, carb, and lipid dials.\n4. **Telemetry & Weight (/log-weight):** Body weight trend charts and milestone projections.\n5. **GPS Trace (/gps):** Real-time route tracking for outdoor cardio and runs.\n6. **Achievements (/achievements):** Unlockable athletic badges and streak milestones.`,
-      chips: ["How do I use the 3D Body Map?", "How are daily calories calculated?", "How do I edit my profile?"],
-    };
-  }
-
-  if (q.includes("gps") || q.includes("run") || q.includes("map") || q.includes("trace")) {
-    return {
-      text: `**GPS Route Tracking (/gps):**\n\n• Track real-time pace, distance in kilometers, elevation gain, and elapsed time.\n• Automatically renders interactive route vectors on the GPS trace canvas.\n• Saves completed sessions to your athlete ledger to sync cardio burn with your daily calorie dial!`,
-      chips: ["How do I log food?", "How do I log a workout?"],
-    };
-  }
-
-  if (q.includes("profile") || q.includes("name") || q.includes("weight") || q.includes("height") || q.includes("settings")) {
-    return {
-      text: `**Athlete Identity & Profile Analytics (/profile):**\n\n• View your GitHub-style training continuity contribution matrix.\n• Click **Edit Profile** to update your display name, height, weight, fitness goals, and profile avatar photo.\n• Updating your height/weight will immediately recalculate your daily calorie and macro targets across the entire app!`,
-      chips: ["How are daily calories calculated?", "Where do I find my achievements?"],
-    };
-  }
-
-  // Default intelligent assistant response
-  return {
-    text: `That's a great question, ${firstName}! Here is what you need to know:\n\n• For fitness progression, maintain **progressive overload** and ensure you hit your **daily protein target** (~2g/kg).\n• Keep your **Daily Continuity Streak** active by logging training sessions or nutrition daily.\n• You can use the top navigation and sidebar menu to navigate between the **3D Anatomy Stage**, **Workouts**, **Nutrition**, and **Progress Analytics** at any time!`,
-    chips: [
-      "How do I use the 3D Body Map?",
-      "How are daily calories calculated?",
-      "Guide me through Workouts & Logging",
-    ],
-  };
-}
-
-// Simple Markdown Formatter for clean rendering
+// Markdown Formatter
 function formatMarkdown(text: string) {
   const lines = text.split("\n");
   return lines.map((line, idx) => {
     if (!line.trim()) return <div key={idx} style={{ height: 6 }} />;
 
-    // Bullet points
     if (line.startsWith("• ") || line.startsWith("- ")) {
       const content = line.substring(2);
       return (
@@ -357,7 +382,6 @@ function formatMarkdown(text: string) {
       );
     }
 
-    // Numbered list
     const numberedMatch = line.match(/^(\d+)\.\s+(.*)/);
     if (numberedMatch) {
       return (
