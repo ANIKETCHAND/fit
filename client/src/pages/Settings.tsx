@@ -64,44 +64,9 @@ export default function Settings() {
   const save = () => { saveCalibrationSettings(form); setSaved(true); toast.success("Calibration and daily targets saved locally"); };
   const reset = () => { setForm(resetCalibrationSettings()); setSaved(false); toast.info("Calibration restored to its baseline"); };
 
-  const isJustOnboarded = (() => {
-    try {
-      return localStorage.getItem("fittrack_just_onboarded") === "true";
-    } catch {
-      return false;
-    }
-  })();
-
   return <WorkflowLayout kicker="System / calibration" title="Calibrate your engine" detail="Set the biometric baseline, workload profile, and nutrition targets that shape every training signal.">
     <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
       <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
-        {isJustOnboarded && (
-          <div className="bg-[#101b13] border border-[#c6ff3d]/40 rounded-2xl p-4 mb-4 flex items-center justify-between gap-3 shadow-[0_0_20px_rgba(198,255,61,0.15)]">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{getExperienceMode() === "advanced" ? "🐀" : "🦖"}</span>
-              <div>
-                <b className="text-white text-xs font-mono uppercase tracking-wider block">
-                  {getExperienceMode() === "advanced" ? "Welcome Gym rat! 🐀🔥 Step 2: Body Weight Calibration" : "Rexi's Step 2: Body Weight Calibration"}
-                </b>
-                <p className="text-[11px] text-[#a5bca3] mt-0.5">
-                  {getExperienceMode() === "advanced"
-                    ? "Enter your body mass (kg), height (cm), and training workload to calculate your maximum hypertrophy & power targets!"
-                    : "Enter your body mass (kg), height (cm), and biological sex below to auto-calculate your daily energy and protein targets!"}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                localStorage.removeItem("fittrack_just_onboarded");
-                window.location.reload();
-              }}
-              className="text-[10px] font-mono text-[#8b9c8a] hover:text-white px-2 py-1 bg-white/5 rounded-lg border border-white/5"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
         <div className="command-deck-head"><div><span className="deck-kicker"><i /> Athlete calibration</span><h2>Baseline parameters</h2><p>Use your current measurements. These values stay in this browser and dynamically power your daily protein and energy targets.</p></div><div className={`deck-status ${saved ? "is-saved" : ""}`}><i />{saved ? "Stored locally" : "Draft active"}</div></div>
         <section className="settings-section"><div className="section-marker"><UserRound size={16} /><div><span>01 / athlete</span><b>Identity & biometrics</b></div></div><div className="settings-field-grid identity-grid"><label className="deck-field wide"><span>Display name</span><input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Athlete name" /></label><label className="deck-field"><span>Age</span><input type="number" min="14" max="99" value={form.age} onChange={(event) => updateBiometric("age", Number(event.target.value))} /></label><label className="deck-field"><span>Height <em>cm</em></span><input type="number" min="120" max="250" value={form.heightCm} onChange={(event) => updateBiometric("heightCm", Number(event.target.value))} /></label><label className="deck-field"><span>Mass <em>kg</em></span><input type="number" min="35" max="300" step="0.1" value={form.weightKg} onChange={(event) => updateBiometric("weightKg", Number(event.target.value))} /></label></div><div className="sex-control" aria-label="Biological sex"><span>Biological sex</span><div><button type="button" className={form.sex === "male" ? "selected" : ""} onClick={() => updateBiometric("sex", "male")}>Male</button><button type="button" className={form.sex === "female" ? "selected" : ""} onClick={() => updateBiometric("sex", "female")}>Female</button></div></div></section>
         <section className="settings-section workload-section"><div className="section-marker"><Activity size={16} /><div><span>02 / workload</span><b>Training rhythm</b></div></div><div className="activity-matrix">{activityOptions.map((option, index) => <button type="button" key={option.value} className={form.activityLevel === option.value ? "activity-choice selected" : "activity-choice"} onClick={() => updateBiometric("activityLevel", option.value)}><span>0{index + 1}</span><b>{option.label}</b><small>{option.detail}</small><i /></button>)}</div></section>
