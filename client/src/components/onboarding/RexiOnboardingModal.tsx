@@ -61,14 +61,22 @@ export function RexiOnboardingModal() {
       localStorage.setItem("fittrack_just_onboarded", "true");
     } catch {}
 
-    const levelTitle = level === "beginner" ? "Beginner" : level === "intermediate" ? "Intermediate" : "Pro";
-    toast.success(`Experience level set to ${levelTitle}!`);
+    if (level === "beginner") {
+      toast.success("Beginner Mode activated! Launching Rexi Guided Tour...");
+      setTimeout(() => {
+        setIsOpen(false);
+        window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
+      }, 1300);
+    } else {
+      const levelTitle = level === "intermediate" ? "Intermediate" : "Pro";
+      toast.success(`Experience level set to ${levelTitle}!`);
 
-    // Redirect to Settings page after celebratory jump animation
-    setTimeout(() => {
-      setIsOpen(false);
-      setLocation("/settings");
-    }, 1400);
+      // Redirect to Settings page after celebratory jump animation
+      setTimeout(() => {
+        setIsOpen(false);
+        setLocation("/settings");
+      }, 1300);
+    }
   };
 
   if (!isOpen) return null;

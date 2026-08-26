@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
 import { EchoAssistant } from "./components/ai/EchoAssistant";
 import { RexiOnboardingModal } from "./components/onboarding/RexiOnboardingModal";
+import { RexiGuidedTour } from "./components/onboarding/RexiGuidedTour";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import LogFood from "./pages/LogFood";
@@ -57,6 +58,7 @@ function App() {
           <Router />
           <EchoAssistant />
           <RexiOnboardingModal />
+          <RexiGuidedTour />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
