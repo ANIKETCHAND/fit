@@ -1,8 +1,8 @@
-/* FitTrack: 2-Step Rexi AI Onboarding Modal (Step 1: 3D Rexi Introduction -> Step 2: Experience Calibration -> Step 3: Settings) */
+/* FitTrack: Rexi AI Onboarding Modal (Step 1: 3D Rexi Introduction -> Step 2: Experience Selection -> Step 3: Gym Rat Popup / Beginner Tour) */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Check, Flame, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Check, Dumbbell, Flame, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Rexi3DCanvas } from "./Rexi3DCanvas";
 import { getAthleteProfile, saveExperienceMode, getScopedKey } from "@/lib/user-store";
@@ -10,7 +10,7 @@ import { getAthleteProfile, saveExperienceMode, getScopedKey } from "@/lib/user-
 export function RexiOnboardingModal() {
   const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [stage, setStage] = useState<"greeting" | "ask_level">("greeting");
+  const [stage, setStage] = useState<"greeting" | "ask_level" | "gym_rat_popup">("greeting");
   const [selectedLevel, setSelectedLevel] = useState<"beginner" | "intermediate" | "advanced" | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -53,7 +53,6 @@ export function RexiOnboardingModal() {
 
   const handleSelectLevel = (level: "beginner" | "intermediate" | "advanced") => {
     setSelectedLevel(level);
-    setIsTransitioning(true);
 
     try {
       saveExperienceMode(level === "beginner" ? "beginner" : "advanced");
@@ -62,21 +61,24 @@ export function RexiOnboardingModal() {
     } catch {}
 
     if (level === "beginner") {
+      setIsTransitioning(true);
       toast.success("Beginner Mode activated! Launching Rexi Guided Tour...");
       setTimeout(() => {
         setIsOpen(false);
         window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
-      }, 1300);
+      }, 1200);
     } else {
-      const levelTitle = level === "intermediate" ? "Intermediate" : "Pro Athlete";
-      toast.success(`Welcome Gym rat! 🐀🔥 Experience level set to ${levelTitle}.`);
-
-      // Redirect to Settings page after celebratory jump animation
-      setTimeout(() => {
-        setIsOpen(false);
-        setLocation("/settings");
-      }, 1400);
+      // Open dedicated "Welcome Gym rat" popup box!
+      setStage("gym_rat_popup");
     }
+  };
+
+  const handleProceedToSettings = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      setLocation("/settings");
+    }, 400);
   };
 
   if (!isOpen) return null;
@@ -86,12 +88,12 @@ export function RexiOnboardingModal() {
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
         <motion.div
           key={stage}
-          initial={{ opacity: 0, scale: 0.92, y: 15 }}
+          initial={{ opacity: 0, scale: 0.9, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
           className={`w-full ${
-            stage === "greeting" ? "max-w-md" : "max-w-lg"
+            stage === "greeting" ? "max-w-md" : stage === "gym_rat_popup" ? "max-w-md" : "max-w-lg"
           } bg-[#0c120e] border border-[#c6ff3d]/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_60px_rgba(198,255,61,0.22)] text-white relative overflow-hidden transition-all duration-300`}
         >
           {/* Ambient Glows */}
@@ -138,6 +140,52 @@ export function RexiOnboardingModal() {
                 className="w-full mt-6 py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(198,255,61,0.35)] transition-all flex items-center justify-center gap-2"
               >
                 <span>Let's Get Started</span>
+                <ArrowRight size={15} />
+              </motion.button>
+            </div>
+          ) : stage === "gym_rat_popup" ? (
+            /* STAGE 3 (GYM RAT POPUP): DEDICATED NEW BOX FOR INTERMEDIATE & PRO */
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full relative flex items-center justify-center -mt-2">
+                <Rexi3DCanvas step="greeting" isCelebrating={true} />
+                <span className="absolute top-2 right-4 bg-amber-400 text-black text-[9px] font-bold font-mono px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md pointer-events-none flex items-center gap-1">
+                  <span>🐀🔥</span> Gym Rat Mode
+                </span>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mt-3 space-y-2.5"
+              >
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#c6ff3d]/10 border border-[#c6ff3d]/30 rounded-full text-[#c6ff3d] text-[11px] font-mono font-bold uppercase tracking-wider">
+                  <Dumbbell size={13} />
+                  <span>{selectedLevel === "advanced" ? "Pro Athlete" : "Intermediate"} Unlocked</span>
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  Welcome, <span className="text-[#c6ff3d]">Gym Rat! 🐀🔥</span>
+                </h2>
+
+                <p className="text-xs sm:text-sm text-[#b8cbb5] max-w-xs mx-auto leading-relaxed">
+                  You already know the iron game! Full 3D muscle telemetry, progressive overload tracking, and hypertrophy diagnostics are primed for you.
+                </p>
+
+                <p className="text-[11px] text-[#718270] font-mono bg-black/40 p-2.5 rounded-xl border border-white/5">
+                  ⚡ Next: Calibrate your body mass (kg), height & target load in Settings.
+                </p>
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={handleProceedToSettings}
+                disabled={isTransitioning}
+                className="w-full mt-5 py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(198,255,61,0.35)] transition-all flex items-center justify-center gap-2"
+              >
+                <span>Calibrate Body Mass in Settings</span>
                 <ArrowRight size={15} />
               </motion.button>
             </div>
@@ -229,17 +277,8 @@ export function RexiOnboardingModal() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-xs font-mono text-[#c6ff3d] flex items-center justify-center gap-2"
                   >
-                    {selectedLevel === "intermediate" || selectedLevel === "advanced" ? (
-                      <>
-                        <span className="text-sm">🐀🔥</span>
-                        <span>Welcome Gym rat! Taking you to Settings to set body mass...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={14} className="animate-spin" />
-                        <span>Calibrating... Starting Rexi Guided Tour</span>
-                      </>
-                    )}
+                    <Sparkles size={14} className="animate-spin" />
+                    <span>Calibrating... Launching Guided Tour</span>
                   </motion.div>
                 ) : (
                   <p className="text-[10px] font-mono text-[#5a6b58]">
