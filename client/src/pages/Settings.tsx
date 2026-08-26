@@ -32,9 +32,13 @@ const computeTargets = (settings: CalibrationSettings) => {
   };
 };
 
+import { exportAthleteDatabase, exportWorkoutCsv, getDatabaseStats } from "@/lib/database-sync";
+import { Database, Download, FileSpreadsheet, HardDrive } from "lucide-react";
+
 export default function Settings() {
   const [form, setForm] = useState<CalibrationSettings>(() => getCalibrationSettings());
   const [saved, setSaved] = useState(false);
+  const dbStats = getDatabaseStats();
 
   // Update biometric parameters and automatically recalculate targets with respect to height, weight, etc.
   const updateBiometric = <Key extends "heightCm" | "weightKg" | "age" | "sex" | "activityLevel">(key: Key, value: CalibrationSettings[Key]) => {
@@ -71,6 +75,55 @@ export default function Settings() {
         <section className="settings-section"><div className="section-marker"><UserRound size={16} /><div><span>01 / athlete</span><b>Identity & biometrics</b></div></div><div className="settings-field-grid identity-grid"><label className="deck-field wide"><span>Display name</span><input value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Athlete name" /></label><label className="deck-field"><span>Age</span><input type="number" min="14" max="99" value={form.age} onChange={(event) => updateBiometric("age", Number(event.target.value))} /></label><label className="deck-field"><span>Height <em>cm</em></span><input type="number" min="120" max="250" value={form.heightCm} onChange={(event) => updateBiometric("heightCm", Number(event.target.value))} /></label><label className="deck-field"><span>Mass <em>kg</em></span><input type="number" min="35" max="300" step="0.1" value={form.weightKg} onChange={(event) => updateBiometric("weightKg", Number(event.target.value))} /></label></div><div className="sex-control" aria-label="Biological sex"><span>Biological sex</span><div><button type="button" className={form.sex === "male" ? "selected" : ""} onClick={() => updateBiometric("sex", "male")}>Male</button><button type="button" className={form.sex === "female" ? "selected" : ""} onClick={() => updateBiometric("sex", "female")}>Female</button></div></div></section>
         <section className="settings-section workload-section"><div className="section-marker"><Activity size={16} /><div><span>02 / workload</span><b>Training rhythm</b></div></div><div className="activity-matrix">{activityOptions.map((option, index) => <button type="button" key={option.value} className={form.activityLevel === option.value ? "activity-choice selected" : "activity-choice"} onClick={() => updateBiometric("activityLevel", option.value)}><span>0{index + 1}</span><b>{option.label}</b><small>{option.detail}</small><i /></button>)}</div></section>
         <section className="settings-section target-section"><div className="section-marker"><Target size={16} /><div><span>03 / nutrition</span><b>Daily targets</b></div><button type="button" className="recalculate-button" onClick={autoSetTargets}><Calculator size={14} />Auto-calibrate</button></div><div className="settings-field-grid targets-grid"><label className="deck-field"><span>Energy <em>kcal</em></span><input type="number" min="1000" max="6000" value={form.goalKcal} onChange={(event) => update("goalKcal", Number(event.target.value))} /></label><label className="deck-field"><span>Protein <em>g</em></span><input type="number" min="40" max="450" value={form.goalProtein} onChange={(event) => update("goalProtein", Number(event.target.value))} /></label><label className="deck-field"><span>Carbohydrate <em>g</em></span><input type="number" min="0" max="800" value={form.goalCarbs} onChange={(event) => update("goalCarbs", Number(event.target.value))} /></label><label className="deck-field"><span>Fat <em>g</em></span><input type="number" min="20" max="300" value={form.goalFat} onChange={(event) => update("goalFat", Number(event.target.value))} /></label></div></section>
+        
+        {/* 04 / Database Engine & Backup */}
+        <section className="settings-section">
+          <div className="section-marker">
+            <Database size={16} />
+            <div>
+              <span>04 / database</span>
+              <b>Engine & Data Backup</b>
+            </div>
+          </div>
+          <div className="bg-[#0e1610] border border-white/10 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#8b9c8a] flex items-center gap-2">
+                <HardDrive size={14} className="text-[#c6ff3d]" />
+                <span>Storage Footprint: {dbStats.storageUsageKb} KB</span>
+              </span>
+              <span className="text-[#c6ff3d] bg-[#c6ff3d]/10 px-2 py-0.5 rounded border border-[#c6ff3d]/30 uppercase text-[10px] font-bold">
+                ● Engine Online
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center bg-black/40 p-2.5 rounded-xl border border-white/5 text-[11px] font-mono">
+              <div><span className="text-[#8b9c8a] block text-[9px]">MEALS</span><b className="text-white">{dbStats.totalLoggedMeals}</b></div>
+              <div><span className="text-[#8b9c8a] block text-[9px]">WORKOUTS</span><b className="text-white">{dbStats.totalWorkouts}</b></div>
+              <div><span className="text-[#8b9c8a] block text-[9px]">FAVORITES</span><b className="text-white">{dbStats.totalFavorites}</b></div>
+              <div><span className="text-[#8b9c8a] block text-[9px]">CUSTOM FOODS</span><b className="text-white">{dbStats.totalCustomFoods}</b></div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <button
+                type="button"
+                onClick={exportAthleteDatabase}
+                className="flex-1 py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono font-medium text-white transition-all flex items-center justify-center gap-2"
+              >
+                <Download size={14} className="text-[#c6ff3d]" />
+                <span>Export JSON Backup</span>
+              </button>
+              <button
+                type="button"
+                onClick={exportWorkoutCsv}
+                className="flex-1 py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono font-medium text-white transition-all flex items-center justify-center gap-2"
+              >
+                <FileSpreadsheet size={14} className="text-sky-400" />
+                <span>Export Workouts (CSV)</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
         <div className="settings-actions"><button type="submit" className="save-calibration"><Save size={16} />Save calibration <span>↗</span></button></div>
       </form>
       <aside className="calibration-rail"><div className="rail-panel metabolism-panel"><div className="rail-head"><span><Gauge size={15} />Metabolic signal</span><small>ACTIVE MODEL</small></div><div className="metabolism-readout"><div><span>Resting output</span><strong>{bmr}<small>kcal</small></strong><em>BMR</em></div><div><span>Daily expenditure</span><strong>{tdee}<small>kcal</small></strong><em>TDEE</em></div></div><div className="energy-rail"><i /><i /><i /><b style={{ left: `${Math.min(88, Math.max(12, ((tdee - 1700) / 2200) * 100))}%` }} /></div><p><i />Projected from your current body mass, age, biological sex, and weekly training rhythm.</p></div><div className="rail-panel target-stack"><div className="rail-head"><span><Scale size={15} />Target composition</span><small>24H</small></div>{[{ label: "Protein", value: form.goalProtein, unit: "g", color: "lime" }, { label: "Carbohydrate", value: form.goalCarbs, unit: "g", color: "blue" }, { label: "Fat", value: form.goalFat, unit: "g", color: "ember" }].map((item) => <div className="target-readout" key={item.label}><span>{item.label}</span><b>{item.value}<small>{item.unit}</small></b><i className={item.color} /></div>)}</div><div className="rail-note"><Check size={15} /><p><b>Calibration note</b>Update your mass after a meaningful change in body weight or workload.</p></div></aside>

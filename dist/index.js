@@ -37,50 +37,116 @@ import { drizzle } from "drizzle-orm/mysql2";
 // drizzle/schema.ts
 import { decimal, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 var users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  experienceLevel: mysqlEnum("experienceLevel", ["beginner", "intermediate", "advanced"]).default("beginner").notNull(),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
 });
+var athleteProfiles = mysqlTable("athlete_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weightKg: decimal("weightKg", { precision: 6, scale: 2 }).default("75.00").notNull(),
+  heightCm: decimal("heightCm", { precision: 5, scale: 1 }).default("175.0").notNull(),
+  age: int("age").default(24).notNull(),
+  sex: mysqlEnum("sex", ["male", "female"]).default("male").notNull(),
+  activityLevel: varchar("activityLevel", { length: 32 }).default("moderate").notNull(),
+  focus: varchar("focus", { length: 180 }).default("Hypertrophy & Progressive Overload").notNull(),
+  goalKcal: int("goalKcal").default(2400).notNull(),
+  goalProtein: int("goalProtein").default(160).notNull(),
+  goalCarbs: int("goalCarbs").default(260).notNull(),
+  goalFat: int("goalFat").default(65).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+}, (table) => [index("athlete_profiles_user_idx").on(table.userId)]);
 var nutritionEntries = mysqlTable("nutrition_entries", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   mealType: varchar("mealType", { length: 32 }).notNull(),
+  // Breakfast, Lunch, Snack, Dinner
   label: varchar("label", { length: 180 }).notNull(),
+  hindiName: varchar("hindiName", { length: 180 }),
+  portionMultiplier: decimal("portionMultiplier", { precision: 4, scale: 2 }).default("1.00").notNull(),
+  servingSize: varchar("servingSize", { length: 120 }).default("1 serving").notNull(),
   calories: int("calories").notNull(),
   proteinGrams: decimal("proteinGrams", { precision: 7, scale: 2 }).notNull(),
   carbGrams: decimal("carbGrams", { precision: 7, scale: 2 }).notNull(),
   fatGrams: decimal("fatGrams", { precision: 7, scale: 2 }).notNull(),
+  isVeg: int("isVeg").default(1).notNull(),
+  // 1 = true, 0 = false
   consumedAt: timestamp("consumedAt").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull()
 }, (table) => [index("nutrition_entries_user_date_idx").on(table.userId, table.consumedAt)]);
-var metricEntries = mysqlTable("metric_entries", {
+var customIndianFoods = mysqlTable("custom_indian_foods", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  weightKg: decimal("weightKg", { precision: 6, scale: 2 }).notNull(),
-  capturedAt: timestamp("capturedAt").notNull(),
+  name: varchar("name", { length: 180 }).notNull(),
+  hindiName: varchar("hindiName", { length: 180 }),
+  category: varchar("category", { length: 64 }).default("high_protein_veg").notNull(),
+  servingSize: varchar("servingSize", { length: 120 }).notNull(),
+  calories: int("calories").notNull(),
+  proteinGrams: decimal("proteinGrams", { precision: 7, scale: 2 }).notNull(),
+  carbGrams: decimal("carbGrams", { precision: 7, scale: 2 }).notNull(),
+  fatGrams: decimal("fatGrams", { precision: 7, scale: 2 }).notNull(),
+  isVeg: int("isVeg").default(1).notNull(),
+  tagsJson: text("tagsJson"),
   createdAt: timestamp("createdAt").defaultNow().notNull()
-}, (table) => [index("metric_entries_user_date_idx").on(table.userId, table.capturedAt)]);
+}, (table) => [index("custom_foods_user_idx").on(table.userId)]);
 var workoutEntries = mysqlTable("workout_entries", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 180 }).notNull(),
   focus: varchar("focus", { length: 120 }).notNull(),
+  // Chest, Back, Legs, Full Body
   movementCount: int("movementCount").notNull(),
   volumeKg: decimal("volumeKg", { precision: 11, scale: 2 }).notNull(),
+  durationMinutes: int("durationMinutes").default(45).notNull(),
   completedAt: timestamp("completedAt").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull()
 }, (table) => [index("workout_entries_user_date_idx").on(table.userId, table.completedAt)]);
+var workoutSets = mysqlTable("workout_sets", {
+  id: int("id").autoincrement().primaryKey(),
+  workoutId: int("workoutId").notNull().references(() => workoutEntries.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  movementId: varchar("movementId", { length: 64 }).notNull(),
+  movementName: varchar("movementName", { length: 180 }).notNull(),
+  setNumber: int("setNumber").notNull(),
+  weightKg: decimal("weightKg", { precision: 7, scale: 2 }).notNull(),
+  reps: int("reps").notNull(),
+  rpe: decimal("rpe", { precision: 3, scale: 1 }).default("8.0"),
+  calculated1Rm: decimal("calculated1Rm", { precision: 7, scale: 2 }),
+  completedAt: timestamp("completedAt").defaultNow().notNull()
+}, (table) => [index("workout_sets_user_idx").on(table.userId, table.workoutId)]);
+var userFavorites = mysqlTable("user_favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  exerciseId: varchar("exerciseId", { length: 64 }).notNull(),
+  exerciseName: varchar("exerciseName", { length: 180 }).notNull(),
+  category: varchar("category", { length: 64 }),
+  favoritedAt: timestamp("favoritedAt").defaultNow().notNull()
+}, (table) => [index("user_favorites_user_idx").on(table.userId, table.exerciseId)]);
+var metricEntries = mysqlTable("metric_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weightKg: decimal("weightKg", { precision: 6, scale: 2 }).notNull(),
+  bodyFatPercent: decimal("bodyFatPercent", { precision: 4, scale: 1 }),
+  notes: text("notes"),
+  capturedAt: timestamp("capturedAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull()
+}, (table) => [index("metric_entries_user_date_idx").on(table.userId, table.capturedAt)]);
+var streakRecords = mysqlTable("streak_records", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  currentStreak: int("currentStreak").default(0).notNull(),
+  longestStreak: int("longestStreak").default(0).notNull(),
+  lastCompletedDate: varchar("lastCompletedDate", { length: 32 }).default("").notNull(),
+  freezeCount: int("freezeCount").default(2).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+});
 var gpsSessions = mysqlTable("gps_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -130,7 +196,7 @@ async function upsertUser(user) {
   if (!db) return;
   const values = { openId: user.openId };
   const updateSet = {};
-  ["name", "email", "loginMethod"].forEach((field) => {
+  ["name", "email", "loginMethod", "experienceLevel"].forEach((field) => {
     if (user[field] !== void 0) {
       values[field] = user[field] ?? null;
       updateSet[field] = user[field] ?? null;
@@ -155,19 +221,23 @@ async function getUserByOpenId(openId) {
 }
 async function listNutritionEntries(userId) {
   const db = await requireDb();
-  return db.select().from(nutritionEntries).where(eq(nutritionEntries.userId, userId)).orderBy(desc(nutritionEntries.consumedAt)).limit(60);
+  return db.select().from(nutritionEntries).where(eq(nutritionEntries.userId, userId)).orderBy(desc(nutritionEntries.consumedAt)).limit(100);
 }
 async function createNutritionEntry(userId, entry) {
   const db = await requireDb();
-  await db.insert(nutritionEntries).values({ ...entry, userId, proteinGrams: entry.proteinGrams.toFixed(2), carbGrams: entry.carbGrams.toFixed(2), fatGrams: entry.fatGrams.toFixed(2) });
-}
-async function listMetricEntries(userId) {
-  const db = await requireDb();
-  return db.select().from(metricEntries).where(eq(metricEntries.userId, userId)).orderBy(desc(metricEntries.capturedAt)).limit(90);
-}
-async function createMetricEntry(userId, entry) {
-  const db = await requireDb();
-  await db.insert(metricEntries).values({ ...entry, userId, weightKg: entry.weightKg.toFixed(2) });
+  await db.insert(nutritionEntries).values({
+    userId,
+    mealType: entry.mealType,
+    label: entry.label,
+    hindiName: entry.hindiName || null,
+    portionMultiplier: (entry.portionMultiplier || 1).toFixed(2),
+    calories: entry.calories,
+    proteinGrams: entry.proteinGrams.toFixed(2),
+    carbGrams: entry.carbGrams.toFixed(2),
+    fatGrams: entry.fatGrams.toFixed(2),
+    isVeg: entry.isVeg !== false ? 1 : 0,
+    consumedAt: entry.consumedAt
+  });
 }
 async function listWorkoutEntries(userId) {
   const db = await requireDb();
@@ -175,7 +245,30 @@ async function listWorkoutEntries(userId) {
 }
 async function createWorkoutEntry(userId, entry) {
   const db = await requireDb();
-  await db.insert(workoutEntries).values({ ...entry, userId, volumeKg: entry.volumeKg.toFixed(2) });
+  const res = await db.insert(workoutEntries).values({
+    userId,
+    title: entry.title,
+    focus: entry.focus,
+    movementCount: entry.movementCount,
+    volumeKg: entry.volumeKg.toFixed(2),
+    durationMinutes: entry.durationMinutes || 45,
+    completedAt: entry.completedAt
+  });
+  return res;
+}
+async function listMetricEntries(userId) {
+  const db = await requireDb();
+  return db.select().from(metricEntries).where(eq(metricEntries.userId, userId)).orderBy(desc(metricEntries.capturedAt)).limit(90);
+}
+async function createMetricEntry(userId, entry) {
+  const db = await requireDb();
+  await db.insert(metricEntries).values({
+    userId,
+    weightKg: entry.weightKg.toFixed(2),
+    bodyFatPercent: entry.bodyFatPercent ? entry.bodyFatPercent.toFixed(1) : null,
+    notes: entry.notes || null,
+    capturedAt: entry.capturedAt
+  });
 }
 async function listGpsSessions(userId) {
   const db = await requireDb();
