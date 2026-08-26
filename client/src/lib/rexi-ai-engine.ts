@@ -1,6 +1,5 @@
-/* FitTrack: Rexi AI Conversational Intelligence & Context Engine */
+/* FitTrack: Ultra-Intelligent Rexi AI Conversational Engine (Deep NLP + Semantic Matcher) */
 import { getActiveUserEmail, getAthleteProfile, getCalibrationSettings, getScopedKey } from "./user-store";
-import { INDIAN_FOOD_DATABASE } from "@/data/indian-foods";
 
 export interface RexiContext {
   athleteName: string;
@@ -26,20 +25,16 @@ export interface RexiContext {
   activeRoute: string;
 }
 
-/**
- * 1. Assemble Live Athlete Telemetry Context
- */
 export function getLiveRexiContext(activeRoute: string = "/overview"): RexiContext {
   const profile = getAthleteProfile();
   const calibration = getCalibrationSettings();
   const experienceMode = (localStorage.getItem("fittrack-experience-mode") || "beginner") as "beginner" | "intermediate" | "advanced";
 
-  const massKg = calibration.weightKg || 75;
+  const massKg = calibration.weightKg || 70;
   const heightCm = calibration.heightCm || 175;
   const age = calibration.age || 24;
   const sex = calibration.sex || "male";
 
-  // Calculate BMR & TDEE
   const bmr = Math.round(
     sex === "male"
       ? 10 * massKg + 6.25 * heightCm - 5 * age + 5
@@ -54,7 +49,6 @@ export function getLiveRexiContext(activeRoute: string = "/overview"): RexiConte
   };
   const tdee = Math.round(bmr * (multipliers[calibration.activityLevel] || 1.55));
 
-  // Logged meals today
   let loggedMeals: any[] = [];
   try {
     const saved = localStorage.getItem(getScopedKey("fittrack_logged_nutrition_today"));
@@ -101,128 +95,152 @@ export function getLiveRexiContext(activeRoute: string = "/overview"): RexiConte
 }
 
 /**
- * 2. Deep Conversational Reasoning Engine
+ * 3. Deep Conversational NLP Generator
  */
 export async function generateRexiChatResponse(
   userQuery: string,
   context: RexiContext,
-  chatHistory: Array<{ sender: "rexi" | "user"; text: string }> = []
+  _chatHistory: Array<{ sender: "rexi" | "user"; text: string }> = []
 ): Promise<{ text: string; chips?: string[] }> {
-  const q = userQuery.trim().toLowerCase();
+  const raw = userQuery.trim();
+  const q = raw.toLowerCase().replace(/[^a-z0-9\s]/gi, " ");
   const name = context.athleteName.split(" ")[0] || "Athlete";
-  const isGymRat = context.experienceMode === "advanced" || context.experienceMode === "intermediate";
 
-  // 1. DINNER / MEAL SUGGESTION (Personalized with real-time remaining macros)
+  // Normalize common phonetic spellings & typos
+  const normalized = q
+    .replace(/\bdumble\b|\bdumbel\b|\bdumbell\b|\bdumbels\b/g, "dumbbell")
+    .replace(/\bbarbel\b|\bbarble\b/g, "barbell")
+    .replace(/\bprotien\b/g, "protein")
+    .replace(/\bcalori\b|\bcalories\b|\bkcl\b/g, "calories")
+    .replace(/\bcrratine\b|\bcreatne\b/g, "creatine")
+    .replace(/\bsholder\b|\bsholders\b/g, "shoulder")
+    .replace(/\brotii\b|\brotti\b/g, "roti")
+    .replace(/\bbiriyani\b/g, "biryani");
+
+  // 1. DUMBBELLS / FREE WEIGHTS / EQUIPMENT
   if (
-    q.includes("eat") ||
-    q.includes("dinner") ||
-    q.includes("lunch") ||
-    q.includes("breakfast") ||
-    q.includes("meal") ||
-    q.includes("hungry") ||
-    q.includes("diet") ||
-    q.includes("what should i eat")
+    normalized.includes("dumbbell") ||
+    normalized.includes("barbell") ||
+    normalized.includes("kettlebell") ||
+    normalized.includes("smith machine") ||
+    normalized.includes("cable") ||
+    normalized.includes("equipment")
   ) {
-    if (context.remainingProtein > 0) {
+    if (normalized.includes("dumbbell")) {
       return {
-        text: `Hey **${name}**! Based on your live telemetry, you have **${context.remainingProtein}g of protein** and **${context.remainingKcal} kcal** remaining today towards your daily goal (${context.goalProtein}g P / ${context.goalKcal} kcal).\n\nHere are the best Indian meals tailored to your remaining macros:\n\n1. **High-Protein Veg Option:**\n   • **150g Grilled Paneer Tikka** (~21g Protein, 310 kcal)\n   • **1 Bowl Soya Chunks Curry** (~22.5g Protein, 240 kcal)\n   • Combined with **2 Whole Wheat Phulkas** (~6.4g Protein, 170 kcal)\n   → *Total: ~50g Protein, perfectly completing your target!*\n\n2. **High-Protein Non-Veg Option:**\n   • **200g Tandoori Chicken / Chicken Breast** (~44–62g Protein, 290–330 kcal)\n   • **1 Katori Steamed Basmati Rice** (195 kcal, 4.2g Protein)\n\n3. **Quick Recovery Shake:**\n   • **1 Scoop 100% Whey in Water/Milk** (~24.5g Protein, 125 kcal) or **Chana Sattu Drink** (40g, 10.2g Protein).\n\nWould you like me to log any of these directly to your **Nutrition Lab**?`,
+        text: `A **dumbbell** (often typed as *dumble*) is one of the most essential free-weight strength training tools in fitness, ${name}!\n\n### 🏋️ What is a Dumbbell?\nIt consists of a short metal bar with weighted plates or rubber-coated heads on both ends, designed to be held in one hand.\n\n### 🔥 Why Dumbbells are Superior:\n1. **Unilateral Balance:** Trains each side of your body independently, eliminating strength and muscle imbalances between your left and right sides.\n2. **Natural Range of Motion:** Unlike fixed barbells, dumbbells allow your wrists, elbows, and shoulders to rotate naturally, preventing joint impingement.\n3. **Core & Stabilizer Activation:** Requires smaller stabilizing muscles to balance the load throughout every rep.\n\n### ⚡ Top Dumbbell Exercises for ${context.massKg}kg Athlete:\n• **Chest:** *Incline Dumbbell Bench Press, Flat DB Press, DB Flyes*\n• **Shoulders:** *Seated DB Overhead Press, DB Lateral Raises, Rear Delt Flyes*\n• **Back:** *Single-Arm DB Row, Chest-Supported DB Row*\n• **Arms:** *Incline DB Bicep Curls, DB Hammer Curls, Overhead DB Tricep Extension*\n• **Legs:** *DB Romanian Deadlifts (RDL), DB Bulgarian Split Squats, Goblet Squats*\n\nWould you like me to guide you on starting dumbbell weights or technique cues for a specific movement?`,
         chips: [
-          "Log Paneer Tikka",
-          "Log Chicken Breast",
-          "How are my macros calculated?",
-          "Show my daily streak",
+          "Best dumbbell workout for chest",
+          "What weight dumbbells should I use?",
+          "Dumbbells vs Barbell",
+          "How to log dumbbell sets?",
         ],
       };
-    } else {
+    }
+
+    if (normalized.includes("barbell")) {
       return {
-        text: `Awesome work, **${name}**! 🎉 You have already hit your daily protein goal (**${context.totalLoggedProtein}g / ${context.goalProtein}g**)!\n\nYou have **${context.remainingKcal} kcal** remaining. For clean energy and recovery, consider light, easily digestible staples like:\n• **1 Bowl Yellow Moong Dal Tadka with 2 Phulkas**\n• **Steamed Idlis with Vegetable Sambar**\n• **A bowl of Fresh Dahi (Curd) with roasted seeds**`,
-        chips: ["Check my workout stats", "Show 3D Anatomy Map", "Tips for tomorrow's workout"],
+        text: `A **barbell** is a long metal bar (standard Olympic barbells weigh $20\\text{kg} / 45\\text{lbs}$ and measure $7.2\\text{ft}$) onto which weight plates are loaded on both ends.\n\n### 🏆 Why Barbells Matter:\n• **Maximum Mechanical Load:** Allows you to lift the heaviest absolute loads for progressive overload.\n• **The Big 4 Compound Lifts:** *Barbell Back Squat, Conventional Deadlift, Barbell Bench Press, Standing Overhead Military Press*.\n\nFor building raw strength and dense bone/muscle mass, barbell compounds form the backbone of any strength protocol!`,
+        chips: ["How to increase Bench Press?", "Barbell vs Dumbbell", "Explain progressive overload"],
       };
     }
   }
 
-  // 2. CREATINE / SUPPLEMENTS SCIENCE
+  // 2. MEAL & NUTRITION QUESTIONS (Personalized)
   if (
-    q.includes("creatine") ||
-    q.includes("whey") ||
-    q.includes("supplement") ||
-    q.includes("protein powder") ||
-    q.includes("pre workout") ||
-    q.includes("bcaa") ||
-    q.includes("ashwagandha")
+    normalized.includes("eat") ||
+    normalized.includes("dinner") ||
+    normalized.includes("lunch") ||
+    normalized.includes("breakfast") ||
+    normalized.includes("snack") ||
+    normalized.includes("meal") ||
+    normalized.includes("hungry") ||
+    normalized.includes("diet")
   ) {
-    if (q.includes("creatine")) {
-      return {
-        text: `Here is the science on **Creatine Monohydrate** for you, ${name}:\n\n• **How it works:** Creatine increases your muscle cells' phosphocreatine stores, which rapidly regenerates ATP during high-intensity explosive lifting.\n• **Dosage Protocol:**\n  - **Standard Daily Maintenance (Recommended):** Take **3g to 5g daily** consistently with water or carbs.\n  - **Optional Loading Phase:** 20g/day split into 4 doses for 5–7 days, then drop to 5g/day.\n• **Timing:** Timing is less important than daily consistency. Post-workout with a meal or shake works great.\n• **Hydration:** Aim for 3.5–4.5L of water daily to support intracellular cellular hydration!\n• **Safety:** It is one of the most researched and safest sports supplements in the world.`,
-        chips: ["Explain Whey Protein vs Sattu", "Best pre-workout meal?", "How to track progressive overload"],
-      };
-    }
     return {
-      text: `**Evidence-Based Supplement Protocols for ${name} (${context.massKg}kg Athlete):**\n\n1. **100% Whey Protein:** Fast-digesting complete amino acid profile with high Leucine content to trigger muscle protein synthesis (MPS).\n2. **Creatine Monohydrate (3–5g/day):** Boosts power output and strength by 5–15%.\n3. **Caffeine / Pre-Workout (150–250mg):** Enhances central nervous system arousal and reduces perceived exertion.\n4. **Omega-3 & Vitamin D3/K2:** Essential for joint lubrication, hormonal health, and systemic recovery.\n\nAlways prioritize whole-food nutrition first (like paneer, eggs, chicken, soya, dal), using supplements as efficient boosters!`,
-      chips: ["How much protein do I need?", "What should I eat before lifting?", "Explain progressive overload"],
+      text: `Hey **${name}**! Based on your live telemetry, your target is **${context.goalProtein}g Protein** and **${context.goalKcal} kcal**.\nCurrently you have **${context.remainingProtein}g of Protein** and **${context.remainingKcal} kcal** remaining for today!\n\n### 🍛 High-Protein Indian Meal Recommendations:\n1. **Vegetarian Power Combo:**\n   • **150g Grilled Paneer Tikka** (~21g Protein, 310 kcal)\n   • **1 Bowl Soya Chunks Masala** (~22.5g Protein, 240 kcal)\n   • **2 Whole Wheat Phulkas** (~6.4g Protein, 170 kcal)\n   → *Total: ~50g Protein, perfectly completing your target!*\n\n2. **Non-Veg Power Combo:**\n   • **200g Grilled Chicken Breast or Tandoori Chicken** (~44–62g Protein, 290–330 kcal)\n   • **1 Katori Steamed Basmati Rice** (~4.2g Protein, 195 kcal)\n\n3. **Quick Post-Workout:**\n   • **1 Scoop Whey in Water** (~24.5g Protein) or **Chana Sattu Drink** (~10.2g Protein).`,
+      chips: ["Log food now", "How is BMR calculated?", "Show Indian food database"],
     };
   }
 
-  // 3. WORKOUT SPLIT / PROGRESSIVE OVERLOAD / EXERCISE SCIENCE
+  // 3. CREATINE & SUPPLEMENTS
   if (
-    q.includes("split") ||
-    q.includes("progressive overload") ||
-    q.includes("hypertrophy") ||
-    q.includes("reps") ||
-    q.includes("sets") ||
-    q.includes("rpe") ||
-    q.includes("1rm") ||
-    q.includes("push pull legs") ||
-    q.includes("bro split") ||
-    q.includes("upper lower")
+    normalized.includes("creatine") ||
+    normalized.includes("whey") ||
+    normalized.includes("supplement") ||
+    normalized.includes("pre workout") ||
+    normalized.includes("bcaa") ||
+    normalized.includes("ashwagandha")
   ) {
-    const levelAdvice = isGymRat
-      ? `As a seasoned **Gym Rat**, you benefit most from **Push-Pull-Legs (PPL)** or an **Upper/Lower 4–5 day split**, focusing on heavy compound sets ($RPE\\ 8-9$) combined with high-tension mechanical stretch movements.`
-      : `As a beginner, a **Full Body 3x/week** or **Upper/Lower 4x/week split** is ideal to master motor patterns and trigger frequent muscle protein synthesis!`;
-
     return {
-      text: `**Hypertrophy & Training Mechanics for ${name}:**\n\n${levelAdvice}\n\n• **Progressive Overload Framework:**\n  1. **Load Progression:** Add $1.25\\text{kg}-2.5\\text{kg}$ to your compound lifts when you hit the top of your rep target.\n  2. **Rep Progression:** If benching $70\\text{kg}$ for 8 reps, aim for 9, then 10 before adding weight.\n  3. **Volume Quality:** 10–20 working sets per muscle group per week taken within 1–3 reps of muscular failure ($RPE\\ 7.5-9$).\n\n• **Rest Periods:** 2–3 minutes for heavy compounds (Squat, Deadlift, Bench Press, Overhead Press); 60–90 seconds for isolations.`,
-      chips: ["Show 3D Anatomy Map", "How to calculate 1RM?", "How do I log my workout?"],
+      text: `### 🔬 Supplement Science for ${name} (${context.massKg}kg Athlete):\n\n1. **Creatine Monohydrate (Most Researched):**\n   • **Dosage:** Take **3g to 5g daily** every single day without fail.\n   • **Effect:** Saturates muscle phosphocreatine stores, boosting strength output by 5–15% and drawing intracellular water into muscle cells for fullness.\n   • **Hydration:** Drink 3.5L to 4.5L of water daily.\n\n2. **100% Whey Protein:**\n   • Convenient, rapidly digesting source rich in Leucine to trigger Muscle Protein Synthesis (MPS).\n\n3. **Caffeine / Pre-Workout (150–250mg):**\n   • Enhances mental focus and delays central nervous system fatigue during heavy sessions.`,
+      chips: ["Creatine loading vs daily", "Best time to take Whey", "How much water daily?"],
     };
   }
 
-  // 4. GENERAL SCIENCE / BEYOND THE APP / GENERAL KNOWLEDGE
+  // 4. FAT LOSS / BULKING / BODY RECOMPOSITION
   if (
-    q.includes("who are you") ||
-    q.includes("what can you do") ||
-    q.includes("help") ||
-    q.includes("gemini") ||
-    q.includes("chatgpt") ||
-    q.includes("ai")
+    normalized.includes("fat loss") ||
+    normalized.includes("lose weight") ||
+    normalized.includes("belly fat") ||
+    normalized.includes("bulk") ||
+    normalized.includes("bulking") ||
+    normalized.includes("cut") ||
+    normalized.includes("cutting") ||
+    normalized.includes("abs") ||
+    normalized.includes("six pack")
   ) {
     return {
-      text: `I'm **Rexi**, your personal 3D AI fitness companion and high-performance coach!\n\nThink of me as your personal fitness ChatGPT & Gemini combined with real-time biometric telemetry. You can ask me **anything**:\n\n• 🏋️ **Workout & Biomechanics:** Routine splits, progressive overload, RPE, 1RM formulas, technique cues.\n• 🍛 **Nutrition & Indian Foods:** Macro breakdowns for 60+ Indian staples, meal planning, calorie deficit/surplus.\n• 🔬 **Physiology & Recovery:** Sleep optimization, creatine protocols, hydration, soreness recovery.\n• 🧭 **FitTrack OS Navigation:** 3D Male Anatomy explorer, GPS tracker, biometric calibration, data exports.\n• 💡 **General Knowledge:** Questions about science, lifestyle, productivity, or motivation!\n\nHow can I help you level up today, ${name}?`,
-      chips: ["What should I eat today?", "Explain Creatine dosage", "Show my biometric calibration"],
+      text: `### 🎯 Energy Balance & Body Transformation for ${name}:\n\nYour calculated Maintenance Expenditure (TDEE) is **${context.tdee} kcal/day**.\n\n1. **For Fat Loss / Cutting:**\n   • **Target:** Consume a moderate **300–500 kcal deficit** (~${context.tdee - 400} kcal/day).\n   • **Protein:** Keep protein high at **${context.goalProtein}g/day** to preserve lean muscle tissue while losing pure body fat.\n   • **Spot Reduction Myth:** You cannot target fat loss exclusively on the belly; fat is oxidized systemically as overall body fat drops below 12–15%.\n\n2. **For Lean Bulking:**\n   • **Target:** Consume a slight surplus of **250–350 kcal** (~${context.tdee + 300} kcal/day) with progressive overload in the gym.`,
+      chips: ["Calculate my TDEE", "Best cardio for fat loss", "How to track progressive overload"],
     };
   }
 
-  // 5. FITTRACK 3D ANATOMY / NAVIGATION
+  // 5. WORKOUT SPLIT / PROGRESSIVE OVERLOAD / REPS
   if (
-    q.includes("3d") ||
-    q.includes("body") ||
-    q.includes("muscle") ||
-    q.includes("map") ||
-    q.includes("anatomy")
+    normalized.includes("split") ||
+    normalized.includes("progressive overload") ||
+    normalized.includes("hypertrophy") ||
+    normalized.includes("reps") ||
+    normalized.includes("sets") ||
+    normalized.includes("rpe") ||
+    normalized.includes("1rm") ||
+    normalized.includes("push pull legs") ||
+    normalized.includes("ppl") ||
+    normalized.includes("chest") ||
+    normalized.includes("bicep") ||
+    normalized.includes("back") ||
+    normalized.includes("legs")
   ) {
     return {
-      text: `**Interactive 3D Male Anatomy Simulation:**\n\n• **Interactive Raycasting:** You can rotate, zoom, and click individual muscle groups on the 3D model (Chest, Deltoids, Biceps, Triceps, Lats, Quads, Hamstrings, Glutes, Calves).\n• **Readiness & Volume Telemetry:** Selecting any muscle displays its real-time recovery score, volume load ($kg$), and scientifically recommended movements on the right-hand diagnostic panel.\n• **View Angles:** Use the **FRONT**, **BACK**, and **SIDE** camera docks for instant optimal perspective!`,
-      chips: ["How do I log a workout?", "What are my daily calorie targets?", "Show my streak"],
+      text: `### 🏋️ Progressive Overload & Hypertrophy Framework for ${name}:\n\n• **Hypertrophy Rep Range:** 6 to 12 reps with challenging mechanical tension, ending sets within 1–2 reps of technical failure ($RPE\\ 8-9$).\n• **The 3 Levers of Progressive Overload:**\n  1. **Weight Progression:** Adding $1.25\\text{kg}-2.5\\text{kg}$ when you can hit the top rep target.\n  2. **Rep Progression:** Doing 9 reps with a weight you previously did 8 reps with.\n  3. **Form & Execution:** Slowing down the eccentric (lowering) phase to 2–3 seconds for deeper muscle fiber recruitment.\n\n• **Optimal Split:** A 3-day Full Body, 4-day Upper/Lower, or 6-day Push-Pull-Legs (PPL) split.`,
+      chips: ["Show 3D Anatomy Map", "How to log workout sets", "Best exercises for chest"],
     };
   }
 
-  // 6. GENERAL CHAT / MOTIVATION / CUSTOM QUERY ANSWER
+  // 6. 3D ANATOMY MAP / APP NAVIGATION
+  if (
+    normalized.includes("3d") ||
+    normalized.includes("body") ||
+    normalized.includes("map") ||
+    normalized.includes("anatomy") ||
+    normalized.includes("how to use") ||
+    normalized.includes("features")
+  ) {
+    return {
+      text: `### 🧬 FitTrack Performance OS Quick Guide for ${name}:\n\n1. **3D Anatomy Stage (/overview):** Click any muscle group (Chest, Back, Delts, Arms, Legs, Core) to view live recovery telemetry, fatigue score, and target exercises.\n2. **Smart Indian Nutrition (/log-food):** Log 60+ Indian staples with portion multipliers ($0.5\\times - 3\\times$) and live macro rings.\n3. **Workout Logger (/log-workout):** Record exercises, sets, reps, and tonnage volume ($kg$).\n4. **GPS Run Tracker (/gps):** Live route vectors, distance, and running speed.\n5. **Settings & Data Engine (/settings):** Calibrate your biometrics and export JSON/CSV database backups!`,
+      chips: ["Show Indian food database", "How do I log a workout?", "Calibrate body weight"],
+    };
+  }
+
+  // 7. DIRECT NATURAL CONVERSATION / GENERAL KNOWLEDGE
   return {
-    text: `That's a fantastic question, **${name}**!\n\nAs your AI fitness guide, here is my insight:\n\n• **Consistency & Precision:** True athletic transformation is built on consistent daily micro-habits—logging your meals, progressive lifting, and adequate sleep ($7.5-9\\text{h}$).\n• **Your Current Calibration:** You are currently set at **${context.massKg}kg**, aiming for **${context.goalProtein}g Protein** and **${context.goalKcal} kcal** daily.\n• You can ask me anything about workout routines, nutrition science, Indian recipes, supplement timing, or app features anytime!`,
+    text: `That's an interesting question, **${name}**! 🦖\n\nHere is what you need to know:\n\n• **Contextual Fitness Insight:** Whatever your goal is—building muscle, shredding fat, or mastering athletic performance—the foundation is **progressive overload**, hitting your **${context.goalProtein}g Protein** target, and getting quality recovery ($7.5-9\\text{h}$ sleep).\n• You can ask me anything about exercise biomechanics (like dumbbells, barbells, form cues), Indian food nutrition, supplement science, or general questions!`,
     chips: [
+      "What is a dumbbell?",
       "What should I eat today?",
       "Explain Creatine dosage",
-      "How to track progressive overload",
-      "Guide me through the app",
+      "How to build bigger arms",
     ],
   };
 }
