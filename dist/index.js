@@ -196,12 +196,16 @@ async function upsertUser(user) {
   if (!db) return;
   const values = { openId: user.openId };
   const updateSet = {};
-  ["name", "email", "loginMethod", "experienceLevel"].forEach((field) => {
+  ["name", "email", "loginMethod"].forEach((field) => {
     if (user[field] !== void 0) {
       values[field] = user[field] ?? null;
       updateSet[field] = user[field] ?? null;
     }
   });
+  if (user.experienceLevel !== void 0) {
+    values.experienceLevel = user.experienceLevel;
+    updateSet.experienceLevel = user.experienceLevel;
+  }
   values.lastSignedIn = user.lastSignedIn ?? /* @__PURE__ */ new Date();
   updateSet.lastSignedIn = values.lastSignedIn;
   if (user.role !== void 0) {

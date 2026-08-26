@@ -43,12 +43,16 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
-  (["name", "email", "loginMethod", "experienceLevel"] as const).forEach((field) => {
+  (["name", "email", "loginMethod"] as const).forEach((field) => {
     if (user[field] !== undefined) {
       values[field] = user[field] ?? null;
       updateSet[field] = user[field] ?? null;
     }
   });
+  if (user.experienceLevel !== undefined) {
+    values.experienceLevel = user.experienceLevel;
+    updateSet.experienceLevel = user.experienceLevel;
+  }
   values.lastSignedIn = user.lastSignedIn ?? new Date();
   updateSet.lastSignedIn = values.lastSignedIn;
   if (user.role !== undefined) {
