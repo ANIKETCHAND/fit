@@ -68,14 +68,14 @@ export function RexiOnboardingModal() {
         window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
       }, 1300);
     } else {
-      const levelTitle = level === "intermediate" ? "Intermediate" : "Pro";
-      toast.success(`Experience level set to ${levelTitle}!`);
+      const levelTitle = level === "intermediate" ? "Intermediate" : "Pro Athlete";
+      toast.success(`Welcome Gym rat! 🐀🔥 Experience level set to ${levelTitle}.`);
 
       // Redirect to Settings page after celebratory jump animation
       setTimeout(() => {
         setIsOpen(false);
         setLocation("/settings");
-      }, 1300);
+      }, 1400);
     }
   };
 
@@ -225,12 +225,21 @@ export function RexiOnboardingModal() {
               <div className="mt-4 text-center">
                 {isTransitioning ? (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className="text-xs font-mono text-[#c6ff3d] flex items-center justify-center gap-2"
                   >
-                    <Sparkles size={14} className="animate-spin" />
-                    Calibrating... Taking you to Settings to set body mass
+                    {selectedLevel === "intermediate" || selectedLevel === "advanced" ? (
+                      <>
+                        <span className="text-sm">🐀🔥</span>
+                        <span>Welcome Gym rat! Taking you to Settings to set body mass...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={14} className="animate-spin" />
+                        <span>Calibrating... Starting Rexi Guided Tour</span>
+                      </>
+                    )}
                   </motion.div>
                 ) : (
                   <p className="text-[10px] font-mono text-[#5a6b58]">

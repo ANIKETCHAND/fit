@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
-import { getCalibrationSettings, resetCalibrationSettings, saveCalibrationSettings, type CalibrationSettings } from "@/lib/user-store";
+import { getCalibrationSettings, resetCalibrationSettings, saveCalibrationSettings, getExperienceMode, type CalibrationSettings } from "@/lib/user-store";
 import "./CommandDeck.css";
 
 const activityOptions: { value: CalibrationSettings["activityLevel"]; label: string; detail: string; multiplier: number }[] = [
@@ -78,11 +78,15 @@ export default function Settings() {
         {isJustOnboarded && (
           <div className="bg-[#101b13] border border-[#c6ff3d]/40 rounded-2xl p-4 mb-4 flex items-center justify-between gap-3 shadow-[0_0_20px_rgba(198,255,61,0.15)]">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🦖</span>
+              <span className="text-2xl">{getExperienceMode() === "advanced" ? "🐀" : "🦖"}</span>
               <div>
-                <b className="text-white text-xs font-mono uppercase tracking-wider block">Rexi's Step 2: Body Weight Calibration</b>
+                <b className="text-white text-xs font-mono uppercase tracking-wider block">
+                  {getExperienceMode() === "advanced" ? "Welcome Gym rat! 🐀🔥 Step 2: Body Weight Calibration" : "Rexi's Step 2: Body Weight Calibration"}
+                </b>
                 <p className="text-[11px] text-[#a5bca3] mt-0.5">
-                  Enter your body mass (kg), height (cm), and biological sex below to auto-calculate your daily energy and protein targets!
+                  {getExperienceMode() === "advanced"
+                    ? "Enter your body mass (kg), height (cm), and training workload to calculate your maximum hypertrophy & power targets!"
+                    : "Enter your body mass (kg), height (cm), and biological sex below to auto-calculate your daily energy and protein targets!"}
                 </p>
               </div>
             </div>
