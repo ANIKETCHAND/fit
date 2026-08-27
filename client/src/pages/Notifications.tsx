@@ -1,4 +1,4 @@
-/** FitTrack Notification & Reminder Center with Customizable Hydration Alarm System */
+/** FitTrack Notification & Reminder Center: Cleaned Layout & Unified Signal-Lime Theme */
 import { useMemo, useState, useEffect } from "react";
 import { 
   Bell, 
@@ -10,8 +10,6 @@ import {
   Plus, 
   Settings2, 
   SlidersHorizontal, 
-  Volume2, 
-  VolumeX, 
   Sparkles,
   Play,
   RotateCcw
@@ -114,7 +112,6 @@ export default function Notifications() {
       const currentTimeStr = `${String(currentHours).padStart(2, "0")}:${String(currentMins).padStart(2, "0")}`;
 
       if (currentTimeStr >= hydrationReminder.startTime && currentTimeStr <= hydrationReminder.endTime) {
-        // Send a hydration alert notification
         if (hydrationReminder.alarmSoundEnabled) {
           playHydrationChime(hydrationReminder.soundType);
         }
@@ -138,72 +135,103 @@ export default function Notifications() {
 
   return (
     <WorkflowLayout title="Notifications">
-      <section className="notification-layout">
-        {/* Left Column: Notification Stream */}
-        <div className="notification-stream">
-          <div className="inbox-topline">
-            <div>
-              <span className="panel-label">Signal inbox</span>
-              <h2>{unread ? `${unread} update${unread > 1 ? "s" : ""}` : "Archive clear"}</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full items-start">
+        {/* Left Column: Notification Stream (7 cols) */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="bg-[#0b110d] border border-white/10 rounded-3xl p-5 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <div>
+                <span className="text-[10px] font-mono text-[#8b9c8a] uppercase tracking-wider block">
+                  Signal inbox
+                </span>
+                <h2 className="text-xl font-bold font-mono text-white mt-0.5">
+                  {unread ? `${unread} update${unread > 1 ? "s" : ""}` : "Archive clear"}
+                </h2>
+              </div>
+              <button 
+                type="button" 
+                onClick={markAll}
+                className="px-3 py-1.5 bg-white/5 hover:bg-[#c6ff3d]/20 text-[#8b9c8a] hover:text-[#c6ff3d] border border-white/10 rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all"
+              >
+                <CheckCheck size={14} />
+                <span>Mark all read</span>
+              </button>
             </div>
-            <button type="button" onClick={markAll}>
-              <CheckCheck size={15} />
-              <span>Mark all read</span>
-            </button>
-          </div>
 
-          {grouped.new.length > 0 && (
-            <>
-              <span className="inbox-divider">Active signals</span>
-              {grouped.new.map((item) => (
-                <NotificationItem
-                  key={item.id}
-                  item={item}
-                  onRead={() => {
-                    const next = notifications.map((value) =>
-                      value.id === item.id ? { ...value, read: true } : value
-                    );
-                    setNotifications(next);
-                    saveNotifications(next);
-                  }}
-                />
-              ))}
-            </>
-          )}
+            {/* Active signals */}
+            {grouped.new.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <span className="text-[10px] font-mono text-[#c6ff3d] uppercase tracking-wider block px-1">
+                  Active Signals
+                </span>
+                <div className="space-y-2">
+                  {grouped.new.map((item) => (
+                    <NotificationItem
+                      key={item.id}
+                      item={item}
+                      onRead={() => {
+                        const next = notifications.map((value) =>
+                          value.id === item.id ? { ...value, read: true } : value
+                        );
+                        setNotifications(next);
+                        saveNotifications(next);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
-          <span className="inbox-divider">Archived signals</span>
-          {grouped.archive.length === 0 && grouped.new.length === 0 ? (
-            <div style={{ padding: "32px 16px", textAlign: "center", color: "#819084" }}>
-              <p style={{ margin: "0 0 8px 0", font: "600 14px 'DM Sans'", color: "#d6ded6" }}>
-                No notifications in your inbox
-              </p>
-              <span style={{ fontSize: "12px" }}>
-                Hydration reminders and workout milestone alerts will appear here.
+            {/* Archived signals */}
+            <div className="mt-5 space-y-2">
+              <span className="text-[10px] font-mono text-[#8b9c8a] uppercase tracking-wider block px-1">
+                Archived Signals
               </span>
+              {grouped.archive.length === 0 && grouped.new.length === 0 ? (
+                <div className="p-8 text-center bg-black/20 rounded-2xl border border-white/5">
+                  <p className="text-sm font-semibold text-[#d6ded6] mb-1">
+                    No notifications in your inbox
+                  </p>
+                  <span className="text-xs text-[#819084]">
+                    Hydration reminders and workout milestone alerts will appear here.
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {grouped.archive.map((item) => (
+                    <NotificationItem key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            grouped.archive.map((item) => <NotificationItem key={item.id} item={item} />)
-          )}
+          </div>
         </div>
 
-        {/* Right Column: Reminders Console */}
-        <aside className="space-y-4">
-          {/* --- HYDRATION REMINDER & ALARM CONSOLE --- */}
-          <div className="reminder-console bg-[#0b110d] border border-[#c6ff3d]/30 rounded-3xl p-5 space-y-4 shadow-xl">
-            <div className="reminder-head flex items-center justify-between pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-sky-400/10 border border-sky-400/20 text-sky-400 flex items-center justify-center">
-                  <Droplets size={16} />
+        {/* Right Column: Reminders Stack (5 cols) */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* --- 1. HYDRATION REMINDER & ALARM CONSOLE (SIGNAL LIME THEME) --- */}
+          <div className="bg-[#0b110d] border border-[#c6ff3d]/30 rounded-3xl p-5 space-y-4 shadow-xl relative overflow-hidden">
+            {/* Top Accent line */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#c6ff3d] via-[#a6d9ff]/50 to-transparent" />
+
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-[#c6ff3d]/15 border border-[#c6ff3d]/30 text-[#c6ff3d] flex items-center justify-center shadow-[0_0_12px_rgba(198,255,61,0.2)]">
+                  <Droplets size={18} />
                 </div>
                 <div>
-                  <span className="panel-label text-sky-400">Hydration Alarm</span>
-                  <h2 className="text-base font-bold text-white">Drink Water Reminder</h2>
+                  <span className="text-[10px] font-mono text-[#c6ff3d] uppercase tracking-wider block">
+                    Hydration Alarm
+                  </span>
+                  <h2 className="text-base font-bold text-white font-mono">
+                    Drink Water Reminder
+                  </h2>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleTestChime}
-                className="px-2.5 py-1 bg-white/5 hover:bg-sky-400/20 text-sky-400 border border-sky-400/30 rounded-xl text-[11px] font-mono flex items-center gap-1 transition-all"
+                className="px-2.5 py-1 bg-[#c6ff3d]/10 hover:bg-[#c6ff3d]/20 text-[#c6ff3d] border border-[#c6ff3d]/30 rounded-xl text-[11px] font-mono flex items-center gap-1 transition-all"
                 title="Test Alarm Sound"
               >
                 <Play size={11} />
@@ -212,32 +240,40 @@ export default function Notifications() {
             </div>
 
             {/* Master Toggle */}
-            <div className="reminder-switch flex items-center justify-between">
+            <div className="flex items-center justify-between bg-black/30 p-3 rounded-2xl border border-white/5">
               <div>
                 <b className="text-xs text-white block">Hydration Reminders</b>
-                <span className="text-[11px] text-[#8b9c8a]">Plays audio chime & pushes alerts</span>
+                <span className="text-[10px] font-mono text-[#8b9c8a]">Audio chime & instant alerts</span>
               </div>
               <button
                 type="button"
-                className={hydrationReminder.enabled ? "toggle-on" : ""}
+                className={`w-10 h-6 rounded-full transition-all p-0.5 border ${
+                  hydrationReminder.enabled 
+                    ? "bg-[#c6ff3d] border-[#c6ff3d]" 
+                    : "bg-white/10 border-white/10"
+                }`}
                 aria-pressed={hydrationReminder.enabled}
                 onClick={() => saveHydration({ ...hydrationReminder, enabled: !hydrationReminder.enabled })}
               >
-                <i />
+                <div 
+                  className={`w-4 h-4 rounded-full bg-black transition-all ${
+                    hydrationReminder.enabled ? "translate-x-4" : "translate-x-0"
+                  }`} 
+                />
               </button>
             </div>
 
             {/* Live Hydration Progress Strip */}
-            <div className="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-2">
+            <div className="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-2.5">
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-[#8b9c8a]">Today's Intake:</span>
-                <span className="text-sky-400 font-bold">
+                <span className="text-[#c6ff3d] font-bold">
                   {(todayWaterMl / 1000).toFixed(2)}L / {hydrationReminder.targetDailyLiters}L ({hydrationPct}%)
                 </span>
               </div>
               <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-sky-400 h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+                  className="bg-[#c6ff3d] h-full rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(198,255,61,0.5)]"
                   style={{ width: `${hydrationPct}%` }}
                 />
               </div>
@@ -247,7 +283,7 @@ export default function Notifications() {
                 <button
                   type="button"
                   onClick={() => handleAddWater(250)}
-                  className="py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-400/20 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1"
+                  className="py-2 bg-white/5 hover:bg-[#c6ff3d]/20 text-white hover:text-[#c6ff3d] border border-white/10 hover:border-[#c6ff3d]/30 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition-all"
                 >
                   <Plus size={11} />
                   <span>250 ml</span>
@@ -255,7 +291,7 @@ export default function Notifications() {
                 <button
                   type="button"
                   onClick={() => handleAddWater(500)}
-                  className="py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-400/20 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1"
+                  className="py-2 bg-white/5 hover:bg-[#c6ff3d]/20 text-white hover:text-[#c6ff3d] border border-white/10 hover:border-[#c6ff3d]/30 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition-all"
                 >
                   <Plus size={11} />
                   <span>500 ml</span>
@@ -263,7 +299,7 @@ export default function Notifications() {
                 <button
                   type="button"
                   onClick={() => handleAddWater(1000)}
-                  className="py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-400/20 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1"
+                  className="py-2 bg-white/5 hover:bg-[#c6ff3d]/20 text-white hover:text-[#c6ff3d] border border-white/10 hover:border-[#c6ff3d]/30 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition-all"
                 >
                   <Plus size={11} />
                   <span>1.0 L</span>
@@ -274,7 +310,7 @@ export default function Notifications() {
             {/* Interval Setting */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-mono text-[#8b9c8a] block">
-                <Clock3 size={13} className="inline mr-1 text-sky-400" />
+                <Clock3 size={13} className="inline mr-1 text-[#c6ff3d]" />
                 Reminder Frequency
               </label>
               <div className="grid grid-cols-2 gap-1.5">
@@ -284,9 +320,9 @@ export default function Notifications() {
                     type="button"
                     disabled={!hydrationReminder.enabled}
                     onClick={() => saveHydration({ ...hydrationReminder, intervalMinutes: opt.value })}
-                    className={`py-1.5 px-2 rounded-xl text-[10px] font-mono text-center transition-all border ${
+                    className={`py-2 px-2 rounded-xl text-[10px] font-mono text-center transition-all border ${
                       hydrationReminder.intervalMinutes === opt.value
-                        ? "bg-sky-400 text-black font-bold border-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.3)]"
+                        ? "bg-[#c6ff3d] text-black font-bold border-[#c6ff3d] shadow-[0_0_10px_rgba(198,255,61,0.3)]"
                         : "bg-white/[0.03] border-white/10 text-[#8b9c8a] hover:text-white"
                     }`}
                   >
@@ -298,37 +334,37 @@ export default function Notifications() {
 
             {/* Time Window Inputs */}
             <div className="grid grid-cols-2 gap-2">
-              <label className="reminder-time">
-                <span className="text-[10px] font-mono text-[#8b9c8a]">Active From</span>
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono text-[#8b9c8a] block">Active From</span>
                 <input
                   type="time"
                   value={hydrationReminder.startTime}
                   disabled={!hydrationReminder.enabled}
                   onChange={(e) => saveHydration({ ...hydrationReminder, startTime: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1 text-xs text-white"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#c6ff3d]/50"
                 />
-              </label>
-              <label className="reminder-time">
-                <span className="text-[10px] font-mono text-[#8b9c8a]">Active Until</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono text-[#8b9c8a] block">Active Until</span>
                 <input
                   type="time"
                   value={hydrationReminder.endTime}
                   disabled={!hydrationReminder.enabled}
                   onChange={(e) => saveHydration({ ...hydrationReminder, endTime: e.target.value })}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1 text-xs text-white"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#c6ff3d]/50"
                 />
-              </label>
+              </div>
             </div>
 
             {/* Sound Selector & Target Goal */}
             <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[10px] font-mono text-[#8b9c8a] block mb-1">Alarm Sound</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-[#8b9c8a] block">Alarm Sound</label>
                 <select
                   value={hydrationReminder.soundType}
                   disabled={!hydrationReminder.enabled}
                   onChange={(e) => saveHydration({ ...hydrationReminder, soundType: e.target.value as any })}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none font-mono"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none font-mono focus:border-[#c6ff3d]/50"
                 >
                   <option value="water_droplet">Water Droplet</option>
                   <option value="gentle_bell">Gentle Bell</option>
@@ -336,8 +372,8 @@ export default function Notifications() {
                 </select>
               </div>
 
-              <div>
-                <label className="text-[10px] font-mono text-[#8b9c8a] block mb-1">Daily Target (L)</label>
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono text-[#8b9c8a] block">Daily Target (L)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -346,47 +382,64 @@ export default function Notifications() {
                   value={hydrationReminder.targetDailyLiters}
                   disabled={!hydrationReminder.enabled}
                   onChange={(e) => saveHydration({ ...hydrationReminder, targetDailyLiters: Number(e.target.value) || 3.0 })}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1 text-xs text-white font-mono"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1 text-xs text-white font-mono outline-none focus:border-[#c6ff3d]/50"
                 />
               </div>
             </div>
 
             <button
               type="button"
-              className="w-full py-2.5 bg-sky-400 hover:bg-sky-300 text-black font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(56,189,248,0.3)]"
+              className="w-full py-2.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(198,255,61,0.3)]"
               onClick={() => toast.success("Hydration reminder settings saved locally!")}
             >
               Save Hydration Alarm
             </button>
           </div>
 
-          {/* --- WORKOUT REMINDER CONSOLE --- */}
-          <div className="reminder-console bg-[#0b110d] border border-white/10 rounded-3xl p-5 space-y-3.5 shadow-xl">
-            <div className="reminder-head flex items-center justify-between pb-2 border-b border-white/5">
-              <div>
-                <span className="panel-label">Workout reminder</span>
-                <h2 className="text-base font-bold text-white">Set the window</h2>
+          {/* --- 2. WORKOUT REMINDER CONSOLE (CLEAN & NON-OVERLAPPING) --- */}
+          <div className="bg-[#0b110d] border border-white/10 rounded-3xl p-5 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-white/5 border border-white/10 text-[#c6ff3d] flex items-center justify-center">
+                  <CalendarClock size={18} />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-[#8b9c8a] uppercase tracking-wider block">
+                    Workout reminder
+                  </span>
+                  <h2 className="text-base font-bold text-white font-mono">
+                    Set the window
+                  </h2>
+                </div>
               </div>
-              <Settings2 size={18} className="text-[#c6ff3d]" />
+              <Settings2 size={18} className="text-[#8b9c8a]" />
             </div>
 
-            <div className="reminder-switch flex items-center justify-between">
+            <div className="flex items-center justify-between bg-black/30 p-3 rounded-2xl border border-white/5">
               <div>
                 <b className="text-xs text-white block">Reminder active</b>
-                <span className="text-[11px] text-[#8b9c8a]">Local device preference</span>
+                <span className="text-[10px] font-mono text-[#8b9c8a]">Local device preference</span>
               </div>
               <button
                 type="button"
-                className={workoutReminder.enabled ? "toggle-on" : ""}
+                className={`w-10 h-6 rounded-full transition-all p-0.5 border ${
+                  workoutReminder.enabled 
+                    ? "bg-[#c6ff3d] border-[#c6ff3d]" 
+                    : "bg-white/10 border-white/10"
+                }`}
                 aria-pressed={workoutReminder.enabled}
                 onClick={() => saveWorkout({ ...workoutReminder, enabled: !workoutReminder.enabled })}
               >
-                <i />
+                <div 
+                  className={`w-4 h-4 rounded-full bg-black transition-all ${
+                    workoutReminder.enabled ? "translate-x-4" : "translate-x-0"
+                  }`} 
+                />
               </button>
             </div>
 
-            <label className="reminder-time block">
-              <span className="text-[11px] font-mono text-[#8b9c8a] block mb-1">
+            <div className="space-y-1">
+              <span className="text-[11px] font-mono text-[#8b9c8a] block">
                 <Clock3 size={13} className="inline mr-1 text-[#c6ff3d]" />
                 Preferred time
               </span>
@@ -395,25 +448,25 @@ export default function Notifications() {
                 value={workoutReminder.time}
                 disabled={!workoutReminder.enabled}
                 onChange={(event) => saveWorkout({ ...workoutReminder, time: event.target.value })}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1 text-xs text-white"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#c6ff3d]/50"
               />
-            </label>
+            </div>
 
-            <div className="reminder-days space-y-1">
+            <div className="space-y-1.5">
               <span className="text-[11px] font-mono text-[#8b9c8a] block">
                 <CalendarClock size={13} className="inline mr-1 text-[#c6ff3d]" />
                 Training days
               </span>
-              <div className="flex flex-wrap gap-1">
+              <div className="grid grid-cols-7 gap-1">
                 {days.map((day) => (
                   <button
                     key={day}
                     type="button"
                     disabled={!workoutReminder.enabled}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-mono transition-all ${
+                    className={`py-1.5 rounded-lg text-[10px] font-mono transition-all border ${
                       workoutReminder.days.includes(day)
-                        ? "bg-[#c6ff3d] text-black font-bold"
-                        : "bg-white/5 text-[#8b9c8a] hover:text-white"
+                        ? "bg-[#c6ff3d] text-black font-bold border-[#c6ff3d]"
+                        : "bg-white/[0.03] border-white/10 text-[#8b9c8a] hover:text-white"
                     }`}
                     onClick={() => toggleDay(day)}
                   >
@@ -425,15 +478,15 @@ export default function Notifications() {
 
             <button
               type="button"
-              className="save-reminder w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-mono border border-white/10 transition-all flex items-center justify-center gap-1.5 mt-2"
+              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-mono border border-white/10 transition-all flex items-center justify-center gap-1.5 mt-2"
               onClick={() => toast.success("Workout reminder settings saved to this device")}
             >
               <SlidersHorizontal size={14} />
               <span>Save workout protocol</span>
             </button>
           </div>
-        </aside>
-      </section>
+        </div>
+      </div>
     </WorkflowLayout>
   );
 }
@@ -441,12 +494,23 @@ export default function Notifications() {
 function NotificationItem({ item, onRead }: { item: NotificationRecord; onRead?: () => void }) {
   const Icon = item.kind === "milestone" ? Medal : item.kind === "reminder" ? CalendarClock : Bell;
   return (
-    <article className={`notification-item ${item.read ? "read" : "unread"}`} onClick={onRead}>
-      <div className="notification-icon">
-        <Icon size={17} />
+    <article 
+      className={`p-3.5 rounded-2xl border transition-all flex items-start gap-3 relative ${
+        item.read 
+          ? "bg-[#0b110d]/60 border-white/5 opacity-70" 
+          : "bg-[#0b110d] border-[#c6ff3d]/30 hover:border-[#c6ff3d]/60 cursor-pointer shadow-lg"
+      }`} 
+      onClick={onRead}
+    >
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+        item.read 
+          ? "bg-white/5 border-white/10 text-[#8b9c8a]" 
+          : "bg-[#c6ff3d]/15 border-[#c6ff3d]/30 text-[#c6ff3d]"
+      }`}>
+        <Icon size={16} />
       </div>
-      <div>
-        <span>
+      <div className="flex-1 min-w-0">
+        <span className="text-[10px] font-mono text-[#8b9c8a] block">
           {item.kind === "milestone"
             ? "Performance milestone"
             : item.kind === "reminder"
@@ -454,10 +518,12 @@ function NotificationItem({ item, onRead }: { item: NotificationRecord; onRead?:
             : "System signal"}{" "}
           · {formatNotificationTime(item.createdAt)}
         </span>
-        <h3>{item.title}</h3>
-        <p>{item.detail}</p>
+        <h3 className="text-sm font-bold text-white mt-0.5 truncate">{item.title}</h3>
+        <p className="text-xs text-[#a0aba0] mt-0.5 leading-relaxed">{item.detail}</p>
       </div>
-      {!item.read && <i />}
+      {!item.read && (
+        <span className="w-2 h-2 rounded-full bg-[#c6ff3d] shadow-[0_0_8px_#c6ff3d] flex-shrink-0 mt-1" />
+      )}
     </article>
   );
 }
