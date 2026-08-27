@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/navigation/Sidebar";
 import { MuscleInfo } from "@/components/3d/MuscleInfo";
 import { VitalStrip } from "@/components/dashboard/WeeklyProgress";
 import { DailyStreak } from "@/components/dashboard/DailyStreak";
+import { WhatShouldIDoTodayCard } from "@/components/dashboard/WhatShouldIDoTodayCard";
 import { muscleLibrary, type MuscleId } from "@/lib/fitness-data";
 import { getAthleteProfile } from "@/lib/user-store";
 
@@ -55,6 +56,10 @@ export default function Home() {
             </button>
           </div>
         </header>
+
+        {/* Prominent Primary Action: What Should I Do Today? Card */}
+        <WhatShouldIDoTodayCard />
+
         <motion.section className="dashboard-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}>
           <motion.div className="overview-column overview-column-focused" variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}><VitalStrip /><DailyStreak /></motion.div>
           <motion.div className="body-column" variants={{ hidden: { opacity: 0, scale: 0.985 }, visible: { opacity: 1, scale: 1 } }}><Suspense fallback={<div className="body-stage anatomy-loading"><span>Calibrating anatomy map</span></div>}><BodyScene selected={selected} onSelected={setSelected} /></Suspense></motion.div>

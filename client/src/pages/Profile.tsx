@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices, getScopedKey } from "@/lib/user-store";
+import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices, getScopedKey, getExperienceTier, saveExperienceTier } from "@/lib/user-store";
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
@@ -154,7 +154,21 @@ export default function Profile() {
       </header>
 
       <motion.section className="profile-identity-bar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .32 }}>
-        <div className="identity-athlete"><div className={`profile-orb ${athlete.photoDataUrl ? "has-photo" : ""}`}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt={`${athlete.name} profile`} /> : initials(athlete.name)}</div><div><span className="panel-label">Athlete record</span><strong>{athlete.name}</strong><p>{athlete.location || "Local profile"} · <b>{athlete.focus}</b></p></div><button className="profile-edit-action" onClick={openProfileEditor}><Pencil size={13} /> Edit profile</button></div><div className="profile-mark-stamp" aria-hidden="true"><Activity size={16} /><span>Signal / identity</span></div>
+        <div className="identity-athlete">
+          <div className={`profile-orb ${athlete.photoDataUrl ? "has-photo" : ""}`}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt={`${athlete.name} profile`} /> : initials(athlete.name)}</div>
+          <div>
+            <span className="panel-label">Athlete record</span>
+            <div className="flex items-center gap-2">
+              <strong>{athlete.name}</strong>
+              <span className="px-2 py-0.5 rounded-full bg-[#c6ff3d]/15 border border-[#c6ff3d]/30 text-[#c6ff3d] text-[10px] font-mono font-bold uppercase">
+                {getExperienceTier().replace("_", " ")}
+              </span>
+            </div>
+            <p>{athlete.location || "Local profile"} · <b>{athlete.focus}</b></p>
+          </div>
+          <button className="profile-edit-action" onClick={openProfileEditor}><Pencil size={13} /> Edit profile</button>
+        </div>
+        <div className="profile-mark-stamp" aria-hidden="true"><Activity size={16} /><span>Signal / identity</span></div>
         <label className="profile-range profile-range-control"><CalendarDays size={14} /><span className="sr-only">Contribution ledger period</span><select aria-label="Contribution ledger period" value={range} onChange={(event) => setRange(event.target.value as RangeKey)}>{Object.entries(rangeOptions).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
       </motion.section>
 
@@ -198,7 +212,7 @@ export default function Profile() {
       </section>
     </main>
 
-    <Dialog open={profileOpen} onOpenChange={setProfileOpen}><DialogContent className="profile-dialog" showCloseButton><DialogHeader><span className="panel-label">Identity console</span><DialogTitle>Edit athlete record</DialogTitle><DialogDescription>These values and your profile photo are saved only in this browser.</DialogDescription></DialogHeader><form className="profile-form" onSubmit={(event) => { event.preventDefault(); saveProfile(); }}><label className="profile-photo-upload"><span className={`profile-photo-preview ${draft.photoDataUrl ? "has-photo" : ""}`}>{draft.photoDataUrl ? <img src={draft.photoDataUrl} alt="Selected profile preview" /> : initials(draft.name)}</span><span><b><Upload size={14} /> Update profile photo</b><small>PNG or JPG · up to 1.5 MB</small></span><input type="file" accept="image/png,image/jpeg,image/webp" onChange={updatePhoto} /></label><div className="profile-form-grid"><label>Full name<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required /></label><label>Email address<input type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} /></label><label>Location<input value={draft.location} onChange={(event) => setDraft({ ...draft, location: event.target.value })} /></label><label>Training focus<input value={draft.focus} onChange={(event) => setDraft({ ...draft, focus: event.target.value })} /></label></div><div className="profile-dialog-actions"><button type="button" onClick={() => setProfileOpen(false)}>Cancel</button><button type="submit">Save profile <Check size={14} /></button></div></form></DialogContent></Dialog>
+    <Dialog open={profileOpen} onOpenChange={setProfileOpen}><DialogContent className="profile-dialog" showCloseButton><DialogHeader><span className="panel-label">Identity console</span><DialogTitle>Edit athlete record</DialogTitle><DialogDescription>These values and your profile photo are saved only in this browser.</DialogDescription></DialogHeader><form className="profile-form" onSubmit={(event) => { event.preventDefault(); saveProfile(); }}><label className="profile-photo-upload"><span className={`profile-photo-preview ${draft.photoDataUrl ? "has-photo" : ""}`}>{draft.photoDataUrl ? <img src={draft.photoDataUrl} alt="Selected profile preview" /> : initials(draft.name)}</span><span><b><Upload size={14} /> Update profile photo</b><small>PNG or JPG · up to 1.5 MB</small></span><input type="file" accept="image/png,image/jpeg,image/webp" onChange={updatePhoto} /></label><div className="profile-form-grid"><label>Full name<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} required /></label><label>Email address<input type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} /></label><label>Location<input value={draft.location} onChange={(event) => setDraft({ ...draft, location: event.target.value })} /></label><label>Training focus<input value={draft.focus} onChange={(event) => setDraft({ ...draft, focus: event.target.value })} /></label><label>Experience level<select value={getExperienceTier()} onChange={(e) => { saveExperienceTier(e.target.value as any); toast.info(`Experience updated to ${e.target.value.replace("_", " ").toUpperCase()}`); }}><option value="complete_beginner">Complete Beginner (0–6m)</option><option value="beginner">Beginner (6–12m)</option><option value="intermediate">Intermediate (1–3y)</option><option value="advanced">Advanced / Gym Rat (3y+)</option></select></label></div><div className="profile-dialog-actions"><button type="button" onClick={() => setProfileOpen(false)}>Cancel</button><button type="submit">Save profile <Check size={14} /></button></div></form></DialogContent></Dialog>
 
     <Dialog open={deviceOpen} onOpenChange={setDeviceOpen}><DialogContent className="profile-dialog device-dialog" showCloseButton><DialogHeader><span className="panel-label">Input source console</span><DialogTitle>Connect a device</DialogTitle><DialogDescription>Choose a device to simulate a local FitTrack connection. No real pairing is performed.</DialogDescription></DialogHeader><div className="device-chooser">{availableDevices.length ? availableDevices.map((candidate) => { const Icon = deviceIcon(candidate.kind); const isConnecting = connecting === candidate.id; return <button key={candidate.id} className="device-choice" disabled={Boolean(connecting)} onClick={() => simulateConnection(candidate)}><span className="device-choice-icon"><Icon size={19} /></span><span><b>{candidate.name}</b><small>{candidate.detail}</small></span>{isConnecting ? <LoaderCircle className="device-loader" size={17} /> : <span className="device-connect">Connect <ArrowUpRight size={14} /></span>}</button>; }) : <div className="device-empty"><Check size={18} /><p>All available simulated sources are connected.</p></div>}</div></DialogContent></Dialog>
   </div>;

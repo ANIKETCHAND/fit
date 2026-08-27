@@ -182,3 +182,7 @@ export function getDatabaseStats(): DatabaseStats {
     };
   }
 }
+
+export const exportDatabaseJson = exportAthleteDatabase;
+export const exportWorkoutHistoryCsv = exportWorkoutCsv;
+export const getDatabaseTelemetry = getDatabaseStats;

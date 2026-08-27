@@ -141,8 +141,28 @@ export const saveDailyStreak = saveStreak;
 export const advanceStreak = () => { const current = getStreak(); const today = dateKey(); if (current.lastCompletedDate === today) return { streak: current, advanced: false, alreadyRecorded: true }; const difference = current.lastCompletedDate ? dayDifference(current.lastCompletedDate, today) : 99; const next: StreakData = { count: difference === 1 ? current.count + 1 : 1, lastCompletedDate: today }; saveStreak(next); return { streak: next, advanced: true, alreadyRecorded: false }; };
 export const recordDailyWorkout = advanceStreak;
 
+export type ExperienceTier = "complete_beginner" | "beginner" | "intermediate" | "advanced";
+
+const experienceTierKey = "fittrack-experience-tier";
+export const getExperienceTier = (): ExperienceTier => {
+  const tier = safeRead<ExperienceTier>(experienceTierKey, "beginner");
+  return tier;
+};
+export const saveExperienceTier = (tier: ExperienceTier) => {
+  write(experienceTierKey, tier);
+  // Also sync legacy boolean mode
+  write(experienceModeKey, tier === "complete_beginner" || tier === "beginner" ? "beginner" : "advanced");
+};
+
 const experienceModeKey = "fittrack-experience-mode";
-export const getExperienceMode = (): "beginner" | "advanced" => safeRead<"beginner" | "advanced">(experienceModeKey, "beginner");
-export const saveExperienceMode = (mode: "beginner" | "advanced") => write(experienceModeKey, mode);
+export const getExperienceMode = (): "beginner" | "advanced" => {
+  const tier = getExperienceTier();
+  if (tier === "complete_beginner" || tier === "beginner") return "beginner";
+  return "advanced";
+};
+export const saveExperienceMode = (mode: "beginner" | "advanced") => {
+  write(experienceModeKey, mode);
+  write(experienceTierKey, mode === "beginner" ? "beginner" : "advanced");
+};
 
 

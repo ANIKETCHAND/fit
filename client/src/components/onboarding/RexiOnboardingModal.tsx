@@ -11,7 +11,7 @@ export function RexiOnboardingModal() {
   const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [stage, setStage] = useState<"greeting" | "ask_level" | "gym_rat_popup">("greeting");
-  const [selectedLevel, setSelectedLevel] = useState<"beginner" | "intermediate" | "advanced" | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<"complete_beginner" | "beginner" | "intermediate" | "advanced" | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const profile = getAthleteProfile() || { name: "Athlete" };
@@ -51,18 +51,19 @@ export function RexiOnboardingModal() {
     };
   }, [location]);
 
-  const handleSelectLevel = (level: "beginner" | "intermediate" | "advanced") => {
+  const handleSelectLevel = (level: "complete_beginner" | "beginner" | "intermediate" | "advanced") => {
     setSelectedLevel(level);
 
     try {
-      saveExperienceMode(level === "beginner" ? "beginner" : "advanced");
+      saveExperienceMode(level === "complete_beginner" || level === "beginner" ? "beginner" : "advanced");
+      localStorage.setItem(getScopedKey("fittrack-experience-tier"), JSON.stringify(level));
       sessionStorage.setItem("fittrack_rexi_welcomed", "true");
       localStorage.setItem("fittrack_just_onboarded", "true");
     } catch {}
 
-    if (level === "beginner") {
+    if (level === "complete_beginner" || level === "beginner") {
       setIsTransitioning(true);
-      toast.success("Beginner Mode activated! Launching Rexi Guided Tour...");
+      toast.success(`${level === "complete_beginner" ? "Complete Beginner" : "Beginner"} Mode activated! Launching Rexi Guided Tour...`);
       setTimeout(() => {
         setIsOpen(false);
         window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
@@ -203,22 +204,31 @@ export function RexiOnboardingModal() {
                 Step 1 of 2 • Tailors weight load & form guidance
               </p>
 
-              {/* 3 Experience Level Cards */}
-              <div className="w-full space-y-2.5">
+              {/* 4 Experience Level Cards */}
+              <div className="w-full space-y-2">
                 {[
                   {
-                    id: "beginner" as const,
-                    title: "Beginner",
-                    desc: "New to training • Need form guidance & starter weights",
+                    id: "complete_beginner" as const,
+                    title: "Complete Beginner",
+                    desc: "Brand new to gym • Needs simple mode, guided cues & form guides",
                     icon: ShieldCheck,
                     color: "text-emerald-400",
                     border: "hover:border-emerald-400/50",
                     bg: "bg-emerald-500/10",
                   },
                   {
+                    id: "beginner" as const,
+                    title: "Beginner",
+                    desc: "6–12 months training • Learning compound lifts & basic splits",
+                    icon: Dumbbell,
+                    color: "text-teal-400",
+                    border: "hover:border-teal-400/50",
+                    bg: "bg-teal-500/10",
+                  },
+                  {
                     id: "intermediate" as const,
                     title: "Intermediate",
-                    desc: "Consistent training • Progressive overload & hypertrophy",
+                    desc: "1–3 years • Progressive overload, volume tracking & hypertrophy",
                     icon: Zap,
                     color: "text-[#c6ff3d]",
                     border: "hover:border-[#c6ff3d]/50",
@@ -226,8 +236,8 @@ export function RexiOnboardingModal() {
                   },
                   {
                     id: "advanced" as const,
-                    title: "Pro Athlete",
-                    desc: "Experienced lifter • High volume, intensity & telemetry",
+                    title: "Advanced / Gym Rat",
+                    desc: "3+ years • High volume, 3D kinetic telemetry & periodization",
                     icon: Flame,
                     color: "text-amber-400",
                     border: "hover:border-amber-400/50",
