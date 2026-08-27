@@ -356,11 +356,7 @@ export default function LogFood() {
   };
 
   return (
-    <WorkflowLayout
-      kicker="Smart Nutrition"
-      title="Nutrition Lab"
-      detail="Track calories, log verified Indian staples, and calibrate daily macro targets."
-    >
+    <WorkflowLayout title="Nutrition Lab">
       <div className="w-full space-y-5">
         {/* 1. MINIMALIST MACRO HUD (CLEAN & HIGH-LEVEL) */}
         <div className="bg-[#0b110d] border border-white/10 rounded-3xl p-5 shadow-xl relative overflow-hidden">
