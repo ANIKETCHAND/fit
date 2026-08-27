@@ -49,9 +49,9 @@ function buildDemoRoute(origin = { latitude: 28.6139, longitude: 77.209 }): Rout
 }
 
 function locationMessage(error: GeolocationPositionError) {
-  if (error.code === error.PERMISSION_DENIED) return "Location permission is required. Please allow location access in your browser, then retry.";
+  if (error.code === error.PERMISSION_DENIED) return "Location permission is required to begin a live trace. Please allow location access in your browser, then retry.";
   if (error.code === error.POSITION_UNAVAILABLE) return "GPS cannot find a reliable position yet. Please ensure GPS/location is enabled on your device.";
-  return "GPS signal was interrupted or took too long to respond. Please check your connection and retry.";
+  return "GPS signal was interrupted. Please check your connection and retry.";
 }
 
 export default function GpsTracker() {
@@ -77,15 +77,16 @@ export default function GpsTracker() {
 
   const createSession = trpc.gps.create.useMutation({
     onMutate: () => setSaveError(null),
+    onError: () => setSaveError("The route could not be saved. Your live trace remains available."),
     onSettled: async () => { try { await utils.gps.list.invalidate(); } catch { /* offline */ } },
-    onError: () => { /* handled in saveRoute */ },
   });
   const removeSession = trpc.gps.remove.useMutation({
     onMutate: () => { setRemoveError(null); setFailedRemovalId(null); },
-    onSettled: async () => { try { await utils.gps.list.invalidate(); } catch { /* offline */ } },
-    onError: (_error, variables) => {
+    onError: (_err, vars) => {
+      setRemoveError("The saved route could not be removed.");
+      setFailedRemovalId(vars.id);
       // Fallback: remove from local storage
-      const next = localSessions.filter((s) => s.id !== variables.id);
+      const next = localSessions.filter((s) => s.id !== vars.id);
       saveLocalSessions(next);
       setLocalSessions(next);
       setSelectedId(null);

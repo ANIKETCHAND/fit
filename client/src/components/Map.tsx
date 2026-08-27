@@ -683,7 +683,7 @@ export function MapView({
 
       {/* Error Overlay */}
       {errorMessage && (
-        <div className="absolute inset-0 z-[30] grid place-items-center bg-[#080c0a] text-center px-6">
+        <div className="map-service-unavailable absolute inset-0 z-[30] grid place-items-center bg-[#080c0a] text-center px-6">
           <div className="max-w-sm border border-[#ff6b6b]/30 bg-[#140d0d] p-5 shadow-lg">
             <div className="flex justify-center mb-3 text-[#ff6b6b]">
               <AlertCircle className="w-7 h-7" />
