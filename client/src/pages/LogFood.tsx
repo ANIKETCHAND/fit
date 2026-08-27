@@ -361,14 +361,9 @@ export default function LogFood() {
         {/* 1. MINIMALIST MACRO HUD (CLEAN & HIGH-LEVEL) */}
         <div className="bg-[#0b110d] border border-white/10 rounded-3xl p-5 shadow-xl relative overflow-hidden">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-                Daily Intake
-              </span>
-              <span className="text-[11px] font-mono text-[#8b9c8a]">
-                ({remKcal} kcal • {remP}g Protein Left)
-              </span>
-            </div>
+            <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+              Daily Intake
+            </span>
             <button
               type="button"
               onClick={() => {
