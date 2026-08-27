@@ -500,7 +500,7 @@ export default function LogFood() {
               }`}
             >
               <BookOpen size={13} />
-              <span>🍛 Indian Staples</span>
+              <span>Indian Staples</span>
             </button>
 
             <button
@@ -513,7 +513,7 @@ export default function LogFood() {
               }`}
             >
               <ChefHat size={13} />
-              <span>🥣 Pantry Builder</span>
+              <span>Pantry Builder</span>
             </button>
           </div>
 
@@ -548,9 +548,9 @@ export default function LogFood() {
               <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
                 {[
                   { id: "all", label: "All" },
-                  { id: "high_protein", label: "🔥 High Protein" },
-                  { id: "veg", label: "🌱 Veg" },
-                  { id: "nonveg", label: "🍗 Non-Veg" },
+                  { id: "high_protein", label: "High Protein" },
+                  { id: "veg", label: "Veg" },
+                  { id: "nonveg", label: "Non-Veg" },
                 ].map((c) => (
                   <button
                     key={c.id}
@@ -582,7 +582,7 @@ export default function LogFood() {
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="text-xs">{item.isVeg ? "🌱" : "🍗"}</span>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.isVeg ? "bg-emerald-400" : "bg-rose-400"}`} />
                         <div>
                           <b className="text-xs text-white block">{item.name}</b>
                           <span className="text-[10px] text-[#8b9c8a] font-mono">{item.servingSize}</span>
@@ -782,10 +782,10 @@ export default function LogFood() {
             {/* Presets */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {[
-                { id: "cutting" as const, label: "🔥 Cut" },
-                { id: "bulking" as const, label: "💪 Bulk" },
-                { id: "maintenance" as const, label: "⚖️ Maintain" },
-                { id: "keto" as const, label: "🥑 Keto" },
+                { id: "cutting" as const, label: "Cut" },
+                { id: "bulking" as const, label: "Bulk" },
+                { id: "maintenance" as const, label: "Maintain" },
+                { id: "keto" as const, label: "Keto" },
               ].map((s) => (
                 <button
                   key={s.id}
