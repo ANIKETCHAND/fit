@@ -165,4 +165,96 @@ export const saveExperienceMode = (mode: "beginner" | "advanced") => {
   write(experienceTierKey, mode === "beginner" ? "beginner" : "advanced");
 };
 
+export type HydrationReminderSettings = {
+  enabled: boolean;
+  intervalMinutes: number; // 30, 45, 60, 90, 120
+  startTime: string; // "08:00"
+  endTime: string; // "22:00"
+  targetDailyLiters: number; // 3.0
+  alarmSoundEnabled: boolean;
+  soundType: "water_droplet" | "gentle_bell" | "digital_beep";
+};
+
+const defaultHydrationSettings: HydrationReminderSettings = {
+  enabled: true,
+  intervalMinutes: 60,
+  startTime: "08:00",
+  endTime: "22:00",
+  targetDailyLiters: 3.5,
+  alarmSoundEnabled: true,
+  soundType: "water_droplet",
+};
+
+const hydrationSettingsKey = "fittrack-hydration-reminders";
+export const getHydrationReminderSettings = (): HydrationReminderSettings => {
+  return safeRead<HydrationReminderSettings>(hydrationSettingsKey, defaultHydrationSettings);
+};
+export const saveHydrationReminderSettings = (settings: HydrationReminderSettings) => {
+  write(hydrationSettingsKey, settings);
+};
+
+export const getTodayHydrationMl = (): number => {
+  const key = `${getScopedKey("fittrack_hydration_today")}_${dateKey()}`;
+  return safeRead<number>(key, 0);
+};
+
+export const addHydrationMl = (ml: number): number => {
+  const key = `${getScopedKey("fittrack_hydration_today")}_${dateKey()}`;
+  const current = getTodayHydrationMl();
+  const next = Math.max(0, current + ml);
+  write(key, next);
+  return next;
+};
+
+export function playHydrationChime(soundType: "water_droplet" | "gentle_bell" | "digital_beep" = "water_droplet") {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    if (soundType === "water_droplet") {
+      // Liquid droplet pitch bend
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(450, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } else if (soundType === "gentle_bell") {
+      // Harmonic bell
+      [587.33, 880, 1174.66].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.08);
+        osc.stop(ctx.currentTime + 0.8);
+      });
+    } else {
+      // Digital beep
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    }
+  } catch (e) {
+    console.warn("AudioContext chime not permitted without gesture", e);
+  }
+}
+
 
