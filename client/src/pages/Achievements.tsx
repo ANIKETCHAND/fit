@@ -155,11 +155,7 @@ export default function Achievements() {
 
   return (
     <>
-      <WorkflowLayout
-        kicker="Achievement cabinet"
-        title="Earn the signal"
-        detail="Training consistency and personal records unlock durable markers of the work. Partitioned into daily consistency challenges and epic monthly milestones."
-      >
+      <WorkflowLayout title="Earn the signal">
         {/* Top Hero Telemetry Strip */}
         <section className="achievement-hero-readout">
           <div>
