@@ -1,28 +1,24 @@
-/* FitTrack: Fully Customizable Smart Nutrition Lab, Dynamic Pantry Meal Builder & Diet Strategy Engine */
-import { useMemo, useState, useEffect } from "react";
+/* FitTrack: Minimalist, Ultra-Clean Smart Nutrition Lab */
+import { useMemo, useState } from "react";
 import { 
   Check, 
   ChevronRight, 
   ChefHat, 
-  Dumbbell, 
   Flame, 
-  Leaf, 
   Plus, 
   Search, 
   Settings2, 
-  Sparkles, 
   Trash2, 
   Utensils, 
   Wheat, 
   X, 
   Zap, 
   Layers, 
-  Scale, 
+  Clock, 
   Sliders, 
   BookOpen, 
-  Clock, 
-  Edit3,
-  BookmarkPlus
+  Sparkles,
+  HelpCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -32,6 +28,7 @@ import { INDIAN_FOOD_DATABASE, type IndianFoodItem } from "@/data/indian-foods";
 import { RAW_INGREDIENTS_DATABASE, type RawIngredient, calculateIngredientMacros } from "@/data/raw-ingredients";
 import { getCalibrationSettings, saveCalibrationSettings, getScopedKey } from "@/lib/user-store";
 import { trpc } from "@/lib/trpc";
+import { GlossaryTooltip } from "@/components/tooltips/FitnessGlossaryTooltip";
 
 interface LoggedEntry {
   id: string;
@@ -48,28 +45,6 @@ interface LoggedEntry {
   ingredientsSummary?: string;
 }
 
-interface CustomMealRecipe {
-  id: string;
-  name: string;
-  mealCategory: string;
-  servingSize: string;
-  kcal: number;
-  p: number;
-  c: number;
-  f: number;
-  isVeg: boolean;
-  ingredients: Array<{
-    ingredientId: string;
-    ingredientName: string;
-    amount: number;
-    unit: string;
-    kcal: number;
-    p: number;
-    c: number;
-    f: number;
-  }>;
-}
-
 interface ActiveIngredientItem {
   id: string;
   ingredient: RawIngredient;
@@ -77,25 +52,23 @@ interface ActiveIngredientItem {
   unit: string;
 }
 
-type MainTab = "indian_database" | "meal_builder" | "saved_recipes";
-type FilterCategory = "all" | "high_protein" | "veg" | "nonveg" | "dal_legumes" | "roti_rice" | "breakfast_snacks" | "recovery_shakes";
+type MainTab = "quick_search" | "custom_builder";
 
 export default function LogFood() {
-  // Navigation & View Tab
-  const [activeTab, setActiveTab] = useState<MainTab>("indian_database");
+  const [activeTab, setActiveTab] = useState<MainTab>("quick_search");
 
-  // Meal Slots (Default + Customizable)
+  // Meal Slots
   const [customSlots, setCustomSlots] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(getScopedKey("fittrack_nutrition_meal_slots"));
-      return saved ? JSON.parse(saved) : ["Breakfast", "Lunch", "Evening Snack", "Dinner", "Post-Workout Fuel"];
+      return saved ? JSON.parse(saved) : ["Breakfast", "Lunch", "Evening Snack", "Dinner", "Post-Workout"];
     } catch {
-      return ["Breakfast", "Lunch", "Evening Snack", "Dinner", "Post-Workout Fuel"];
+      return ["Breakfast", "Lunch", "Evening Snack", "Dinner", "Post-Workout"];
     }
   });
   const [selectedSlot, setSelectedSlot] = useState<string>(() => customSlots[0] || "Breakfast");
-  const [newSlotName, setNewSlotName] = useState("");
   const [slotModalOpen, setSlotModalOpen] = useState(false);
+  const [newSlotName, setNewSlotName] = useState("");
 
   // Targets from Calibration Settings
   const [calibration, setCalibration] = useState(() => getCalibrationSettings());
@@ -104,7 +77,6 @@ export default function LogFood() {
   const targetCarbs = calibration?.goalCarbs || 260;
   const targetFat = calibration?.goalFat || 65;
 
-  // Target Customization Modal State
   const [targetModalOpen, setTargetModalOpen] = useState(false);
   const [draftTarget, setDraftTarget] = useState({
     goalKcal: targetKcal,
@@ -118,12 +90,12 @@ export default function LogFood() {
     ? trpc.nutrition.create.useMutation()
     : { mutate: (_args: any) => {} };
 
-  // --- TAB 1: INDIAN FOOD DATABASE STATE ---
+  // --- TAB 1: QUICK SEARCH & INDIAN FOODS ---
   const [query, setQuery] = useState<string>("");
-  const [activeCategory, setActiveCategory] = useState<FilterCategory>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [portionMultiplier, setPortionMultiplier] = useState<number>(1.0);
 
-  // Custom single foods saved in localStorage
+  // Custom single foods
   const [customFoods, setCustomFoods] = useState<IndianFoodItem[]>(() => {
     try {
       const saved = localStorage.getItem(getScopedKey("fittrack_custom_indian_foods"));
@@ -133,49 +105,28 @@ export default function LogFood() {
     }
   });
 
-  const allFoods = useMemo(() => {
-    return [...customFoods, ...INDIAN_FOOD_DATABASE];
-  }, [customFoods]);
-
+  const allFoods = useMemo(() => [...customFoods, ...INDIAN_FOOD_DATABASE], [customFoods]);
   const [picked, setPicked] = useState<IndianFoodItem>(() => allFoods[0]);
 
-  // --- TAB 2: INGREDIENT PANTRY & MEAL BUILDER STATE ---
-  const [pantryQuery, setPantryQuery] = useState("");
-  const [pantryCategory, setPantryCategory] = useState<string>("all");
+  // --- TAB 2: MEAL BUILDER ---
   const [builderMealName, setBuilderMealName] = useState("");
-  const [builderMealCategory, setBuilderMealCategory] = useState(selectedSlot);
   const [activeIngredients, setActiveIngredients] = useState<ActiveIngredientItem[]>([
     {
-      id: `ing-1`,
+      id: "ing-1",
       ingredient: RAW_INGREDIENTS_DATABASE.find((i) => i.id === "raw-rolled-oats") || RAW_INGREDIENTS_DATABASE[0],
       amount: 60,
       unit: "g",
     },
     {
-      id: `ing-2`,
+      id: "ing-2",
       ingredient: RAW_INGREDIENTS_DATABASE.find((i) => i.id === "raw-cow-milk") || RAW_INGREDIENTS_DATABASE[1],
-      amount: 250,
+      amount: 200,
       unit: "ml",
     },
-    {
-      id: `ing-3`,
-      ingredient: RAW_INGREDIENTS_DATABASE.find((i) => i.id === "raw-whey-isolate") || RAW_INGREDIENTS_DATABASE[2],
-      amount: 1,
-      unit: "scoops",
-    },
   ]);
+  const [pantryQuery, setPantryQuery] = useState("");
 
-  // Saved Custom Meal Recipes
-  const [savedRecipes, setSavedRecipes] = useState<CustomMealRecipe[]>(() => {
-    try {
-      const saved = localStorage.getItem(getScopedKey("fittrack_saved_meal_recipes"));
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // --- TAB 3: LOGGED ENTRIES FOR TODAY ---
+  // Logged items for today
   const [loggedEntries, setLoggedEntries] = useState<LoggedEntry[]>(() => {
     try {
       const saved = localStorage.getItem(getScopedKey("fittrack_logged_nutrition_today"));
@@ -185,337 +136,162 @@ export default function LogFood() {
     }
   });
 
-  // Modal State for adding custom single food
-  const [quickCustomModalOpen, setQuickCustomModalOpen] = useState(false);
-  const [draftCustomFood, setDraftCustomFood] = useState({
+  // Quick Custom Single Food Modal
+  const [customItemModalOpen, setCustomItemModalOpen] = useState(false);
+  const [draftCustom, setDraftCustom] = useState({
     name: "",
-    hindiName: "",
-    category: "Breakfast",
-    servingSize: "1 bowl",
-    unit: "g",
+    servingSize: "1 serving",
     kcal: "250",
-    p: "18",
-    c: "30",
+    p: "20",
+    c: "25",
     f: "6",
-    isVeg: true,
   });
 
-  // Scaled macros for single picked food
+  // Scaled Single Item
   const currentKcal = Math.round(picked.kcal * portionMultiplier);
   const currentP = Math.round(picked.p * portionMultiplier * 10) / 10;
   const currentC = Math.round(picked.c * portionMultiplier * 10) / 10;
   const currentF = Math.round(picked.f * portionMultiplier * 10) / 10;
 
-  // Composite macros for Custom Meal Builder
+  // Composite Totals for Builder
   const builderTotals = useMemo(() => {
-    let totalKcal = 0;
-    let totalP = 0;
-    let totalC = 0;
-    let totalF = 0;
-    let totalWeightGrams = 0;
-    let isAllVeg = true;
-
+    let kcal = 0, p = 0, c = 0, f = 0;
     activeIngredients.forEach((item) => {
-      const macros = calculateIngredientMacros(item.ingredient, item.amount, item.unit);
-      totalKcal += macros.kcal;
-      totalP += macros.p;
-      totalC += macros.c;
-      totalF += macros.f;
-      totalWeightGrams += macros.totalGrams;
-      if (!item.ingredient.isVeg) isAllVeg = false;
+      const m = calculateIngredientMacros(item.ingredient, item.amount, item.unit);
+      kcal += m.kcal;
+      p += m.p;
+      c += m.c;
+      f += m.f;
     });
-
     return {
-      kcal: Math.round(totalKcal),
-      p: Math.round(totalP * 10) / 10,
-      c: Math.round(totalC * 10) / 10,
-      f: Math.round(totalF * 10) / 10,
-      weightGrams: Math.round(totalWeightGrams),
-      isVeg: isAllVeg,
+      kcal: Math.round(kcal),
+      p: Math.round(p * 10) / 10,
+      c: Math.round(c * 10) / 10,
+      f: Math.round(f * 10) / 10,
     };
   }, [activeIngredients]);
 
-  // Total daily intake calculations
-  const totalLoggedKcal = loggedEntries.reduce((acc, curr) => acc + curr.kcal, 0);
-  const totalLoggedP = Math.round(loggedEntries.reduce((acc, curr) => acc + curr.p, 0) * 10) / 10;
-  const totalLoggedC = Math.round(loggedEntries.reduce((acc, curr) => acc + curr.c, 0) * 10) / 10;
-  const totalLoggedF = Math.round(loggedEntries.reduce((acc, curr) => acc + curr.f, 0) * 10) / 10;
+  // Today's Aggregate Totals
+  const totalKcal = loggedEntries.reduce((sum, e) => sum + e.kcal, 0);
+  const totalP = Math.round(loggedEntries.reduce((sum, e) => sum + e.p, 0) * 10) / 10;
+  const totalC = Math.round(loggedEntries.reduce((sum, e) => sum + e.c, 0) * 10) / 10;
+  const totalF = Math.round(loggedEntries.reduce((sum, e) => sum + e.f, 0) * 10) / 10;
 
-  const remainingKcal = Math.max(0, targetKcal - totalLoggedKcal);
-  const remainingP = Math.max(0, Math.round((targetProtein - totalLoggedP) * 10) / 10);
-  const remainingC = Math.max(0, Math.round((targetCarbs - totalLoggedC) * 10) / 10);
-  const remainingF = Math.max(0, Math.round((targetFat - totalLoggedF) * 10) / 10);
+  const remKcal = Math.max(0, targetKcal - totalKcal);
+  const remP = Math.max(0, Math.round((targetProtein - totalP) * 10) / 10);
 
-  // Filtered Indian Foods
+  // Filtered Foods
   const filteredFoods = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allFoods.filter((item) => {
-      if (activeCategory === "high_protein" && item.p < 15) return false;
-      if (activeCategory === "veg" && !item.isVeg) return false;
-      if (activeCategory === "nonveg" && item.isVeg) return false;
-      if (activeCategory === "dal_legumes" && item.category !== "dal_legumes") return false;
-      if (activeCategory === "roti_rice" && item.category !== "roti_rice") return false;
-      if (activeCategory === "breakfast_snacks" && item.category !== "breakfast_snacks") return false;
-      if (activeCategory === "recovery_shakes" && item.category !== "recovery_shakes") return false;
-
+      if (categoryFilter === "high_protein" && item.p < 15) return false;
+      if (categoryFilter === "veg" && !item.isVeg) return false;
+      if (categoryFilter === "nonveg" && item.isVeg) return false;
       if (!q) return true;
-      const matchName = item.name.toLowerCase().includes(q);
-      const matchHindi = item.hindiName?.toLowerCase().includes(q) || false;
-      const matchTags = item.tags.some((t) => t.toLowerCase().includes(q));
-      return matchName || matchHindi || matchTags;
+      return (
+        item.name.toLowerCase().includes(q) ||
+        (item.hindiName && item.hindiName.toLowerCase().includes(q)) ||
+        item.tags.some((t) => t.toLowerCase().includes(q))
+      );
     });
-  }, [allFoods, query, activeCategory]);
+  }, [allFoods, query, categoryFilter]);
 
-  // Filtered Pantry Ingredients
+  // Filtered Pantry
   const filteredPantry = useMemo(() => {
     const q = pantryQuery.trim().toLowerCase();
-    return RAW_INGREDIENTS_DATABASE.filter((ing) => {
-      if (pantryCategory !== "all" && ing.category !== pantryCategory) return false;
-      if (!q) return true;
-      return ing.name.toLowerCase().includes(q) || (ing.hindiName && ing.hindiName.toLowerCase().includes(q));
-    });
-  }, [pantryQuery, pantryCategory]);
+    if (!q) return RAW_INGREDIENTS_DATABASE.slice(0, 10);
+    return RAW_INGREDIENTS_DATABASE.filter(
+      (i) => i.name.toLowerCase().includes(q) || (i.hindiName && i.hindiName.toLowerCase().includes(q))
+    );
+  }, [pantryQuery]);
 
-  // --- ACTIONS ---
-
-  // 1. Log Single Food Item
-  const handleLogSingleFood = () => {
-    const newEntry: LoggedEntry = {
+  // --- LOGGING ACTIONS ---
+  const logItem = (name: string, kcal: number, p: number, c: number, f: number, serving: string, hindi?: string) => {
+    const entry: LoggedEntry = {
       id: `${Date.now()}-${Math.random()}`,
-      name: picked.name,
-      hindiName: picked.hindiName,
-      portionMultiplier,
-      servingSize: picked.servingSize,
+      name,
+      hindiName: hindi,
+      portionMultiplier: 1.0,
+      servingSize: serving,
       meal: selectedSlot,
-      kcal: currentKcal,
-      p: currentP,
-      c: currentC,
-      f: currentF,
+      kcal,
+      p,
+      c,
+      f,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    const updated = [newEntry, ...loggedEntries];
+    const updated = [entry, ...loggedEntries];
     setLoggedEntries(updated);
     try {
       localStorage.setItem(getScopedKey("fittrack_logged_nutrition_today"), JSON.stringify(updated));
-      // Safe background TRPC mutation
       if (createNutritionMutation?.mutate) {
         createNutritionMutation.mutate({
           mealType: selectedSlot,
-          label: picked.name,
-          calories: currentKcal,
-          proteinGrams: currentP,
-          carbGrams: currentC,
-          fatGrams: currentF,
+          label: name,
+          calories: kcal,
+          proteinGrams: p,
+          carbGrams: c,
+          fatGrams: f,
           consumedAt: new Date(),
         });
       }
     } catch {}
 
-    toast.success(`Logged ${currentKcal} kcal (${currentP}g Protein) to ${selectedSlot}!`, {
-      icon: "🥗",
-    });
+    toast.success(`Logged ${name} (${kcal} kcal) to ${selectedSlot}!`);
   };
 
-  // 2. Log Built Custom Meal
+  const handleLogSingle = () => {
+    logItem(picked.name, currentKcal, currentP, currentC, currentF, `${picked.servingSize} (${portionMultiplier}x)`, picked.hindiName);
+  };
+
   const handleLogBuiltMeal = () => {
     if (activeIngredients.length === 0) {
-      toast.error("Please add at least one ingredient to the meal.");
+      toast.error("Add at least one ingredient.");
       return;
     }
-
-    const mealTitle = builderMealName.trim() || `Custom ${builderMealCategory} Bowl`;
-    const summary = activeIngredients.map((i) => `${i.amount}${i.unit} ${i.ingredient.name}`).join(", ");
-
-    const newEntry: LoggedEntry = {
-      id: `${Date.now()}-${Math.random()}`,
-      name: mealTitle,
-      portionMultiplier: 1.0,
-      servingSize: `${builderTotals.weightGrams}g (${activeIngredients.length} ingredients)`,
-      meal: builderMealCategory || selectedSlot,
-      kcal: builderTotals.kcal,
-      p: builderTotals.p,
-      c: builderTotals.c,
-      f: builderTotals.f,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      ingredientsSummary: summary,
-    };
-
-    const updated = [newEntry, ...loggedEntries];
-    setLoggedEntries(updated);
-    try {
-      localStorage.setItem(getScopedKey("fittrack_logged_nutrition_today"), JSON.stringify(updated));
-      if (createNutritionMutation?.mutate) {
-        createNutritionMutation.mutate({
-          mealType: builderMealCategory || selectedSlot,
-          label: mealTitle,
-          calories: builderTotals.kcal,
-          proteinGrams: builderTotals.p,
-          carbGrams: builderTotals.c,
-          fatGrams: builderTotals.f,
-          consumedAt: new Date(),
-        });
-      }
-    } catch {}
-
-    toast.success(`Logged "${mealTitle}" (${builderTotals.kcal} kcal, ${builderTotals.p}g P) to ${builderMealCategory}!`, {
-      icon: "🍲",
-    });
+    const name = builderMealName.trim() || `Custom ${selectedSlot} Bowl`;
+    const serving = `${activeIngredients.length} ingredients`;
+    logItem(name, builderTotals.kcal, builderTotals.p, builderTotals.c, builderTotals.f, serving);
   };
 
-  // 3. Save Built Meal as Reusable Recipe
-  const handleSaveRecipe = () => {
-    if (activeIngredients.length === 0) {
-      toast.error("Add ingredients before saving as a recipe.");
-      return;
-    }
-
-    const title = builderMealName.trim() || `Power Recipe #${savedRecipes.length + 1}`;
-    const newRecipe: CustomMealRecipe = {
-      id: `recipe-${Date.now()}`,
-      name: title,
-      mealCategory: builderMealCategory || selectedSlot,
-      servingSize: `${builderTotals.weightGrams}g portion`,
-      kcal: builderTotals.kcal,
-      p: builderTotals.p,
-      c: builderTotals.c,
-      f: builderTotals.f,
-      isVeg: builderTotals.isVeg,
-      ingredients: activeIngredients.map((item) => {
-        const m = calculateIngredientMacros(item.ingredient, item.amount, item.unit);
-        return {
-          ingredientId: item.ingredient.id,
-          ingredientName: item.ingredient.name,
-          amount: item.amount,
-          unit: item.unit,
-          kcal: m.kcal,
-          p: m.p,
-          c: m.c,
-          f: m.f,
-        };
-      }),
-    };
-
-    const updated = [newRecipe, ...savedRecipes];
-    setSavedRecipes(updated);
-    try {
-      localStorage.setItem(getScopedKey("fittrack_saved_meal_recipes"), JSON.stringify(updated));
-    } catch {}
-
-    toast.success(`Saved "${title}" to your recipes!`);
-  };
-
-  // 4. Log a Saved Recipe directly
-  const handleLogSavedRecipe = (recipe: CustomMealRecipe) => {
-    const newEntry: LoggedEntry = {
-      id: `${Date.now()}-${Math.random()}`,
-      name: recipe.name,
-      portionMultiplier: 1.0,
-      servingSize: recipe.servingSize,
-      meal: selectedSlot,
-      kcal: recipe.kcal,
-      p: recipe.p,
-      c: recipe.c,
-      f: recipe.f,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    const updated = [newEntry, ...loggedEntries];
-    setLoggedEntries(updated);
-    try {
-      localStorage.setItem(getScopedKey("fittrack_logged_nutrition_today"), JSON.stringify(updated));
-    } catch {}
-
-    toast.success(`Logged "${recipe.name}" to ${selectedSlot}!`);
-  };
-
-  // 5. Delete Logged Item
   const handleDeleteEntry = (id: string) => {
     const updated = loggedEntries.filter((e) => e.id !== id);
     setLoggedEntries(updated);
     try {
       localStorage.setItem(getScopedKey("fittrack_logged_nutrition_today"), JSON.stringify(updated));
     } catch {}
-    toast.info("Food entry removed from log.");
+    toast.info("Item removed.");
   };
 
-  // 6. Delete Recipe
-  const handleDeleteRecipe = (id: string) => {
-    const updated = savedRecipes.filter((r) => r.id !== id);
-    setSavedRecipes(updated);
-    try {
-      localStorage.setItem(getScopedKey("fittrack_saved_meal_recipes"), JSON.stringify(updated));
-    } catch {}
-    toast.info("Recipe removed.");
-  };
-
-  // 7. Add Ingredient to Builder
-  const handleAddIngredientToBuilder = (ing: RawIngredient) => {
-    const existing = activeIngredients.find((i) => i.ingredient.id === ing.id);
-    if (existing) {
-      setActiveIngredients((prev) =>
-        prev.map((item) =>
-          item.ingredient.id === ing.id ? { ...item, amount: item.amount + (ing.defaultUnit === "g" ? 50 : 1) } : item
-        )
-      );
-      toast.info(`Increased quantity for ${ing.name}`);
-    } else {
-      const defaultAmt = ing.defaultUnit === "g" ? 100 : ing.defaultUnit === "ml" ? 200 : 1;
-      setActiveIngredients((prev) => [
-        ...prev,
-        {
-          id: `active-${Date.now()}-${Math.random()}`,
-          ingredient: ing,
-          amount: defaultAmt,
-          unit: ing.defaultUnit,
-        },
-      ]);
-      toast.success(`Added ${ing.name} to Meal Builder!`);
-    }
-  };
-
-  // 8. Add Custom Meal Slot
-  const handleAddCustomSlot = () => {
-    const trimmed = newSlotName.trim();
-    if (!trimmed) {
-      toast.error("Please enter a slot name.");
+  const handleSaveCustomItem = () => {
+    if (!draftCustom.name.trim()) {
+      toast.error("Enter item name.");
       return;
     }
-    if (customSlots.includes(trimmed)) {
-      toast.error("This meal slot already exists.");
-      return;
-    }
-
-    const updated = [...customSlots, trimmed];
-    setCustomSlots(updated);
-    setSelectedSlot(trimmed);
-    setNewSlotName("");
-    setSlotModalOpen(false);
+    const newItem: IndianFoodItem = {
+      id: `custom-${Date.now()}`,
+      name: draftCustom.name.trim(),
+      category: "high_protein_veg",
+      servingSize: draftCustom.servingSize || "1 serving",
+      kcal: Number(draftCustom.kcal) || 200,
+      p: Number(draftCustom.p) || 15,
+      c: Number(draftCustom.c) || 20,
+      f: Number(draftCustom.f) || 5,
+      isVeg: true,
+      tags: ["custom", draftCustom.name.toLowerCase()],
+    };
+    const updated = [newItem, ...customFoods];
+    setCustomFoods(updated);
     try {
-      localStorage.setItem(getScopedKey("fittrack_nutrition_meal_slots"), JSON.stringify(updated));
+      localStorage.setItem(getScopedKey("fittrack_custom_indian_foods"), JSON.stringify(updated));
     } catch {}
-    toast.success(`Added "${trimmed}" to your meal categories!`);
+    setPicked(newItem);
+    setCustomItemModalOpen(false);
+    toast.success(`Added "${newItem.name}"!`);
   };
 
-  // 9. Remove Custom Meal Slot
-  const handleRemoveCustomSlot = (slotToRemove: string) => {
-    if (customSlots.length <= 1) {
-      toast.error("You must have at least one meal slot.");
-      return;
-    }
-    const updated = customSlots.filter((s) => s !== slotToRemove);
-    setCustomSlots(updated);
-    if (selectedSlot === slotToRemove) {
-      setSelectedSlot(updated[0]);
-    }
-    try {
-      localStorage.setItem(getScopedKey("fittrack_nutrition_meal_slots"), JSON.stringify(updated));
-    } catch {}
-    toast.info(`Removed "${slotToRemove}" slot.`);
-  };
-
-  // 10. Save Target Customization & Diet Strategy
-  const handleApplyDietStrategy = (strategy: "cutting" | "bulking" | "maintenance" | "keto") => {
+  const handleApplyDietPreset = (strategy: "cutting" | "bulking" | "maintenance" | "keto") => {
     const mass = calibration?.weightKg || 70;
     let kcal = calibration?.goalKcal || 2400;
     let p = Math.round(mass * 2.2);
@@ -524,7 +300,7 @@ export default function LogFood() {
 
     if (strategy === "cutting") {
       kcal = Math.max(1500, Math.round(kcal * 0.82));
-      p = Math.round(mass * 2.4); // Higher protein during cut
+      p = Math.round(mass * 2.4);
       f = Math.round((kcal * 0.22) / 9);
       c = Math.round((kcal - (p * 4 + f * 9)) / 4);
     } else if (strategy === "bulking") {
@@ -538,7 +314,7 @@ export default function LogFood() {
       f = Math.round((kcal * 0.25) / 9);
     } else if (strategy === "keto") {
       p = Math.round(mass * 2.0);
-      c = 30; // Very low carb
+      c = 30;
       f = Math.round((kcal - (p * 4 + c * 4)) / 9);
     }
 
@@ -562,55 +338,41 @@ export default function LogFood() {
     saveCalibrationSettings(updated);
     setCalibration(updated);
     setTargetModalOpen(false);
-    toast.success("Daily Calorie & Macro targets updated successfully!");
+    toast.success("Daily targets updated!");
   };
 
-  // 11. Create Quick Custom Food Item
-  const handleCreateQuickCustomFood = () => {
-    if (!draftCustomFood.name.trim()) {
-      toast.error("Please enter a name for the custom food.");
-      return;
-    }
-
-    const newItem: IndianFoodItem = {
-      id: `custom-${Date.now()}`,
-      name: draftCustomFood.name.trim(),
-      hindiName: draftCustomFood.hindiName.trim() || undefined,
-      category: "high_protein_veg",
-      servingSize: `${draftCustomFood.servingSize} (${draftCustomFood.unit})`,
-      kcal: Number(draftCustomFood.kcal) || 200,
-      p: Number(draftCustomFood.p) || 15,
-      c: Number(draftCustomFood.c) || 20,
-      f: Number(draftCustomFood.f) || 5,
-      isVeg: draftCustomFood.isVeg,
-      tags: ["custom", "homemade", draftCustomFood.name.toLowerCase()],
-    };
-
-    const updated = [newItem, ...customFoods];
-    setCustomFoods(updated);
+  const handleAddSlot = () => {
+    const trimmed = newSlotName.trim();
+    if (!trimmed || customSlots.includes(trimmed)) return;
+    const updated = [...customSlots, trimmed];
+    setCustomSlots(updated);
+    setSelectedSlot(trimmed);
+    setNewSlotName("");
+    setSlotModalOpen(false);
     try {
-      localStorage.setItem(getScopedKey("fittrack_custom_indian_foods"), JSON.stringify(updated));
+      localStorage.setItem(getScopedKey("fittrack_nutrition_meal_slots"), JSON.stringify(updated));
     } catch {}
-
-    setPicked(newItem);
-    setQuickCustomModalOpen(false);
-    toast.success(`Added "${newItem.name}" to your custom food list!`);
+    toast.success(`Added "${trimmed}"!`);
   };
 
   return (
     <WorkflowLayout
-      kicker="Smart Nutrition / Custom Pantry Lab"
-      title="Fuel Telemetry & Meal Builder"
-      detail="Build ingredient-based custom meals, customize your daily diet strategy, and log 60+ verified Indian staples in real-time."
+      kicker="Smart Nutrition"
+      title="Nutrition Lab"
+      detail="Track calories, log verified Indian staples, and calibrate daily macro targets."
     >
-      <div className="w-full space-y-6">
-        {/* 1. TOP MACRO TARGETS HUD WITH DIRECT EDIT BUTTON */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-[#8b9c8a] uppercase tracking-wider flex items-center gap-2">
-              <Scale size={14} className="text-[#c6ff3d]" />
-              <span>Daily Target Telemetry</span>
-            </span>
+      <div className="w-full space-y-5">
+        {/* 1. MINIMALIST MACRO HUD (CLEAN & HIGH-LEVEL) */}
+        <div className="bg-[#0b110d] border border-white/10 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                Daily Intake
+              </span>
+              <span className="text-[11px] font-mono text-[#8b9c8a]">
+                ({remKcal} kcal • {remP}g Protein Left)
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -622,110 +384,95 @@ export default function LogFood() {
                 });
                 setTargetModalOpen(true);
               }}
-              className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-[#c6ff3d] border border-[#c6ff3d]/30 rounded-xl text-[11px] font-mono flex items-center gap-1.5 transition-all"
+              className="px-3 py-1 bg-white/5 hover:bg-white/10 text-[#c6ff3d] border border-[#c6ff3d]/30 rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all"
             >
-              <Settings2 size={13} />
-              <span>Edit Strategy & Targets</span>
+              <Settings2 size={12} />
+              <span>Edit Targets</span>
             </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {/* Calories */}
-            <div className="bg-[#0e1610] border border-white/10 rounded-2xl p-4 relative overflow-hidden shadow-lg">
-              <div className="flex items-center justify-between text-xs font-mono text-[#8b9c8a] mb-1">
-                <span>DAILY ENERGY</span>
-                <Flame size={14} className="text-amber-400" />
+            <div className="bg-black/30 p-3 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#8b9c8a] mb-1">
+                <span>Calories</span>
+                <Flame size={13} className="text-amber-400" />
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-white">
-                {totalLoggedKcal} <span className="text-xs font-mono text-[#8b9c8a]">/ {targetKcal} kcal</span>
+              <div className="text-lg sm:text-xl font-bold text-white">
+                {totalKcal} <span className="text-xs font-mono text-[#8b9c8a]">/ {targetKcal}</span>
               </div>
               <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
-                  className="bg-amber-400 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (totalLoggedKcal / targetKcal) * 100)}%` }}
+                  className="bg-amber-400 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (totalKcal / targetKcal) * 100)}%` }}
                 />
-              </div>
-              <div className="text-[10px] font-mono text-[#8b9c8a] mt-1.5">
-                {remainingKcal} kcal remaining
               </div>
             </div>
 
             {/* Protein */}
-            <div className="bg-[#0e1610] border border-[#c6ff3d]/30 rounded-2xl p-4 relative overflow-hidden shadow-lg shadow-[#c6ff3d]/5">
-              <div className="flex items-center justify-between text-xs font-mono text-[#c6ff3d] mb-1">
-                <span>PROTEIN GOAL</span>
-                <Zap size={14} />
+            <div className="bg-[#c6ff3d]/5 p-3 rounded-2xl border border-[#c6ff3d]/20">
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#c6ff3d] mb-1">
+                <span>Protein</span>
+                <Zap size={13} />
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-white">
-                {totalLoggedP}g <span className="text-xs font-mono text-[#8b9c8a]">/ {targetProtein}g</span>
+              <div className="text-lg sm:text-xl font-bold text-white">
+                {totalP}g <span className="text-xs font-mono text-[#8b9c8a]">/ {targetProtein}g</span>
               </div>
               <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
-                  className="bg-[#c6ff3d] h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (totalLoggedP / targetProtein) * 100)}%` }}
+                  className="bg-[#c6ff3d] h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (totalP / targetProtein) * 100)}%` }}
                 />
-              </div>
-              <div className="text-[10px] font-mono text-[#8b9c8a] mt-1.5">
-                {remainingP}g remaining for synthesis
               </div>
             </div>
 
             {/* Carbs */}
-            <div className="bg-[#0e1610] border border-white/10 rounded-2xl p-4 relative overflow-hidden shadow-lg">
-              <div className="flex items-center justify-between text-xs font-mono text-[#8b9c8a] mb-1">
-                <span>CARBOHYDRATES</span>
-                <Wheat size={14} className="text-sky-400" />
+            <div className="bg-black/30 p-3 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#8b9c8a] mb-1">
+                <span>Carbs</span>
+                <Wheat size={13} className="text-sky-400" />
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-white">
-                {totalLoggedC}g <span className="text-xs font-mono text-[#8b9c8a]">/ {targetCarbs}g</span>
+              <div className="text-lg sm:text-xl font-bold text-white">
+                {totalC}g <span className="text-xs font-mono text-[#8b9c8a]">/ {targetCarbs}g</span>
               </div>
               <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
-                  className="bg-sky-400 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (totalLoggedC / targetCarbs) * 100)}%` }}
+                  className="bg-sky-400 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (totalC / targetCarbs) * 100)}%` }}
                 />
-              </div>
-              <div className="text-[10px] font-mono text-[#8b9c8a] mt-1.5">
-                {remainingC}g glycogen fuel left
               </div>
             </div>
 
             {/* Fats */}
-            <div className="bg-[#0e1610] border border-white/10 rounded-2xl p-4 relative overflow-hidden shadow-lg">
-              <div className="flex items-center justify-between text-xs font-mono text-[#8b9c8a] mb-1">
-                <span>HEALTHY FATS</span>
-                <Utensils size={14} className="text-rose-400" />
+            <div className="bg-black/30 p-3 rounded-2xl border border-white/5">
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#8b9c8a] mb-1">
+                <span>Fats</span>
+                <Utensils size={13} className="text-rose-400" />
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-white">
-                {totalLoggedF}g <span className="text-xs font-mono text-[#8b9c8a]">/ {targetFat}g</span>
+              <div className="text-lg sm:text-xl font-bold text-white">
+                {totalF}g <span className="text-xs font-mono text-[#8b9c8a]">/ {targetFat}g</span>
               </div>
               <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
                 <div
-                  className="bg-rose-400 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (totalLoggedF / targetFat) * 100)}%` }}
+                  className="bg-rose-400 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, (totalF / targetFat) * 100)}%` }}
                 />
-              </div>
-              <div className="text-[10px] font-mono text-[#8b9c8a] mt-1.5">
-                {remainingF}g lipid balance left
               </div>
             </div>
           </div>
         </div>
 
-        {/* 2. CUSTOMIZABLE MEAL SLOTS SELECTOR */}
-        <div className="bg-[#0e1610] border border-white/10 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
-            <span className="text-[11px] font-mono text-[#8b9c8a] uppercase flex-shrink-0">
-              Active Meal Slot:
-            </span>
+        {/* 2. MEAL SLOTS BAR */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5">
             {customSlots.map((slot) => (
               <button
                 key={slot}
                 type="button"
                 onClick={() => setSelectedSlot(slot)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all whitespace-nowrap border ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all whitespace-nowrap border ${
                   selectedSlot === slot
-                    ? "bg-[#c6ff3d] text-black border-[#c6ff3d] font-bold shadow-[0_0_15px_rgba(198,255,61,0.25)]"
+                    ? "bg-[#c6ff3d] text-black font-bold border-[#c6ff3d]"
                     : "bg-white/[0.03] border-white/10 text-[#8b9c8a] hover:text-white"
                 }`}
               >
@@ -737,701 +484,360 @@ export default function LogFood() {
           <button
             type="button"
             onClick={() => setSlotModalOpen(true)}
-            className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-[#8b9c8a] hover:text-white rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all flex-shrink-0"
+            className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-[#8b9c8a] hover:text-white rounded-xl text-xs font-mono flex items-center gap-1 border border-white/10 flex-shrink-0"
           >
-            <Plus size={13} />
-            <span>Customize Slots</span>
+            <Plus size={12} />
+            <span>Slot</span>
           </button>
         </div>
 
-        {/* 3. NAVIGATION VIEW TABS */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-          <button
-            type="button"
-            onClick={() => setActiveTab("indian_database")}
-            className={`px-4 py-2 rounded-2xl text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
-              activeTab === "indian_database"
-                ? "bg-[#c6ff3d]/15 border-[#c6ff3d] text-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
-                : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
-            }`}
-          >
-            <BookOpen size={14} />
-            <span>🍛 Indian Staples Database</span>
-          </button>
+        {/* 3. TABS: QUICK SEARCH vs MEAL BUILDER */}
+        <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("quick_search")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border ${
+                activeTab === "quick_search"
+                  ? "bg-[#c6ff3d]/15 border-[#c6ff3d] text-[#c6ff3d]"
+                  : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
+              }`}
+            >
+              <BookOpen size={13} />
+              <span>🍛 Indian Staples</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("custom_builder")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 border ${
+                activeTab === "custom_builder"
+                  ? "bg-[#c6ff3d]/15 border-[#c6ff3d] text-[#c6ff3d]"
+                  : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
+              }`}
+            >
+              <ChefHat size={13} />
+              <span>🥣 Pantry Builder</span>
+            </button>
+          </div>
 
           <button
             type="button"
-            onClick={() => setActiveTab("meal_builder")}
-            className={`px-4 py-2 rounded-2xl text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
-              activeTab === "meal_builder"
-                ? "bg-[#c6ff3d]/15 border-[#c6ff3d] text-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
-                : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
-            }`}
+            onClick={() => setCustomItemModalOpen(true)}
+            className="px-2.5 py-1.5 bg-[#c6ff3d]/10 hover:bg-[#c6ff3d] text-[#c6ff3d] hover:text-black border border-[#c6ff3d]/30 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1"
           >
-            <ChefHat size={14} />
-            <span>🥣 Ingredient Pantry & Meal Builder</span>
-            {activeIngredients.length > 0 && (
-              <span className="px-1.5 py-0.5 bg-[#c6ff3d] text-black text-[10px] rounded-full font-bold">
-                {activeIngredients.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("saved_recipes")}
-            className={`px-4 py-2 rounded-2xl text-xs font-mono font-bold transition-all flex items-center gap-2 border ${
-              activeTab === "saved_recipes"
-                ? "bg-[#c6ff3d]/15 border-[#c6ff3d] text-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
-                : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
-            }`}
-          >
-            <BookmarkPlus size={14} />
-            <span>Saved Custom Recipes ({savedRecipes.length})</span>
+            <Plus size={12} />
+            <span>Custom Item</span>
           </button>
         </div>
 
-        {/* 4. MAIN CONTENT WORKSPACE BASED ON TAB */}
-        {activeTab === "indian_database" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* LEFT: DATABASE EXPLORER (7 COLS) */}
-            <div className="lg:col-span-7 space-y-3.5">
-              {/* Search + Quick Create Button */}
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b9c8a]" />
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search 60+ Indian foods (e.g. Paneer, Roti, Dal, Sattu, Chicken, अंडा)..."
-                    className="w-full bg-[#0e1610] border border-white/10 focus:border-[#c6ff3d] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder:text-[#5a6b58] outline-none transition-all"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => setQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8b9c8a] hover:text-white"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setQuickCustomModalOpen(true)}
-                  className="px-3 py-2 bg-[#c6ff3d]/15 hover:bg-[#c6ff3d] text-[#c6ff3d] hover:text-black border border-[#c6ff3d]/40 rounded-2xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 whitespace-nowrap"
-                >
-                  <Plus size={13} />
-                  <span>Custom Item</span>
-                </button>
+        {/* 4. MAIN CONTENT */}
+        {activeTab === "quick_search" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Left: Food List (7 Cols) */}
+            <div className="lg:col-span-7 space-y-3">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b9c8a]" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search Indian foods (Roti, Dal, Paneer, Chicken, Sattu, Biryani)..."
+                  className="w-full bg-[#0b110d] border border-white/10 focus:border-[#c6ff3d] rounded-2xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-[#5a6b58] outline-none"
+                />
               </div>
 
-              {/* Category Filter Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {/* Minimal Category Chips */}
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
                 {[
-                  { id: "all" as const, label: "All Staples" },
-                  { id: "high_protein" as const, label: "🔥 High Protein (15g+)" },
-                  { id: "veg" as const, label: "🌱 Pure Veg" },
-                  { id: "nonveg" as const, label: "🍗 Non-Veg" },
-                  { id: "dal_legumes" as const, label: "🥣 Dal & Chana" },
-                  { id: "roti_rice" as const, label: "🌾 Roti & Rice" },
-                  { id: "breakfast_snacks" as const, label: "🍳 Breakfast" },
-                  { id: "recovery_shakes" as const, label: "🥤 Whey & Shakes" },
-                ].map((chip) => (
+                  { id: "all", label: "All" },
+                  { id: "high_protein", label: "🔥 High Protein" },
+                  { id: "veg", label: "🌱 Veg" },
+                  { id: "nonveg", label: "🍗 Non-Veg" },
+                ].map((c) => (
                   <button
-                    key={chip.id}
+                    key={c.id}
                     type="button"
-                    onClick={() => setActiveCategory(chip.id)}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-mono whitespace-nowrap transition-all border ${
-                      activeCategory === chip.id
-                        ? "bg-[#c6ff3d]/20 border-[#c6ff3d] text-[#c6ff3d] font-bold shadow-[0_0_15px_rgba(198,255,61,0.15)]"
-                        : "bg-white/[0.03] border-white/10 text-[#8b9c8a] hover:text-white hover:bg-white/[0.06]"
+                    onClick={() => setCategoryFilter(c.id)}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-mono transition-all border ${
+                      categoryFilter === c.id
+                        ? "bg-[#c6ff3d]/20 border-[#c6ff3d] text-[#c6ff3d] font-bold"
+                        : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
                     }`}
                   >
-                    {chip.label}
+                    {c.label}
                   </button>
                 ))}
               </div>
 
-              {/* Food Items List */}
-              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                {filteredFoods.length === 0 ? (
-                  <div className="text-center py-12 bg-[#0e1610] rounded-2xl border border-white/5 text-[#5a6b58] text-xs font-mono">
-                    No Indian food items found matching "{query}".
-                  </div>
-                ) : (
-                  filteredFoods.map((item) => {
-                    const isSelected = picked.id === item.id;
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => setPicked(item)}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? "bg-[#c6ff3d]/15 border-[#c6ff3d] shadow-[0_0_25px_rgba(198,255,61,0.15)]"
-                            : "bg-[#0e1610] border-white/10 hover:border-white/20 hover:bg-white/[0.02]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
-                              item.isVeg ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                            }`}
-                            title={item.isVeg ? "Vegetarian" : "Non-Vegetarian"}
-                          >
-                            {item.isVeg ? "🌱" : "🍗"}
-                          </div>
-                          <div>
-                            <div className="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
-                              {item.name}
-                              {item.hindiName && (
-                                <span className="text-[11px] font-normal text-[#8b9c8a]">
-                                  ({item.hindiName})
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] font-mono text-[#5a6b58] mt-0.5">
-                              {item.servingSize}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Macro Pills */}
-                        <div className="flex items-center gap-2">
-                          <div className="text-right">
-                            <span className="font-extrabold text-xs text-white block">
-                              {item.kcal} <small className="text-[10px] font-mono text-[#8b9c8a]">kcal</small>
-                            </span>
-                            <span className="text-[10px] font-mono font-bold text-[#c6ff3d]">
-                              {item.p}g Protein
-                            </span>
-                          </div>
-                          <ChevronRight size={15} className="text-[#8b9c8a]" />
+              {/* Foods List */}
+              <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
+                {filteredFoods.slice(0, 30).map((item) => {
+                  const isSelected = picked.id === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => setPicked(item)}
+                      className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                        isSelected
+                          ? "bg-[#c6ff3d]/15 border-[#c6ff3d]"
+                          : "bg-[#0b110d] border-white/5 hover:border-white/20"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs">{item.isVeg ? "🌱" : "🍗"}</span>
+                        <div>
+                          <b className="text-xs text-white block">{item.name}</b>
+                          <span className="text-[10px] text-[#8b9c8a] font-mono">{item.servingSize}</span>
                         </div>
                       </div>
-                    );
-                  })
-                )}
+
+                      <div className="text-right flex items-center gap-2">
+                        <div>
+                          <b className="text-xs text-white block">{item.kcal} kcal</b>
+                          <span className="text-[10px] font-mono text-[#c6ff3d]">{item.p}g P</span>
+                        </div>
+                        <ChevronRight size={13} className="text-[#8b9c8a]" />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* RIGHT: PORTION SCALER & LOGGING DECK (5 COLS) */}
+            {/* Right: Portion & 1-Click Log (5 Cols) */}
             <div className="lg:col-span-5 space-y-4">
-              <div className="bg-[#0e1610] border border-[#c6ff3d]/30 rounded-3xl p-5 shadow-xl relative overflow-hidden">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-                  <div>
-                    <span className="text-[10px] font-mono text-[#c6ff3d] uppercase tracking-wider block">
-                      Portion Scaler & Log
-                    </span>
-                    <h3 className="text-base font-extrabold text-white mt-0.5">
-                      {picked.name}
-                    </h3>
-                    {picked.hindiName && (
-                      <span className="text-xs text-[#8b9c8a]">({picked.hindiName})</span>
-                    )}
-                  </div>
-                  <span className="text-xs font-mono text-[#8b9c8a] bg-black/40 px-2.5 py-1 rounded-xl border border-white/5">
-                    Target: {selectedSlot}
+              <div className="bg-[#0b110d] border border-[#c6ff3d]/30 rounded-3xl p-4 space-y-3.5">
+                <div>
+                  <span className="text-[10px] font-mono text-[#c6ff3d] uppercase tracking-wider block">
+                    Selected Item
                   </span>
+                  <h3 className="text-sm font-extrabold text-white mt-0.5">{picked.name}</h3>
+                  <span className="text-[10px] font-mono text-[#8b9c8a]">{picked.servingSize}</span>
                 </div>
 
-                {/* Portion Multiplier Chips */}
-                <div className="space-y-2 mb-4">
-                  <label className="text-[11px] font-mono text-[#8b9c8a] uppercase tracking-wider block">
-                    Select Serving Multiplier:
-                  </label>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {[
-                      { mult: 0.5, label: "0.5x (Half)" },
-                      { mult: 1.0, label: "1.0x (Std)" },
-                      { mult: 1.5, label: "1.5x (Large)" },
-                      { mult: 2.0, label: "2.0x (Double)" },
-                      { mult: 3.0, label: "3.0x (Triple)" },
-                    ].map((p) => (
-                      <button
-                        key={p.mult}
-                        type="button"
-                        onClick={() => setPortionMultiplier(p.mult)}
-                        className={`py-2 rounded-xl text-[10px] sm:text-xs font-mono font-bold transition-all border ${
-                          portionMultiplier === p.mult
-                            ? "bg-[#c6ff3d] text-black border-[#c6ff3d] shadow-[0_0_15px_rgba(198,255,61,0.3)]"
-                            : "bg-white/5 text-[#8b9c8a] border-white/10 hover:text-white"
-                        }`}
-                      >
-                        {p.mult}x
-                      </button>
-                    ))}
-                  </div>
+                {/* Portion Multipliers */}
+                <div className="grid grid-cols-4 gap-1">
+                  {[0.5, 1.0, 1.5, 2.0].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPortionMultiplier(m)}
+                      className={`py-1.5 rounded-xl text-xs font-mono font-bold transition-all border ${
+                        portionMultiplier === m
+                          ? "bg-[#c6ff3d] text-black border-[#c6ff3d]"
+                          : "bg-white/5 text-[#8b9c8a] border-white/10 hover:text-white"
+                      }`}
+                    >
+                      {m}x
+                    </button>
+                  ))}
                 </div>
 
-                {/* Scaled Macro Matrix */}
-                <div className="grid grid-cols-4 gap-2 bg-black/40 p-3 rounded-2xl border border-white/5 mb-5 text-center">
-                  <div>
-                    <span className="text-[9px] font-mono text-amber-400 block uppercase">Energy</span>
-                    <b className="text-sm sm:text-base text-white">{currentKcal}</b>
-                    <small className="text-[9px] text-[#5a6b58] block">kcal</small>
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-mono text-[#c6ff3d] block uppercase">Protein</span>
-                    <b className="text-sm sm:text-base text-[#c6ff3d]">{currentP}</b>
-                    <small className="text-[9px] text-[#5a6b58] block">grams</small>
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-mono text-sky-400 block uppercase">Carbs</span>
-                    <b className="text-sm sm:text-base text-white">{currentC}</b>
-                    <small className="text-[9px] text-[#5a6b58] block">grams</small>
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-mono text-rose-400 block uppercase">Fats</span>
-                    <b className="text-sm sm:text-base text-white">{currentF}</b>
-                    <small className="text-[9px] text-[#5a6b58] block">grams</small>
-                  </div>
+                {/* Macro Summary Strip */}
+                <div className="grid grid-cols-4 gap-1 bg-black/40 p-2.5 rounded-2xl border border-white/5 text-center text-[11px] font-mono">
+                  <div><span className="text-[#8b9c8a] block text-[9px]">KCAL</span><b className="text-white">{currentKcal}</b></div>
+                  <div><span className="text-[#c6ff3d] block text-[9px]">PROT</span><b className="text-[#c6ff3d]">{currentP}g</b></div>
+                  <div><span className="text-sky-400 block text-[9px]">CARB</span><b className="text-white">{currentC}g</b></div>
+                  <div><span className="text-rose-400 block text-[9px]">FAT</span><b className="text-white">{currentF}g</b></div>
                 </div>
 
-                {/* Log Button */}
+                {/* 1-Click Log Button */}
                 <button
                   type="button"
-                  onClick={handleLogSingleFood}
-                  className="w-full py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(198,255,61,0.25)]"
+                  onClick={handleLogSingle}
+                  className="w-full py-3 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(198,255,61,0.2)]"
                 >
-                  <Plus size={16} />
+                  <Plus size={15} />
                   <span>Log to {selectedSlot} ({currentKcal} kcal)</span>
                 </button>
               </div>
 
-              {/* Today's Logged Fuel Timeline */}
-              <MealTimelineCard
-                loggedEntries={loggedEntries}
-                totalLoggedKcal={totalLoggedKcal}
-                onDelete={handleDeleteEntry}
-              />
+              {/* Minimal Timeline */}
+              <CleanTimelineCard loggedEntries={loggedEntries} onDelete={handleDeleteEntry} />
             </div>
           </div>
-        )}
+        ) : (
+          /* PANTRY MEAL BUILDER VIEW */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Left: Ingredients Picker (6 Cols) */}
+            <div className="lg:col-span-6 space-y-3 bg-[#0b110d] border border-white/10 rounded-3xl p-4">
+              <span className="text-xs font-mono font-bold text-white uppercase tracking-wider block">
+                Select Raw Ingredients
+              </span>
 
-        {/* --- TAB 2: INGREDIENT PANTRY & CUSTOM MEAL BUILDER --- */}
-        {activeTab === "meal_builder" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* LEFT: INGREDIENT PANTRY (6 COLS) */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="bg-[#0e1610] border border-white/10 rounded-3xl p-5 space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <ChefHat size={16} className="text-[#c6ff3d]" />
-                    <span>Raw Pantry Inventory</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-[#8b9c8a]">
-                    Click any ingredient to add to recipe
-                  </span>
-                </div>
-
-                {/* Search + Pantry Filters */}
-                <div className="relative">
-                  <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b9c8a]" />
-                  <input
-                    type="text"
-                    value={pantryQuery}
-                    onChange={(e) => setPantryQuery(e.target.value)}
-                    placeholder="Search raw ingredients (Oats, Eggs, Chicken, Rice, Ghee, Milk)..."
-                    className="w-full bg-[#080d09] border border-white/10 focus:border-[#c6ff3d] rounded-2xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-[#5a6b58] outline-none transition-all"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                  {[
-                    { id: "all", label: "All Items" },
-                    { id: "protein", label: "🥩 Protein" },
-                    { id: "carbs", label: "🌾 Grains/Carbs" },
-                    { id: "fats", label: "🥑 Healthy Fats/Oils" },
-                    { id: "dairy", label: "🥛 Dairy & Liquids" },
-                    { id: "produce", label: "🥦 Veggies & Fruits" },
-                    { id: "supplements", label: "⚡ Whey & Supps" },
-                  ].map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setPantryCategory(cat.id)}
-                      className={`px-2.5 py-1 rounded-xl text-[10px] font-mono whitespace-nowrap transition-all border ${
-                        pantryCategory === cat.id
-                          ? "bg-[#c6ff3d]/20 border-[#c6ff3d] text-[#c6ff3d] font-bold"
-                          : "bg-white/[0.02] border-white/10 text-[#8b9c8a] hover:text-white"
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Pantry Grid List */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[460px] overflow-y-auto pr-1">
-                  {filteredPantry.map((ing) => (
-                    <div
-                      key={ing.id}
-                      onClick={() => handleAddIngredientToBuilder(ing)}
-                      className="p-3 rounded-2xl bg-black/40 border border-white/5 hover:border-[#c6ff3d]/50 hover:bg-[#c6ff3d]/5 transition-all cursor-pointer flex items-center justify-between"
-                    >
-                      <div>
-                        <b className="text-xs text-white block">{ing.name}</b>
-                        {ing.hindiName && (
-                          <span className="text-[10px] text-[#8b9c8a]">({ing.hindiName})</span>
-                        )}
-                        <div className="text-[9px] font-mono text-[#5a6b58] mt-1">
-                          Per 100g: {ing.kcalPer100g} kcal • {ing.pPer100g}g P
-                        </div>
-                      </div>
-                      <div className="w-7 h-7 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#c6ff3d] group-hover:bg-[#c6ff3d] group-hover:text-black">
-                        <Plus size={14} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT: ACTIVE RECIPE COOKSTATION (6 COLS) */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="bg-[#0e1610] border border-[#c6ff3d]/40 rounded-3xl p-5 shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div>
-                    <span className="text-[10px] font-mono text-[#c6ff3d] uppercase tracking-wider block">
-                      Custom Meal Cookstation
-                    </span>
-                    <input
-                      type="text"
-                      value={builderMealName}
-                      onChange={(e) => setBuilderMealName(e.target.value)}
-                      placeholder="e.g. Aniket's Power Oatmeal & Eggs Bowl"
-                      className="text-base font-extrabold text-white bg-transparent border-b border-white/20 focus:border-[#c6ff3d] outline-none w-full mt-1"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <select
-                      value={builderMealCategory}
-                      onChange={(e) => setBuilderMealCategory(e.target.value)}
-                      className="bg-black/50 border border-white/10 text-xs font-mono text-white rounded-xl px-2.5 py-1 outline-none"
-                    >
-                      {customSlots.map((s) => (
-                        <option key={s} value={s} className="bg-[#0e1610] text-white">
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Active Ingredients List */}
-                <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
-                  {activeIngredients.length === 0 ? (
-                    <div className="text-center py-8 text-xs font-mono text-[#5a6b58] border border-dashed border-white/10 rounded-2xl">
-                      Select raw ingredients from the left pantry to build your meal!
-                    </div>
-                  ) : (
-                    activeIngredients.map((item, idx) => {
-                      const macros = calculateIngredientMacros(item.ingredient, item.amount, item.unit);
-                      return (
-                        <div
-                          key={item.id}
-                          className="p-3 rounded-2xl bg-black/40 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                        >
-                          <div className="flex-1">
-                            <b className="text-xs text-white block">{item.ingredient.name}</b>
-                            <div className="text-[10px] font-mono text-[#8b9c8a] flex items-center gap-2 mt-0.5">
-                              <span className="text-[#c6ff3d] font-bold">{macros.kcal} kcal</span>
-                              <span>•</span>
-                              <span>{macros.p}g P</span>
-                              <span>•</span>
-                              <span>{macros.c}g C</span>
-                              <span>•</span>
-                              <span>{macros.f}g F</span>
-                            </div>
-                          </div>
-
-                          {/* Quantity Controls */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-[#080d09] border border-white/10 rounded-xl px-2 py-1">
-                              <input
-                                type="number"
-                                min="0.1"
-                                step="any"
-                                value={item.amount}
-                                onChange={(e) => {
-                                  const val = Number(e.target.value);
-                                  setActiveIngredients((prev) =>
-                                    prev.map((it, i) => (i === idx ? { ...it, amount: val } : it))
-                                  );
-                                }}
-                                className="w-14 text-center bg-transparent text-xs font-mono text-white outline-none font-bold"
-                              />
-                              <span className="text-[10px] font-mono text-[#8b9c8a] ml-1">
-                                {item.unit}
-                              </span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setActiveIngredients((prev) => prev.filter((_, i) => i !== idx));
-                              }}
-                              className="p-1.5 text-[#5a6b58] hover:text-rose-400 transition-colors"
-                              title="Remove ingredient"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                {/* Real-time Recalculated Aggregated Totals */}
-                <div className="bg-black/60 p-4 rounded-2xl border border-white/10 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-mono text-[#8b9c8a]">
-                    <span>AGGREGATED COMPOSITE MACROS:</span>
-                    <span>Total Weight: ~{builderTotals.weightGrams}g</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div>
-                      <span className="text-[9px] font-mono text-amber-400 block uppercase">Energy</span>
-                      <b className="text-base text-white">{builderTotals.kcal}</b>
-                      <small className="text-[9px] text-[#5a6b58] block">kcal</small>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-mono text-[#c6ff3d] block uppercase">Protein</span>
-                      <b className="text-base text-[#c6ff3d]">{builderTotals.p}</b>
-                      <small className="text-[9px] text-[#5a6b58] block">grams</small>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-mono text-sky-400 block uppercase">Carbs</span>
-                      <b className="text-base text-white">{builderTotals.c}</b>
-                      <small className="text-[9px] text-[#5a6b58] block">grams</small>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-mono text-rose-400 block uppercase">Fats</span>
-                      <b className="text-base text-white">{builderTotals.f}</b>
-                      <small className="text-[9px] text-[#5a6b58] block">grams</small>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleSaveRecipe}
-                    className="py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <BookmarkPlus size={15} className="text-[#c6ff3d]" />
-                    <span>Save as Recipe</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleLogBuiltMeal}
-                    className="py-3 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(198,255,61,0.25)]"
-                  >
-                    <Plus size={16} />
-                    <span>Log to {builderMealCategory}</span>
-                  </button>
-                </div>
+              <div className="relative">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8b9c8a]" />
+                <input
+                  type="text"
+                  value={pantryQuery}
+                  onChange={(e) => setPantryQuery(e.target.value)}
+                  placeholder="Filter ingredients (Oats, Eggs, Chicken, Milk, Rice)..."
+                  className="w-full bg-[#080d09] border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white outline-none"
+                />
               </div>
 
-              {/* Today's Fuel Timeline */}
-              <MealTimelineCard
-                loggedEntries={loggedEntries}
-                totalLoggedKcal={totalLoggedKcal}
-                onDelete={handleDeleteEntry}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* --- TAB 3: SAVED CUSTOM RECIPES --- */}
-        {activeTab === "saved_recipes" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Your Reusable Custom Recipes
-                </h3>
-                <p className="text-xs text-[#8b9c8a]">
-                  1-Click log custom recipes created from the Pantry Cookstation.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab("meal_builder")}
-                className="px-3 py-1.5 bg-[#c6ff3d] text-black rounded-xl text-xs font-mono font-bold flex items-center gap-1"
-              >
-                <Plus size={14} />
-                <span>Build New Meal</span>
-              </button>
-            </div>
-
-            {savedRecipes.length === 0 ? (
-              <div className="text-center py-16 bg-[#0e1610] rounded-3xl border border-white/5 space-y-3">
-                <ChefHat size={32} className="text-[#5a6b58] mx-auto" />
-                <p className="text-xs font-mono text-[#8b9c8a]">
-                  No saved recipes yet. Go to the Meal Builder to assemble your favorite bowls!
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("meal_builder")}
-                  className="px-4 py-2 bg-[#c6ff3d]/15 text-[#c6ff3d] border border-[#c6ff3d]/30 rounded-xl text-xs font-mono font-bold"
-                >
-                  Open Meal Builder →
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {savedRecipes.map((recipe) => (
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
+                {filteredPantry.map((ing) => (
                   <div
-                    key={recipe.id}
-                    className="p-5 rounded-3xl bg-[#0e1610] border border-white/10 hover:border-[#c6ff3d]/40 transition-all space-y-3.5 relative overflow-hidden"
+                    key={ing.id}
+                    onClick={() => {
+                      const def = ing.defaultUnit === "g" ? 100 : ing.defaultUnit === "ml" ? 200 : 1;
+                      setActiveIngredients((prev) => [
+                        ...prev,
+                        { id: `ing-${Date.now()}-${Math.random()}`, ingredient: ing, amount: def, unit: ing.defaultUnit },
+                      ]);
+                      toast.info(`Added ${ing.name}`);
+                    }}
+                    className="p-2 rounded-xl bg-black/40 border border-white/5 hover:border-[#c6ff3d]/40 transition-all cursor-pointer flex items-center justify-between text-xs"
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-mono text-[#c6ff3d] uppercase tracking-wider block">
-                          {recipe.mealCategory}
-                        </span>
-                        <h4 className="text-sm font-extrabold text-white mt-0.5">{recipe.name}</h4>
-                        <span className="text-[10px] font-mono text-[#8b9c8a]">{recipe.servingSize}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteRecipe(recipe.id)}
-                        className="text-[#5a6b58] hover:text-rose-400 transition-colors p-1"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    <div>
+                      <b className="text-white block">{ing.name}</b>
+                      <span className="text-[10px] font-mono text-[#5a6b58]">
+                        Per 100g: {ing.kcalPer100g} kcal • {ing.pPer100g}g P
+                      </span>
                     </div>
-
-                    {/* Ingredients summary */}
-                    <div className="text-[11px] text-[#8b9c8a] line-clamp-2 bg-black/40 p-2 rounded-xl border border-white/5">
-                      {recipe.ingredients.map((i) => `${i.amount}${i.unit} ${i.ingredientName}`).join(", ")}
-                    </div>
-
-                    {/* Macro pills */}
-                    <div className="grid grid-cols-4 gap-1 text-center bg-white/[0.02] p-2 rounded-xl border border-white/5 text-[10px] font-mono">
-                      <div><span className="text-[#8b9c8a] block text-[8px]">KCAL</span><b className="text-white">{recipe.kcal}</b></div>
-                      <div><span className="text-[#c6ff3d] block text-[8px]">PROT</span><b className="text-[#c6ff3d]">{recipe.p}g</b></div>
-                      <div><span className="text-sky-400 block text-[8px]">CARB</span><b className="text-white">{recipe.c}g</b></div>
-                      <div><span className="text-rose-400 block text-[8px]">FAT</span><b className="text-white">{recipe.f}g</b></div>
-                    </div>
-
-                    {/* 1-Click Log Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleLogSavedRecipe(recipe)}
-                      className="w-full py-2.5 bg-[#c6ff3d]/15 hover:bg-[#c6ff3d] text-[#c6ff3d] hover:text-black border border-[#c6ff3d]/40 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5"
-                    >
-                      <Plus size={14} />
-                      <span>Log to {selectedSlot}</span>
-                    </button>
+                    <Plus size={14} className="text-[#c6ff3d]" />
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+
+            {/* Right: Recipe Assembler (6 Cols) */}
+            <div className="lg:col-span-6 space-y-3 bg-[#0b110d] border border-[#c6ff3d]/30 rounded-3xl p-4">
+              <input
+                type="text"
+                value={builderMealName}
+                onChange={(e) => setBuilderMealName(e.target.value)}
+                placeholder="Meal Name (e.g. Power Oats Bowl)"
+                className="w-full bg-transparent border-b border-white/20 focus:border-[#c6ff3d] pb-1 text-sm font-bold text-white outline-none"
+              />
+
+              <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+                {activeIngredients.map((item, idx) => {
+                  const m = calculateIngredientMacros(item.ingredient, item.amount, item.unit);
+                  return (
+                    <div key={item.id} className="p-2 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between text-xs">
+                      <div>
+                        <b className="text-white block">{item.ingredient.name}</b>
+                        <span className="text-[10px] font-mono text-[#c6ff3d]">{m.kcal} kcal • {m.p}g P</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={item.amount}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setActiveIngredients((prev) =>
+                              prev.map((it, i) => (i === idx ? { ...it, amount: val } : it))
+                            );
+                          }}
+                          className="w-12 text-center bg-[#080d09] border border-white/10 rounded px-1 text-xs text-white font-mono"
+                        />
+                        <span className="text-[10px] font-mono text-[#8b9c8a]">{item.unit}</span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveIngredients((prev) => prev.filter((_, i) => i !== idx))}
+                          className="text-[#5a6b58] hover:text-rose-400"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total Macros */}
+              <div className="grid grid-cols-4 gap-1 bg-black/50 p-2 rounded-xl border border-white/5 text-center text-[10px] font-mono">
+                <div><span className="text-[#8b9c8a] block">KCAL</span><b className="text-white">{builderTotals.kcal}</b></div>
+                <div><span className="text-[#c6ff3d] block">PROT</span><b className="text-[#c6ff3d]">{builderTotals.p}g</b></div>
+                <div><span className="text-sky-400 block">CARB</span><b className="text-white">{builderTotals.c}g</b></div>
+                <div><span className="text-rose-400 block">FAT</span><b className="text-white">{builderTotals.f}g</b></div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogBuiltMeal}
+                className="w-full py-2.5 bg-[#c6ff3d] text-black font-mono font-bold text-xs rounded-xl uppercase tracking-wider"
+              >
+                Log to {selectedSlot}
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* --- MODAL 1: DIET STRATEGY & TARGETS CUSTOMIZATION --- */}
+      {/* --- MODAL 1: TARGETS & DIET PRESETS --- */}
       <Dialog open={targetModalOpen} onOpenChange={setTargetModalOpen}>
-        <DialogContent className="max-w-lg bg-[#0c130e] border border-[#c6ff3d]/30 text-white rounded-3xl p-6 shadow-2xl">
+        <DialogContent className="max-w-md bg-[#0c120e] border border-[#c6ff3d]/30 text-white rounded-3xl p-5 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Sliders size={18} className="text-[#c6ff3d]" />
-              <span>Customize Diet Strategy & Macro Targets</span>
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <Sliders size={16} className="text-[#c6ff3d]" />
+              <span>Macro Targets & Strategy</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-[#8b9c8a]">
-              Adjust your daily caloric baseline and macronutrient distribution directly inside the tab.
+              Choose a strategy preset or adjust grams directly.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 mt-3">
-            {/* Quick Diet Strategy Presets */}
-            <div>
-              <label className="text-[10px] font-mono text-[#8b9c8a] uppercase tracking-wider block mb-2">
-                1-Click Strategy Presets:
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: "cutting" as const, label: "🔥 Fat Loss", desc: "40% P / Deficit" },
-                  { id: "bulking" as const, label: "💪 Lean Bulk", desc: "50% C / Surplus" },
-                  { id: "maintenance" as const, label: "⚖️ Balance", desc: "30P/45C/25F" },
-                  { id: "keto" as const, label: "🥑 Keto", desc: "65% F / Low Carb" },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handleApplyDietStrategy(s.id)}
-                    className="p-2 rounded-xl bg-white/5 hover:bg-[#c6ff3d]/15 border border-white/10 hover:border-[#c6ff3d]/40 text-left transition-all"
-                  >
-                    <b className="text-xs text-white block">{s.label}</b>
-                    <small className="text-[9px] text-[#8b9c8a] block font-mono">{s.desc}</small>
-                  </button>
-                ))}
-              </div>
+          <div className="space-y-3.5 mt-2">
+            {/* Presets */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {[
+                { id: "cutting" as const, label: "🔥 Cut" },
+                { id: "bulking" as const, label: "💪 Bulk" },
+                { id: "maintenance" as const, label: "⚖️ Maintain" },
+                { id: "keto" as const, label: "🥑 Keto" },
+              ].map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleApplyDietPreset(s.id)}
+                  className="p-2 rounded-xl bg-white/5 hover:bg-[#c6ff3d]/15 border border-white/10 text-xs font-mono font-bold text-center"
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
 
-            {/* Custom Input Fields */}
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="bg-black/40 p-3 rounded-2xl border border-white/10">
-                <label className="text-[10px] font-mono text-amber-400 uppercase block mb-1">
-                  Daily Energy (kcal)
-                </label>
+            {/* Inputs */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-mono text-amber-400 block mb-1">Calories (kcal)</label>
                 <input
                   type="number"
-                  min="1000"
-                  max="6000"
                   value={draftTarget.goalKcal}
                   onChange={(e) => setDraftTarget({ ...draftTarget, goalKcal: Number(e.target.value) })}
-                  className="w-full bg-[#080d09] border border-white/10 focus:border-amber-400 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none"
+                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none"
                 />
               </div>
-
-              <div className="bg-black/40 p-3 rounded-2xl border border-white/10">
-                <label className="text-[10px] font-mono text-[#c6ff3d] uppercase block mb-1">
-                  Protein Target (g)
-                </label>
+              <div>
+                <label className="text-[10px] font-mono text-[#c6ff3d] block mb-1">Protein (g)</label>
                 <input
                   type="number"
-                  min="40"
-                  max="400"
                   value={draftTarget.goalProtein}
                   onChange={(e) => setDraftTarget({ ...draftTarget, goalProtein: Number(e.target.value) })}
-                  className="w-full bg-[#080d09] border border-white/10 focus:border-[#c6ff3d] rounded-xl px-3 py-2 text-sm font-bold text-[#c6ff3d] outline-none"
+                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none"
                 />
               </div>
-
-              <div className="bg-black/40 p-3 rounded-2xl border border-white/10">
-                <label className="text-[10px] font-mono text-sky-400 uppercase block mb-1">
-                  Carbohydrates (g)
-                </label>
+              <div>
+                <label className="text-[10px] font-mono text-sky-400 block mb-1">Carbs (g)</label>
                 <input
                   type="number"
-                  min="0"
-                  max="800"
                   value={draftTarget.goalCarbs}
                   onChange={(e) => setDraftTarget({ ...draftTarget, goalCarbs: Number(e.target.value) })}
-                  className="w-full bg-[#080d09] border border-white/10 focus:border-sky-400 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none"
+                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none"
                 />
               </div>
-
-              <div className="bg-black/40 p-3 rounded-2xl border border-white/10">
-                <label className="text-[10px] font-mono text-rose-400 uppercase block mb-1">
-                  Healthy Fats (g)
-                </label>
+              <div>
+                <label className="text-[10px] font-mono text-rose-400 block mb-1">Fats (g)</label>
                 <input
                   type="number"
-                  min="10"
-                  max="300"
                   value={draftTarget.goalFat}
                   onChange={(e) => setDraftTarget({ ...draftTarget, goalFat: Number(e.target.value) })}
-                  className="w-full bg-[#080d09] border border-white/10 focus:border-rose-400 rounded-xl px-3 py-2 text-sm font-bold text-white outline-none"
+                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none"
                 />
               </div>
             </div>
@@ -1439,165 +845,113 @@ export default function LogFood() {
             <button
               type="button"
               onClick={handleSaveTargets}
-              className="w-full mt-3 py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-[0_0_20px_rgba(198,255,61,0.25)]"
+              className="w-full py-2.5 bg-[#c6ff3d] text-black font-mono font-bold text-xs uppercase rounded-xl"
             >
-              Apply Targets & Recalculate Telemetry
+              Save Targets
             </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* --- MODAL 2: CUSTOM MEAL SLOTS MANAGER --- */}
-      <Dialog open={slotModalOpen} onOpenChange={setSlotModalOpen}>
-        <DialogContent className="max-w-md bg-[#0c130e] border border-[#c6ff3d]/30 text-white rounded-3xl p-6 shadow-2xl">
+      {/* --- MODAL 2: CUSTOM SINGLE FOOD ITEM --- */}
+      <Dialog open={customItemModalOpen} onOpenChange={setCustomItemModalOpen}>
+        <DialogContent className="max-w-sm bg-[#0c120e] border border-[#c6ff3d]/30 text-white rounded-3xl p-5 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Layers size={18} className="text-[#c6ff3d]" />
-              <span>Customize Meal Categories</span>
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <Plus size={16} className="text-[#c6ff3d]" />
+              <span>Add Custom Food</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-[#8b9c8a]">
-              Add custom meal slots (e.g. Pre-Workout Snack, Midnight Shake, Meal 1).
-            </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 mt-3">
-            {/* Add Slot Input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newSlotName}
-                onChange={(e) => setNewSlotName(e.target.value)}
-                placeholder="e.g. Pre-Workout Fuel"
-                className="flex-1 bg-[#080d09] border border-white/10 focus:border-[#c6ff3d] rounded-xl px-3 py-2 text-xs text-white outline-none"
-              />
-              <button
-                type="button"
-                onClick={handleAddCustomSlot}
-                className="px-4 py-2 bg-[#c6ff3d] text-black rounded-xl text-xs font-mono font-bold"
-              >
-                Add Slot
-              </button>
-            </div>
-
-            {/* Current Slots List */}
-            <div className="space-y-2 max-h-[220px] overflow-y-auto">
-              {customSlots.map((slot) => (
-                <div
-                  key={slot}
-                  className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between text-xs"
-                >
-                  <span className="font-mono text-white">{slot}</span>
-                  {customSlots.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCustomSlot(slot)}
-                      className="text-[#5a6b58] hover:text-rose-400 p-1"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* --- MODAL 3: QUICK CUSTOM SINGLE FOOD ITEM --- */}
-      <Dialog open={quickCustomModalOpen} onOpenChange={setQuickCustomModalOpen}>
-        <DialogContent className="max-w-md bg-[#0c130e] border border-[#c6ff3d]/30 text-white rounded-3xl p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-              <Sparkles size={16} className="text-[#c6ff3d]" />
-              <span>Add Custom Food Item</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs text-[#8b9c8a]">
-              Define any food with exact calories and macronutrients.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 mt-3">
+          <div className="space-y-2.5 mt-2">
             <div>
-              <label className="text-[10px] font-mono text-[#8b9c8a] uppercase block mb-1">Item Name</label>
+              <label className="text-[10px] font-mono text-[#8b9c8a] block mb-1">Item Name</label>
               <input
                 type="text"
-                value={draftCustomFood.name}
-                onChange={(e) => setDraftCustomFood({ ...draftCustomFood, name: e.target.value })}
-                placeholder="e.g. Grandma's Sattu Paratha"
-                className="w-full bg-[#080d09] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#c6ff3d]"
+                value={draftCustom.name}
+                onChange={(e) => setDraftCustom({ ...draftCustom, name: e.target.value })}
+                placeholder="e.g. Sattu Drink"
+                className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               <div>
-                <label className="text-[10px] font-mono text-[#8b9c8a] uppercase block mb-1">Serving Size</label>
-                <input
-                  type="text"
-                  value={draftCustomFood.servingSize}
-                  onChange={(e) => setDraftCustomFood({ ...draftCustomFood, servingSize: e.target.value })}
-                  placeholder="e.g. 1 medium piece"
-                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-mono text-[#8b9c8a] uppercase block mb-1">Unit</label>
-                <input
-                  type="text"
-                  value={draftCustomFood.unit}
-                  onChange={(e) => setDraftCustomFood({ ...draftCustomFood, unit: e.target.value })}
-                  placeholder="g / pieces / bowl"
-                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Macros */}
-            <div className="grid grid-cols-4 gap-2">
-              <div>
-                <label className="text-[9px] font-mono text-amber-400 uppercase block mb-1">Kcal</label>
+                <label className="text-[9px] font-mono text-amber-400 block mb-0.5">Kcal</label>
                 <input
                   type="number"
-                  value={draftCustomFood.kcal}
-                  onChange={(e) => setDraftCustomFood({ ...draftCustomFood, kcal: e.target.value })}
-                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none"
+                  value={draftCustom.kcal}
+                  onChange={(e) => setDraftCustom({ ...draftCustom, kcal: e.target.value })}
+                  className="w-full bg-[#080d09] border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
                 />
               </div>
               <div>
-                <label className="text-[9px] font-mono text-[#c6ff3d] uppercase block mb-1">Prot (g)</label>
+                <label className="text-[9px] font-mono text-[#c6ff3d] block mb-0.5">Prot</label>
                 <input
                   type="number"
-                  value={draftCustomFood.p}
-                  onChange={(e) => setDraftCustomFood({ ...draftCustomFood, p: e.target.value })}
-                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none"
+                  value={draftCustom.p}
+                  onChange={(e) => setDraftCustom({ ...draftCustom, p: e.target.value })}
+                  className="w-full bg-[#080d09] border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
                 />
               </div>
               <div>
-                <label className="text-[9px] font-mono text-sky-400 uppercase block mb-1">Carb (g)</label>
+                <label className="text-[9px] font-mono text-sky-400 block mb-0.5">Carb</label>
                 <input
                   type="number"
-                  value={draftCustomFood.c}
-                  onChange={(e) => setDraftCustomFood({ ...draftCustomFood, c: e.target.value })}
-                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none"
+                  value={draftCustom.c}
+                  onChange={(e) => setDraftCustom({ ...draftCustom, c: e.target.value })}
+                  className="w-full bg-[#080d09] border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
                 />
               </div>
               <div>
-                <label className="text-[9px] font-mono text-rose-400 uppercase block mb-1">Fat (g)</label>
+                <label className="text-[9px] font-mono text-rose-400 block mb-0.5">Fat</label>
                 <input
                   type="number"
-                  value={draftCustomFood.f}
-                  onChange={(e) => setDraftCustomFood({ ...draftCustomFood, f: e.target.value })}
-                  className="w-full bg-[#080d09] border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none"
+                  value={draftCustom.f}
+                  onChange={(e) => setDraftCustom({ ...draftCustom, f: e.target.value })}
+                  className="w-full bg-[#080d09] border border-white/10 rounded-lg px-2 py-1 text-xs text-white"
                 />
               </div>
             </div>
 
             <button
               type="button"
-              onClick={handleCreateQuickCustomFood}
-              className="w-full mt-3 py-3 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl transition-all"
+              onClick={handleSaveCustomItem}
+              className="w-full py-2.5 bg-[#c6ff3d] text-black font-mono font-bold text-xs uppercase rounded-xl mt-1"
             >
-              Save Custom Item
+              Add Item
             </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- MODAL 3: ADD MEAL SLOT --- */}
+      <Dialog open={slotModalOpen} onOpenChange={setSlotModalOpen}>
+        <DialogContent className="max-w-sm bg-[#0c120e] border border-[#c6ff3d]/30 text-white rounded-3xl p-5 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+              <Layers size={16} className="text-[#c6ff3d]" />
+              <span>Add Meal Category</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3 mt-2">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newSlotName}
+                onChange={(e) => setNewSlotName(e.target.value)}
+                placeholder="e.g. Midnight Snack"
+                className="flex-1 bg-[#080d09] border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddSlot}
+                className="px-3 py-1.5 bg-[#c6ff3d] text-black font-mono font-bold text-xs rounded-xl"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1605,67 +959,52 @@ export default function LogFood() {
   );
 }
 
-// Reusable Meal Timeline Card
-function MealTimelineCard({
+// Minimalist Timeline Card
+function CleanTimelineCard({
   loggedEntries,
-  totalLoggedKcal,
   onDelete,
 }: {
   loggedEntries: LoggedEntry[];
-  totalLoggedKcal: number;
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="bg-[#0e1610] border border-white/10 rounded-3xl p-4 space-y-3">
-      <div className="flex items-center justify-between pb-2 border-b border-white/10">
-        <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <Clock size={14} className="text-[#c6ff3d]" />
-          <span>Today's Fuel Timeline ({loggedEntries.length})</span>
-        </span>
-        <span className="text-[10px] font-mono text-[#c6ff3d]">
-          {totalLoggedKcal} kcal Total
+    <div className="bg-[#0b110d] border border-white/10 rounded-3xl p-4 space-y-2.5">
+      <div className="flex items-center justify-between pb-2 border-b border-white/5">
+        <span className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+          <Clock size={13} className="text-[#c6ff3d]" />
+          <span>Today's Log ({loggedEntries.length})</span>
         </span>
       </div>
 
-      <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+      <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
         {loggedEntries.length === 0 ? (
-          <div className="text-center py-6 text-[11px] font-mono text-[#5a6b58]">
-            No foods logged yet today. Select an Indian staple or construct a meal in the Pantry builder!
+          <div className="text-center py-4 text-[11px] font-mono text-[#5a6b58]">
+            No meals logged yet today.
           </div>
         ) : (
           loggedEntries.map((entry) => (
             <div
               key={entry.id}
-              className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs"
+              className="p-2 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs"
             >
               <div>
-                <b className="text-white text-xs block">{entry.name}</b>
-                <div className="text-[10px] font-mono text-[#8b9c8a] flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[#c6ff3d]">{entry.meal}</span>
-                  <span>•</span>
-                  <span>{entry.servingSize}</span>
-                  <span>•</span>
-                  <span>{entry.time}</span>
-                </div>
-                {entry.ingredientsSummary && (
-                  <div className="text-[9px] text-[#5a6b58] truncate max-w-[200px] sm:max-w-[280px]">
-                    {entry.ingredientsSummary}
-                  </div>
-                )}
+                <b className="text-white block">{entry.name}</b>
+                <span className="text-[10px] font-mono text-[#8b9c8a]">
+                  {entry.meal} • {entry.time}
+                </span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <span className="font-bold text-white text-xs block">{entry.kcal} kcal</span>
-                  <span className="text-[10px] font-mono text-[#c6ff3d]">{entry.p}g P</span>
+              <div className="flex items-center gap-2">
+                <div className="text-right font-mono text-[11px]">
+                  <b className="text-white block">{entry.kcal} kcal</b>
+                  <span className="text-[#c6ff3d] text-[10px]">{entry.p}g P</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => onDelete(entry.id)}
-                  className="p-1 text-[#5a6b58] hover:text-rose-400 transition-colors"
-                  title="Remove entry"
+                  className="p-1 text-[#5a6b58] hover:text-rose-400"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             </div>
