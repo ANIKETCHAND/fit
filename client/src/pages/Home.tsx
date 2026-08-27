@@ -37,15 +37,6 @@ export default function Home() {
             </div>
           </div>
           <div className="topbar-actions flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent("fittrack_open_rexi_onboarding"))}
-              className="px-3 py-1.5 bg-[#c6ff3d]/15 hover:bg-[#c6ff3d] text-[#c6ff3d] hover:text-black border border-[#c6ff3d]/40 rounded-xl font-mono text-[11px] font-bold tracking-wider uppercase transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(198,255,61,0.15)]"
-              title="Open Rexi AI Setup"
-            >
-              <span className="text-base">🦖</span>
-              <span>Rexi AI</span>
-            </button>
             <button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}>
               <Bell size={19} />
               <b />
