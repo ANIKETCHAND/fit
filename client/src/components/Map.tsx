@@ -128,6 +128,7 @@ export function MapView({
   // Leaflet elements
   const leafletMapRef = useRef<any>(null);
   const leafletTileLayerRef = useRef<any>(null);
+  const leafletLabelsLayerRef = useRef<any>(null);
   const leafletLocMarkerRef = useRef<any>(null);
   const leafletLocCircleRef = useRef<any>(null);
   const leafletRouteLineRef = useRef<any>(null);
@@ -156,15 +157,19 @@ export function MapView({
     });
 
     const tileUrls: Record<TileStyle, string> = {
-      dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      dark: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
       streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     };
 
     const tileLayer = L.tileLayer(tileUrls["dark"], {
       maxZoom: 19,
-      subdomains: "abcd",
     }).addTo(map);
+
+    const labelsLayer = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+      { maxZoom: 19 }
+    ).addTo(map);
 
     // Fallback if dark tiles encounter tile load issues
     tileLayer.on("tileerror", () => {
@@ -172,6 +177,7 @@ export function MapView({
     });
 
     leafletTileLayerRef.current = tileLayer;
+    leafletLabelsLayerRef.current = labelsLayer;
     leafletMapRef.current = map;
 
     setTimeout(() => map.invalidateSize(), 100);
@@ -572,17 +578,28 @@ export function MapView({
     setTileStyle(style);
     if (activeEngine === "leaflet" && leafletMapRef.current && window.L) {
       const tileUrls: Record<TileStyle, string> = {
-        dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        dark: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
         streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
         satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       };
       if (leafletTileLayerRef.current) {
         leafletMapRef.current.removeLayer(leafletTileLayerRef.current);
       }
+      if (leafletLabelsLayerRef.current) {
+        leafletMapRef.current.removeLayer(leafletLabelsLayerRef.current);
+        leafletLabelsLayerRef.current = null;
+      }
+
       leafletTileLayerRef.current = window.L.tileLayer(tileUrls[style], {
         maxZoom: 19,
-        subdomains: "abcd",
       }).addTo(leafletMapRef.current);
+
+      if (style === "dark") {
+        leafletLabelsLayerRef.current = window.L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+          { maxZoom: 19 }
+        ).addTo(leafletMapRef.current);
+      }
     }
   };
 
