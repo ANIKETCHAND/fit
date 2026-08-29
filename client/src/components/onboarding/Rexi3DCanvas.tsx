@@ -14,13 +14,14 @@ export function Rexi3DCanvas({ isCelebrating = false, step = "greeting" }: Rexi3
     const container = mountRef.current;
     if (!container) return;
 
-    const width = container.clientWidth || 320;
-    const height = container.clientHeight || (step === "greeting" ? 260 : 180);
+    const width = container.clientWidth || 340;
+    const height = container.clientHeight || (step === "greeting" ? 280 : 180);
 
     // 1. Scene, Camera, Renderer
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 0.3, 4.0);
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    // Center camera on Rexi's body center (y=1.1) and slightly back (z=4.2) so full horn is never clipped
+    camera.position.set(0, 1.1, 4.2);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(width, height);
@@ -118,66 +119,83 @@ export function Rexi3DCanvas({ isCelebrating = false, step = "greeting" }: Rexi3
     character.add(tipMesh);
 
     // Eyes
-    const eyeGeometry = new THREE.SphereGeometry(0.13, 24, 24);
-    eyeGeometry.scale(1, 1.45, 0.6);
-
+    const eyeGeometry = new THREE.SphereGeometry(0.13, 20, 20);
     const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    leftEye.position.set(-0.3, 0.95, 0.72);
-    leftEye.rotation.y = -0.15;
+    leftEye.position.set(-0.28, 0.92, 0.72);
     character.add(leftEye);
 
-    const highlightGeo = new THREE.SphereGeometry(0.04, 12, 12);
-    const leftHigh = new THREE.Mesh(highlightGeo, eyeHighlightMaterial);
-    leftHigh.position.set(-0.28, 1.02, 0.8);
-    character.add(leftHigh);
-
     const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    rightEye.position.set(0.3, 0.95, 0.72);
-    rightEye.rotation.y = 0.15;
+    rightEye.position.set(0.28, 0.92, 0.72);
     character.add(rightEye);
 
-    const rightHigh = new THREE.Mesh(highlightGeo, eyeHighlightMaterial);
-    rightHigh.position.set(0.32, 1.02, 0.8);
-    character.add(rightHigh);
+    // Eye Highlights (Sparkles)
+    const highlightGeo = new THREE.SphereGeometry(0.045, 12, 12);
+    const leftSparkle = new THREE.Mesh(highlightGeo, eyeHighlightMaterial);
+    leftSparkle.position.set(-0.25, 0.96, 0.82);
+    character.add(leftSparkle);
 
-    // Cheeks
-    const cheekGeo = new THREE.SphereGeometry(0.09, 16, 16);
-    cheekGeo.scale(1.2, 0.7, 0.5);
+    const rightSparkle = new THREE.Mesh(highlightGeo, eyeHighlightMaterial);
+    rightSparkle.position.set(0.31, 0.96, 0.82);
+    character.add(rightSparkle);
+
+    // Cheeks (Rosy Green Blush)
+    const cheekGeo = new THREE.CircleGeometry(0.1, 16);
     const leftCheek = new THREE.Mesh(cheekGeo, cheekMaterial);
-    leftCheek.position.set(-0.48, 0.76, 0.64);
+    leftCheek.position.set(-0.45, 0.76, 0.68);
+    leftCheek.rotation.y = -0.3;
     character.add(leftCheek);
 
     const rightCheek = new THREE.Mesh(cheekGeo, cheekMaterial);
-    rightCheek.position.set(0.48, 0.76, 0.64);
+    rightCheek.position.set(0.45, 0.76, 0.68);
+    rightCheek.rotation.y = 0.3;
     character.add(rightCheek);
 
-    // Floating Paws
-    const handGeo = new THREE.SphereGeometry(0.18, 20, 20);
-    handGeo.scale(1, 0.85, 1.2);
+    // Smiling Mouth
+    const mouthCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.12, 0.72, 0.78),
+      new THREE.Vector3(0, 0.67, 0.8),
+      new THREE.Vector3(0.12, 0.72, 0.78),
+    ]);
+    const mouthGeo = new THREE.TubeGeometry(mouthCurve, 16, 0.025, 8, false);
+    const mouthMesh = new THREE.Mesh(mouthGeo, eyeMaterial);
+    character.add(mouthMesh);
 
+    // Cute Paws / Hands
+    const handGeo = new THREE.SphereGeometry(0.18, 16, 16);
     const leftHand = new THREE.Mesh(handGeo, bodyMaterial);
-    leftHand.position.set(-0.85, 0.65, 0.35);
+    leftHand.position.set(-0.85, 0.65, 0.1);
     character.add(leftHand);
 
     const rightHand = new THREE.Mesh(handGeo, bodyMaterial);
-    rightHand.position.set(0.85, 0.65, 0.35);
+    rightHand.position.set(0.85, 0.65, 0.1);
     character.add(rightHand);
 
-    // Ground Shadow Blob
-    const shadowGeo = new THREE.PlaneGeometry(1.6, 1.2);
+    // Little Stumpy Feet
+    const footGeo = new THREE.SphereGeometry(0.2, 16, 16);
+    const leftFoot = new THREE.Mesh(footGeo, bodyMaterial);
+    leftFoot.position.set(-0.35, 0.05, 0.15);
+    leftFoot.scale.set(1, 0.6, 1.4);
+    character.add(leftFoot);
+
+    const rightFoot = new THREE.Mesh(footGeo, bodyMaterial);
+    rightFoot.position.set(0.35, 0.05, 0.15);
+    rightFoot.scale.set(1, 0.6, 1.4);
+    character.add(rightFoot);
+
+    // Interactive Ground Shadow
+    const shadowGeo = new THREE.PlaneGeometry(1.6, 1.6);
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
-      opacity: 0.5,
-      depthWrite: false,
+      opacity: 0.45,
     });
     const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
     shadowMesh.rotation.x = -Math.PI / 2;
-    shadowMesh.position.y = -0.42;
+    shadowMesh.position.y = -0.05;
     rootGroup.add(shadowMesh);
 
-    // Energy Ring Particle Halo
-    const ringGeo = new THREE.RingGeometry(1.1, 1.18, 36);
+    // Futuristic Holographic Energy Ring on ground
+    const ringGeo = new THREE.RingGeometry(0.85, 0.95, 32);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0xc6ff3d,
       side: THREE.DoubleSide,
@@ -186,57 +204,39 @@ export function Rexi3DCanvas({ isCelebrating = false, step = "greeting" }: Rexi3
     });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
     ringMesh.rotation.x = -Math.PI / 2;
-    ringMesh.position.y = -0.38;
+    ringMesh.position.y = -0.04;
     rootGroup.add(ringMesh);
 
-    // Mouse Tracking
-    const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+    // 5. Mouse Interaction
+    const mouse = { x: 0, y: 0 };
     const handleMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect();
-      mouse.targetX = ((e.clientX - rect.left) / width) * 2 - 1;
-      mouse.targetY = -(((e.clientY - rect.top) / height) * 2 - 1);
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      mouse.x = x * 2;
+      mouse.y = y * 2;
     };
     window.addEventListener("mousemove", handleMouseMove);
 
-    // 5. Animation Loop
-    let clock = new THREE.Clock();
+    // 6. Animation Loop (Squash, Stretch, Bobbing & Jumping)
     let animId: number;
-    let entranceProgress = 0;
+    let clock = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
       const time = clock.getElapsedTime();
 
-      // Mouse smoothing
-      mouse.x += (mouse.targetX - mouse.x) * 0.08;
-      mouse.y += (mouse.targetY - mouse.y) * 0.08;
+      // Bouncy Jump physics
+      const jumpCycle = time * 2.8;
+      const rawJump = Math.max(0, Math.sin(jumpCycle));
+      const jumpY = rawJump * 0.45;
 
-      // Entrance Drop-in
-      if (entranceProgress < 1) {
-        entranceProgress = Math.min(1, entranceProgress + delta * 2.4);
-        const ease = Math.sin((entranceProgress * Math.PI) / 2);
-        rootGroup.position.y = (1 - ease) * 3;
-        rootGroup.rotation.y = (1 - ease) * Math.PI * 2;
-      }
+      // Squash and stretch
+      const squashStretch = 1 + (rawJump > 0.05 ? 0.12 * rawJump : -0.08 * Math.cos(jumpCycle * 2));
+      const inverseStretch = 1 / Math.sqrt(squashStretch);
 
-      // Continuous Joyful Jumping Physics (Sine bounce with squash & stretch)
-      const jumpSpeed = 4.2;
-      const jumpPhase = (time * jumpSpeed) % Math.PI;
-      const rawJump = Math.sin(jumpPhase);
-      const jumpHeight = isCelebrating ? 1.6 : 0.65;
-      const currentJumpY = rawJump * jumpHeight;
-
-      character.position.y = currentJumpY;
-
-      // Squash and Stretch:
-      if (rawJump < 0.2) {
-        const squash = (1 - rawJump / 0.2) * 0.18;
-        character.scale.set(1 + squash, 1 - squash * 1.3, 1 + squash);
-      } else {
-        const stretch = ((rawJump - 0.2) / 0.8) * 0.14;
-        character.scale.set(1 - stretch * 0.6, 1 + stretch, 1 - stretch * 0.6);
-      }
+      character.position.y = jumpY;
+      character.scale.set(inverseStretch, squashStretch, inverseStretch);
 
       // Shadow scaling
       const shadowScale = Math.max(0.4, 1 - rawJump * 0.55);
@@ -284,7 +284,7 @@ export function Rexi3DCanvas({ isCelebrating = false, step = "greeting" }: Rexi3
     <div
       ref={mountRef}
       className={`w-full flex items-center justify-center relative cursor-grab active:cursor-grabbing ${
-        step === "greeting" ? "h-[250px]" : "h-[180px]"
+        step === "greeting" ? "h-[280px]" : "h-[180px]"
       }`}
     />
   );
