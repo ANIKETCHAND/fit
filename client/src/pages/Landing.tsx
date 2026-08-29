@@ -402,9 +402,9 @@ export default function Landing() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.65, delay: 0.1 }}
         >
-          BUILD YOUR STRONGEST BODY
+          BUILD STRENGTH
           <br />
-          <span className="hero-title-highlight">AND TRACK REAL PROGRESS</span>
+          <span className="hero-title-highlight">TRACK PROGRESS</span>
         </motion.h1>
 
         <motion.p
