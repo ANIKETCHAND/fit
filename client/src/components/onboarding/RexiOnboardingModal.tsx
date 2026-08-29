@@ -1,4 +1,4 @@
-/* FitTrack: Rexi AI Onboarding Modal (Step 1: Fullscreen 3D Rexi + Cloud Speech Bubble -> Step 2: Experience Selection -> Step 3: Gym Rat Mode) */
+/* FitTrack: Rexi AI Onboarding Modal (Step 1: Fullscreen 3D Rexi + Cloud Speech Bubble -> Step 2: Experience Selection (Beginner, Intermediate, Advanced) -> Step 3: Gym Rat Mode) */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ export function RexiOnboardingModal() {
   const [location, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [stage, setStage] = useState<"greeting" | "ask_level" | "gym_rat_popup">("greeting");
-  const [selectedLevel, setSelectedLevel] = useState<"complete_beginner" | "beginner" | "intermediate" | "advanced" | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<"beginner" | "intermediate" | "advanced" | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const profile = getAthleteProfile() || { name: "Athlete" };
@@ -51,19 +51,19 @@ export function RexiOnboardingModal() {
     };
   }, [location]);
 
-  const handleSelectLevel = (level: "complete_beginner" | "beginner" | "intermediate" | "advanced") => {
+  const handleSelectLevel = (level: "beginner" | "intermediate" | "advanced") => {
     setSelectedLevel(level);
 
     try {
-      saveExperienceMode(level === "complete_beginner" || level === "beginner" ? "beginner" : "advanced");
+      saveExperienceMode(level === "beginner" ? "beginner" : "advanced");
       localStorage.setItem(getScopedKey("fittrack-experience-tier"), JSON.stringify(level));
       sessionStorage.setItem("fittrack_rexi_welcomed", "true");
       localStorage.setItem("fittrack_just_onboarded", "true");
     } catch {}
 
-    if (level === "complete_beginner" || level === "beginner") {
+    if (level === "beginner") {
       setIsTransitioning(true);
-      toast.success(`${level === "complete_beginner" ? "Complete Beginner" : "Beginner"} Mode activated! Launching Rexi Guided Tour...`);
+      toast.success("Beginner Mode activated! Launching Rexi Guided Tour...");
       setTimeout(() => {
         setIsOpen(false);
         window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
@@ -92,7 +92,7 @@ export function RexiOnboardingModal() {
         <div className="fixed bottom-10 left-1/4 w-72 h-72 bg-[#38bdf8]/10 rounded-full blur-[90px] pointer-events-none" />
 
         {stage === "greeting" ? (
-          /* STAGE 1: IMMERSIVE FULL-SCREEN REXI + CLEAN CLOUD SPEECH BUBBLE (ZERO OUTER BORDER BOX) */
+          /* STAGE 1: IMMERSIVE FULL-SCREEN REXI + CLEAN CLOUD SPEECH BUBBLE */
           <motion.div
             key="greeting"
             initial={{ opacity: 0, scale: 0.92, y: 15 }}
@@ -186,7 +186,7 @@ export function RexiOnboardingModal() {
               >
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#c6ff3d]/10 border border-[#c6ff3d]/30 rounded-full text-[#c6ff3d] text-[11px] font-mono font-bold uppercase tracking-wider">
                   <Dumbbell size={13} />
-                  <span>{selectedLevel === "advanced" ? "Pro Athlete" : "Intermediate"} Unlocked</span>
+                  <span>{selectedLevel === "advanced" ? "Advanced Athlete" : "Intermediate"} Unlocked</span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -198,7 +198,7 @@ export function RexiOnboardingModal() {
                 </p>
 
                 <p className="text-[11px] text-[#718270] font-mono bg-black/40 p-2.5 rounded-xl border border-white/5">
-                  ⚡ Next: Calibrate your body mass (kg), height & target load in Settings.
+                  ⚡ Next: Calibrate your body mass (kg), height and target load in Settings.
                 </p>
               </motion.div>
 
@@ -216,7 +216,7 @@ export function RexiOnboardingModal() {
             </div>
           </motion.div>
         ) : (
-          /* STAGE 2: THEN REXI ASKS YOUR TRAINING LEVEL */
+          /* STAGE 2: THEN REXI ASKS YOUR TRAINING LEVEL (3 TIERS: BEGINNER, INTERMEDIATE, ADVANCED) */
           <motion.div
             key="ask_level"
             initial={{ opacity: 0, scale: 0.9, y: 15 }}
@@ -234,43 +234,34 @@ export function RexiOnboardingModal() {
                 What is your training experience level?
               </h3>
               <p className="text-xs text-[#8b9c8a] mt-0.5 mb-4 font-mono">
-                Step 1 of 2 • Tailors weight load & form guidance
+                Step 1 of 2: Tailors weight load and form guidance
               </p>
 
-              {/* 4 Experience Level Cards */}
-              <div className="w-full space-y-2">
+              {/* 3 Experience Level Cards */}
+              <div className="w-full space-y-2.5">
                 {[
                   {
-                    id: "complete_beginner" as const,
-                    title: "Complete Beginner",
-                    desc: "Brand new to gym • Needs simple mode, guided cues & form guides",
+                    id: "beginner" as const,
+                    title: "Beginner",
+                    desc: "Learning proper exercise form, guided cues and fundamental movements",
                     icon: ShieldCheck,
                     color: "text-emerald-400",
                     border: "hover:border-emerald-400/50",
                     bg: "bg-emerald-500/10",
                   },
                   {
-                    id: "beginner" as const,
-                    title: "Beginner",
-                    desc: "6–12 months training • Learning compound lifts & basic splits",
-                    icon: Dumbbell,
-                    color: "text-teal-400",
-                    border: "hover:border-teal-400/50",
-                    bg: "bg-teal-500/10",
-                  },
-                  {
                     id: "intermediate" as const,
                     title: "Intermediate",
-                    desc: "1–3 years • Progressive overload, volume tracking & hypertrophy",
-                    icon: Zap,
+                    desc: "Tracking progressive overload, workout volume and muscle growth",
+                    icon: Dumbbell,
                     color: "text-[#c6ff3d]",
                     border: "hover:border-[#c6ff3d]/50",
                     bg: "bg-[#c6ff3d]/10",
                   },
                   {
                     id: "advanced" as const,
-                    title: "Advanced / Gym Rat",
-                    desc: "3+ years • High volume, 3D kinetic telemetry & periodization",
+                    title: "Advanced Gym Rat",
+                    desc: "High intensity training, custom programming and performance tracking",
                     icon: Flame,
                     color: "text-amber-400",
                     border: "hover:border-amber-400/50",
@@ -287,14 +278,14 @@ export function RexiOnboardingModal() {
                       whileTap={{ scale: 0.985 }}
                       onClick={() => handleSelectLevel(item.id)}
                       disabled={isTransitioning}
-                      className={`w-full p-3.5 rounded-2xl text-left border transition-all flex items-center justify-between ${
+                      className={`w-full p-4 rounded-2xl text-left border transition-all flex items-center justify-between ${
                         isSelected
                           ? "border-[#c6ff3d] bg-[#c6ff3d]/20 shadow-[0_0_25px_rgba(198,255,61,0.25)]"
                           : `border-white/10 bg-white/[0.03] ${item.border} hover:bg-white/[0.06]`
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl ${item.bg} ${item.color}`}>
+                      <div className="flex items-center gap-3.5">
+                        <div className={`p-2.5 rounded-xl ${item.bg} ${item.color}`}>
                           <Icon size={18} />
                         </div>
                         <div>
@@ -325,7 +316,7 @@ export function RexiOnboardingModal() {
                   </motion.div>
                 ) : (
                   <p className="text-[10px] font-mono text-[#5a6b58]">
-                    Next step: Calibrate body mass (kg), height & daily targets
+                    Next step: Calibrate body mass (kg), height and daily targets
                   </p>
                 )}
               </div>
