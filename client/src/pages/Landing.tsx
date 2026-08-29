@@ -10,41 +10,38 @@ import {
   Fingerprint,
   Flame,
   KeyRound,
-  Lock,
   LogIn,
   Quote,
-  ShieldCheck,
   Sparkles,
   UserCheck,
   UserPlus,
-  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Landing3DScene } from "@/components/3d/Landing3DScene";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { getAthleteProfile, saveAthleteProfile } from "@/lib/user-store";
+import { saveAthleteProfile } from "@/lib/user-store";
 import { sanitizeText, sanitizeEmail } from "@/lib/sanitize";
 import "./Landing.css";
 
 const motivatingQuotes = [
   {
-    quote: "Discipline is the bridge between kinetic signal and physical reality.",
-    author: "Kinetic Principle 01",
-    tag: "Mindset",
+    quote: "Consistency is what transforms average effort into excellence.",
+    author: "Pro Fitness Coaching",
+    tag: "Consistency",
   },
   {
-    quote: "Every repetition encodes physical endurance into muscle memory.",
-    author: "Command Protocol",
+    quote: "What gets measured gets improved.",
+    author: "Performance Principle",
+    tag: "Performance",
+  },
+  {
+    quote: "Small daily actions compound into lasting physical transformations.",
+    author: "Training Wisdom",
     tag: "Discipline",
   },
   {
-    quote: "Precision metrics eliminate guesswork from peak athletic performance.",
-    author: "Telemetry Deck",
-    tag: "Analytics",
-  },
-  {
-    quote: "Progress compounds when consistency meets metabolic focus.",
-    author: "Bio-Kinetic OS",
+    quote: "Focus on the process and the results will take care of themselves.",
+    author: "Athlete Mindset",
     tag: "Focus",
   },
 ];
@@ -121,10 +118,10 @@ export default function Landing() {
             email: validEmail,
             photoDataUrl: payload.picture || "",
             location: "New York, USA",
-            focus: "Hypertrophy & Strength Protocol",
+            focus: "Strength and Conditioning",
           });
           localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
-          toast.success(`Welcome, ${cleanName}! Authenticated with Google.`);
+          toast.success(`Welcome, ${cleanName}! Signed in with Google.`);
           setGoogleModalOpen(false);
           setAuthModalOpen(false);
           setLocation("/overview");
@@ -167,7 +164,7 @@ export default function Landing() {
                     email: googleEmailClean,
                     photoDataUrl: userData.picture || "",
                     location: "New York, USA",
-                    focus: "Hypertrophy & Strength Protocol",
+                    focus: "Strength and Conditioning",
                   });
                   // Save account to remembered list
                   try {
@@ -275,28 +272,28 @@ export default function Landing() {
     e.preventDefault();
     setIsGoogleLoading(true);
     setTimeout(() => {
-      const email = sanitizeEmail(googleEmail) || "athlete@gmail.com";
-      const usernamePart = email.split("@")[0] || "Athlete";
+      const cleanUserEmail = sanitizeEmail(googleEmail) || "athlete@gmail.com";
+      const usernamePart = cleanUserEmail.split("@")[0] || "Athlete";
       const cleanName = usernamePart
-        .split(/[\._\-]/)
+        .split(/[\._]/)
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
         .join(" ");
 
       localStorage.setItem("fittrack_auth_state", "authenticated");
       localStorage.setItem("fittrack_auth_provider", "google");
-      localStorage.setItem("fittrack_user_email", email);
+      localStorage.setItem("fittrack_user_email", cleanUserEmail);
       localStorage.setItem("fittrack_user_name", cleanName || "Google Athlete");
 
       saveAthleteProfile({
         name: cleanName || "Google Athlete",
-        email: email,
+        email: cleanUserEmail,
         location: "New York, USA",
-        focus: "Hypertrophy & Strength Protocol",
+        focus: "Strength and Conditioning",
       });
 
       // Update remembered accounts
       try {
-        const updatedAccounts = Array.from(new Set([email, ...savedGoogleAccounts]));
+        const updatedAccounts = Array.from(new Set([cleanUserEmail, ...savedGoogleAccounts]));
         localStorage.setItem("fittrack_google_accounts", JSON.stringify(updatedAccounts));
         setSavedGoogleAccounts(updatedAccounts);
       } catch {}
@@ -304,7 +301,7 @@ export default function Landing() {
       setIsGoogleLoading(false);
       setGoogleModalOpen(false);
       localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
-      toast.success(`Google Account connected: ${email}`);
+      toast.success(`Google Account connected: ${cleanUserEmail}`);
       setLocation("/overview");
     }, 550);
   };
@@ -321,7 +318,7 @@ export default function Landing() {
     e.preventDefault();
     const cleanEmail = sanitizeEmail(email) || "athlete@fittrack.training";
     const cleanName = sanitizeText(name) || "Athlete";
-    const cleanFocus = sanitizeText(focus) || "Focused strength protocol";
+    const cleanFocus = sanitizeText(focus) || "Strength and fitness goals";
 
     localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_user_email", cleanEmail);
@@ -336,9 +333,9 @@ export default function Landing() {
         location: "New York, USA",
         focus: cleanFocus,
       });
-      toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}! Telemetry initialized.`);
+      toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}!`);
     } else {
-      toast.success("Athlete authenticated. Launching Command Deck.");
+      toast.success("Welcome back! Loading your fitness dashboard.");
     }
     setAuthModalOpen(false);
     setLocation("/overview");
@@ -348,7 +345,7 @@ export default function Landing() {
     localStorage.setItem("fittrack_user_email", "demo@fittrack.training");
     localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
-    toast.success("Welcome, Athlete! Launching overview workspace.");
+    toast.success("Welcome! Opening demo dashboard.");
     setLocation("/overview");
   };
 
@@ -373,7 +370,7 @@ export default function Landing() {
             <strong>FIT<span>TRACK</span></strong>
           </div>
 
-          {/* Top Left Sign In & Log In Action Buttons as requested */}
+          {/* Top Left Sign In and Sign Up Action Buttons */}
           <div className="landing-auth-buttons">
             <button
               className="landing-auth-btn login-btn"
@@ -405,10 +402,19 @@ export default function Landing() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.65, delay: 0.1 }}
         >
-          ENGINEER YOUR PHYSIQUE.
+          BUILD YOUR STRONGEST BODY
           <br />
-          <span className="hero-title-highlight">TRANSCEND YOUR LIMITS.</span>
+          <span className="hero-title-highlight">AND TRACK REAL PROGRESS</span>
         </motion.h1>
+
+        <motion.p
+          className="hero-description"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          A modern workout and nutrition tracking platform built with 3D anatomy visualization, daily calorie and macro targets, and outdoor GPS routing.
+        </motion.p>
 
         {/* Action Callouts */}
         <motion.div
@@ -419,7 +425,7 @@ export default function Landing() {
         >
           <button className="hero-primary-cta" onClick={() => openAuth("signin")}>
             <Fingerprint size={18} />
-            Enter Platform / Sign In
+            Start Tracking Free
             <ArrowRight size={16} />
           </button>
         </motion.div>
@@ -434,9 +440,9 @@ export default function Landing() {
           <div className="quote-header">
             <div className="quote-kicker">
               <Quote size={12} />
-              <span>ATHLETE SIGNAL // {motivatingQuotes[quoteIndex].tag}</span>
+              <span>Daily Motivation</span>
             </div>
-            <span className="quote-author">— {motivatingQuotes[quoteIndex].author}</span>
+            <span className="quote-author">{motivatingQuotes[quoteIndex].author}</span>
           </div>
           <AnimatePresence mode="wait">
             <motion.p
@@ -455,30 +461,30 @@ export default function Landing() {
         {/* 5. Core Platform Pillars */}
         <div className="landing-features-grid">
           <div className="feature-pillar-card">
-            <span className="feature-card-index">01 / ANATOMY LAB</span>
+            <span className="feature-card-index">3D Muscle Activation</span>
             <div className="feature-card-icon">
               <Dumbbell size={20} />
             </div>
-            <h3>3D Interactive Stage</h3>
-            <p>Select target muscle groups in full 3D and review real-time fiber activation pathways across 26 engineered movements.</p>
+            <h3>Interactive Anatomy</h3>
+            <p>Select target muscle groups in full 3D and understand muscle activation pathways across comprehensive training movements.</p>
           </div>
 
           <div className="feature-pillar-card">
-            <span className="feature-card-index">02 / METABOLICS</span>
+            <span className="feature-card-index">Precision Nutrition</span>
             <div className="feature-card-icon">
               <Flame size={20} />
             </div>
-            <h3>Dynamic Fuel Telemetry</h3>
-            <p>Automatic energy and protein recalibration based on your exact mass, height, age, and weekly workout load.</p>
+            <h3>Smart Macro Targets</h3>
+            <p>Automatic energy and protein calibrations calculated for your exact weight, height, age, and training frequency.</p>
           </div>
 
           <div className="feature-pillar-card">
-            <span className="feature-card-index">03 / CONTINUITY</span>
+            <span className="feature-card-index">Consistency and Streaks</span>
             <div className="feature-card-icon">
               <Award size={20} />
             </div>
-            <h3>Satellite Trace & Streak</h3>
-            <p>Live satellite GPS tracking, milestone pixel badges, and year-wide 52-week training consistency matrices.</p>
+            <h3>GPS Logging and Badges</h3>
+            <p>Track outdoor routes with live GPS maps, build unbroken workout streaks, and unlock earned milestone achievements.</p>
           </div>
         </div>
       </main>
@@ -486,10 +492,10 @@ export default function Landing() {
       {/* 6. Footer */}
       <footer className="landing-footer">
         <div>
-          <span>FITTRACK KINETIC ANATOMY LAB · <b>PRECISION TELEMETRY</b></span>
+          <span>FitTrack Personal Fitness Platform</span>
         </div>
         <div>
-          <span>BUILT FOR HIGH-OUTPUT ATHLETES · 2026</span>
+          <span>Designed for dedicated athletes and fitness enthusiasts</span>
         </div>
       </footer>
 
@@ -502,8 +508,8 @@ export default function Landing() {
             </DialogTitle>
             <DialogDescription className="text-xs text-[#8a9b89] font-['Space_Mono']">
               {authMode === "signin"
-                ? "Enter your email to sign in and open the Command Deck."
-                : "Initialize your profile and training targets."}
+                ? "Sign in to access your workout logs, nutrition targets, and 3D anatomy workspace."
+                : "Create your athlete profile and start tracking your fitness journey today."}
             </DialogDescription>
           </DialogHeader>
 
@@ -553,68 +559,68 @@ export default function Landing() {
             </button>
 
             <div className="auth-divider">
-              <span>OR SIGN IN WITH EMAIL</span>
+              <span>Or sign in with email</span>
             </div>
 
             <form onSubmit={handleAuthSubmit} className="auth-form-stack">
-            {authMode === "signup" && (
+              {authMode === "signup" && (
+                <div className="auth-input-group">
+                  <label>Full Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Alex Morgan"
+                    required
+                  />
+                </div>
+              )}
+
               <div className="auth-input-group">
-                <label>Full Name</label>
+                <label>Email Address</label>
                 <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Jordan Mercer"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="alex@example.com"
                   required
                 />
               </div>
-            )}
 
-            <div className="auth-input-group">
-              <label>Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@gmail.com"
-                required
-              />
-            </div>
-
-            <div className="auth-input-group">
-              <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                required
-              />
-            </div>
-
-            {authMode === "signup" && (
               <div className="auth-input-group">
-                <label>Primary Training Focus</label>
+                <label>Password</label>
                 <input
-                  type="text"
-                  value={focus}
-                  onChange={(e) => setFocus(e.target.value)}
-                  placeholder="e.g. Hypertrophy, Strength, Endurance"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  required
                 />
               </div>
-            )}
 
-            <button type="submit" className="auth-submit-btn">
-              {authMode === "signin" ? <LogIn size={16} /> : <UserCheck size={16} />}
-              {authMode === "signin" ? "Sign In & Enter Overview" : "Create Account"}
-            </button>
-          </form>
+              {authMode === "signup" && (
+                <div className="auth-input-group">
+                  <label>Primary Fitness Goal</label>
+                  <input
+                    type="text"
+                    value={focus}
+                    onChange={(e) => setFocus(e.target.value)}
+                    placeholder="Strength, Muscle Gain, or Endurance"
+                  />
+                </div>
+              )}
+
+              <button type="submit" className="auth-submit-btn">
+                {authMode === "signin" ? <LogIn size={16} /> : <UserCheck size={16} />}
+                {authMode === "signin" ? "Sign In to Dashboard" : "Create Your Account"}
+              </button>
+            </form>
           </div>
 
           <div className="auth-demo-shortcut">
             <button type="button" className="demo-entry-btn" onClick={handleQuickDemo}>
               <KeyRound size={13} />
-              Instant 1-Click Demo Login ↗
+              Instant Demo Access
             </button>
           </div>
         </DialogContent>
@@ -649,7 +655,7 @@ export default function Landing() {
               />
             </svg>
             <h2>Sign in with Google</h2>
-            <p>to continue to <strong className="text-zinc-900">FitTrack Performance Lab</strong></p>
+            <p>to continue to <strong className="text-zinc-900">FitTrack Fitness Platform</strong></p>
           </div>
 
           {googleStep === "email" ? (
@@ -660,7 +666,7 @@ export default function Landing() {
                   type="email"
                   value={googleEmail}
                   onChange={(e) => setGoogleEmail(e.target.value)}
-                  placeholder="Enter your Google Account email"
+                  placeholder="Enter your Google email"
                   autoFocus
                   required
                 />
@@ -682,7 +688,7 @@ export default function Landing() {
                       <strong>
                         {accEmail
                           .split("@")[0]
-                          .split(/[\._\-]/)
+                          .split(/[\._]/)
                           .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
                           .join(" ")}
                       </strong>
@@ -696,7 +702,7 @@ export default function Landing() {
                 <button
                   type="button"
                   className="google-text-link"
-                  onClick={() => toast.info("Enter your registered Google email address (e.g. caniket2007@gmail.com).")}
+                  onClick={() => toast.info("Enter your registered Google email address.")}
                 >
                   Use another account
                 </button>
