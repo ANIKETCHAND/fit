@@ -407,15 +407,6 @@ export default function Landing() {
           <span className="hero-title-highlight">TRACK PROGRESS</span>
         </motion.h1>
 
-        <motion.p
-          className="hero-description"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          A modern workout and nutrition tracking platform built with 3D anatomy visualization, daily calorie and macro targets, and outdoor GPS routing.
-        </motion.p>
-
         {/* Action Callouts */}
         <motion.div
           className="hero-cta-group"
