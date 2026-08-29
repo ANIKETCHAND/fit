@@ -607,13 +607,6 @@ export default function Landing() {
               </button>
             </form>
           </div>
-
-          <div className="auth-demo-shortcut">
-            <button type="button" className="demo-entry-btn" onClick={handleQuickDemo}>
-              <KeyRound size={13} />
-              Instant Demo Access
-            </button>
-          </div>
         </DialogContent>
       </Dialog>
 
