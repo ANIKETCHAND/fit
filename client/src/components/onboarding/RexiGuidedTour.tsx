@@ -1,8 +1,8 @@
-/* FitTrack: Rexi AI Interactive App Tour for Beginners */
+/* FitTrack: Rexi Interactive App Tour for Beginners (Clean, Professional Copy without AI jargon or special symbols) */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { RexiMascotIcon } from "@/components/ai/EchoAssistant";
 
@@ -11,6 +11,7 @@ export interface TourStep {
   title: string;
   path: string;
   pageName: string;
+  category: string;
   speechText: string;
   quickHighlight: string;
 }
@@ -18,48 +19,53 @@ export interface TourStep {
 export const tourSteps: TourStep[] = [
   {
     stepIndex: 0,
-    title: "Step 1: Calibration & Body Mass",
+    title: "Profile Settings",
     path: "/settings",
-    pageName: "Calibration Deck",
+    pageName: "Settings",
+    category: "Step 1 of 5",
     speechText:
-      "First, let's look at your Calibration Deck! Here you set your body mass (kg), height, and training frequency so I can auto-calculate your daily energy and protein targets.",
-    quickHighlight: "💡 Set your weight & height to personalize your metabolism.",
+      "Set your current body weight, height, and weekly workout schedule so the system can personalize your daily calorie and protein recommendations.",
+    quickHighlight: "Enter your profile metrics to customize your workout plan.",
   },
   {
     stepIndex: 1,
-    title: "Step 2: 3D Body Command Center",
+    title: "Interactive 3D Body",
     path: "/overview",
-    pageName: "Command Deck",
+    pageName: "Dashboard",
+    category: "Step 2 of 5",
     speechText:
-      "This is your 3D Command Center! Click on any muscle on the 3D human body to see which exercises target it and check your readiness.",
-    quickHighlight: "💡 Rotate & tap any muscle group to view targeting movements.",
+      "Rotate the 3D model and tap any muscle group to view targeted exercises and track your recovery readiness.",
+    quickHighlight: "Tap any muscle on the 3D model to see targeted exercises.",
   },
   {
     stepIndex: 2,
-    title: "Step 3: Movement Library",
+    title: "Exercise Directory",
     path: "/exercise-library",
     pageName: "Exercise Library",
+    category: "Step 3 of 5",
     speechText:
-      "Welcome to the Movement Library! Browse form guides with 3D animation videos, search exercises, or tap the heart icon to save your favorites.",
-    quickHighlight: "💡 Watch video form guides and filter by favorites.",
+      "Explore comprehensive exercise guides with animated video demonstrations, step by step instructions, and bookmark your favorites.",
+    quickHighlight: "Watch exercise demonstration videos and save favorites.",
   },
   {
     stepIndex: 3,
-    title: "Step 4: Smart Indian Nutrition Lab",
+    title: "Nutrition and Meal Log",
     path: "/log-food",
-    pageName: "Fuel & Nutrition Lab",
+    pageName: "Nutrition",
+    category: "Step 4 of 5",
     speechText:
-      "Here is your Fuel Lab! Search 50+ Indian staples (Paneer, Roti, Dal, Sattu, Chicken), select portions (0.5x, 1x, 2x), and track your daily macros.",
-    quickHighlight: "💡 Search Indian dishes and track daily calorie & protein rings.",
+      "Log your daily meals, search traditional Indian foods and global recipes, and monitor your calorie and protein goals.",
+    quickHighlight: "Log meals and track your daily nutrition progress.",
   },
   {
     stepIndex: 4,
-    title: "Step 5: Active Workout Session",
+    title: "Workout Logger",
     path: "/log-workout",
-    pageName: "Workout Logger",
+    pageName: "Workout Tracker",
+    category: "Step 5 of 5",
     speechText:
-      "Ready to train? Log your sets, reps, and weights here. In Beginner Mode, I'll provide form safety cues, warm-up checklists, and starter weight recommendations!",
-    quickHighlight: "💡 Log exercises with built-in beginner warm-up guidance.",
+      "Log your workout sets, repetitions, and weights with guided warm up routines and safety tips to build consistent strength.",
+    quickHighlight: "Record your sets, reps, and weights during workouts.",
   },
 ];
 
@@ -118,9 +124,7 @@ export function RexiGuidedTour() {
     setIsActive(false);
     sessionStorage.removeItem("fittrack_beginner_tour_active");
     sessionStorage.removeItem("fittrack_beginner_tour_step");
-    toast.success("Tour complete! You're ready to start your training protocol.", {
-      icon: "🎉",
-    });
+    toast.success("Tour complete! You are ready to start tracking your fitness.");
     setLocation("/overview");
   };
 
@@ -138,7 +142,7 @@ export function RexiGuidedTour() {
         {/* Top Tour Step Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
           <div className="flex items-center gap-2">
-            <span className="bg-[#c6ff3d] text-black text-[10px] font-mono font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="bg-[#c6ff3d] text-black text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
               Rexi Guided Tour
             </span>
             <span className="text-xs font-mono text-[#8b9c8a]">
@@ -156,7 +160,7 @@ export function RexiGuidedTour() {
           </button>
         </div>
 
-        {/* Rexi Character + Speech Area */}
+        {/* Rexi Character and Speech Area */}
         <div className="flex items-start gap-3.5 mb-4">
           <motion.div
             animate={{ y: [0, -4, 0] }}
@@ -167,10 +171,10 @@ export function RexiGuidedTour() {
           </motion.div>
 
           <div className="flex-1">
-            <div className="font-bold text-sm text-white flex items-center gap-1.5">
-              <span>{currentStep.pageName}</span>
-              <span className="text-[10px] font-normal font-mono text-[#c6ff3d] bg-[#c6ff3d]/10 px-1.5 py-0.5 rounded border border-[#c6ff3d]/30">
-                {currentStep.path}
+            <div className="font-bold text-sm text-white flex items-center gap-2">
+              <span>{currentStep.title}</span>
+              <span className="text-[10px] font-normal font-mono text-[#c6ff3d] bg-[#c6ff3d]/10 px-2 py-0.5 rounded-full border border-[#c6ff3d]/30">
+                {currentStep.pageName}
               </span>
             </div>
 
@@ -178,7 +182,7 @@ export function RexiGuidedTour() {
               {currentStep.speechText}
             </p>
 
-            <div className="mt-2 text-[11px] font-mono text-[#8b9c8a] bg-black/40 p-2 rounded-xl border border-white/5">
+            <div className="mt-2 text-[11px] text-[#a1b3a0] bg-black/40 p-2.5 rounded-xl border border-white/5">
               {currentStep.quickHighlight}
             </div>
           </div>
