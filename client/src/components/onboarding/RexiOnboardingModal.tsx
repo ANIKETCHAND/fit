@@ -1,4 +1,4 @@
-/* FitTrack: Rexi AI Onboarding Modal (Step 1: 3D Rexi Introduction -> Step 2: Experience Selection -> Step 3: Gym Rat Popup / Beginner Tour) */
+/* FitTrack: Rexi AI Onboarding Modal (Step 1: Jumping 3D Rexi Outside the Box + Cloud Speech Bubble) */
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -86,59 +86,95 @@ export function RexiOnboardingModal() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
         <motion.div
           key={stage}
-          initial={{ opacity: 0, scale: 0.9, y: 15 }}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
           className={`w-full ${
-            stage === "greeting" ? "max-w-md" : stage === "gym_rat_popup" ? "max-w-md" : "max-w-lg"
-          } bg-[#0c120e] border border-[#c6ff3d]/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_60px_rgba(198,255,61,0.22)] text-white relative overflow-hidden transition-all duration-300`}
+            stage === "greeting" ? "max-w-md mt-28 sm:mt-32" : stage === "gym_rat_popup" ? "max-w-md" : "max-w-lg"
+          } bg-[#0c120e] border border-[#c6ff3d]/30 rounded-3xl p-6 sm:p-8 shadow-[0_0_60px_rgba(198,255,61,0.22)] text-white relative overflow-visible transition-all duration-300`}
         >
           {/* Ambient Glows */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#c6ff3d]/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#38bdf8]/15 rounded-full blur-3xl pointer-events-none" />
 
           {stage === "greeting" ? (
-            /* STAGE 1: FIRST ONLY 3D REXI COMES JUMPING & GREETING */
-            <div className="flex flex-col items-center text-center">
-              <div className="w-full relative flex items-center justify-center -mt-2">
-                <Rexi3DCanvas step="greeting" />
-                <span className="absolute top-2 right-4 bg-[#c6ff3d] text-black text-[9px] font-bold font-mono px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md pointer-events-none">
-                  3D AI Guide
-                </span>
-              </div>
-
+            /* STAGE 1: REXI JUMPING OUTSIDE THE BOX + CLOUD SPEECH BUBBLE WELCOME */
+            <div className="flex flex-col items-center text-center relative pt-4">
+              {/* 3D Rexi jumping completely outside the top border of the box */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mt-2 space-y-2"
+                initial={{ y: -60, opacity: 0, scale: 0.7 }}
+                animate={{
+                  y: [-60, -10, -25, -15],
+                  opacity: 1,
+                  scale: 1,
+                }}
+                transition={{
+                  duration: 0.8,
+                  times: [0, 0.5, 0.8, 1],
+                  ease: "easeOut",
+                }}
+                className="absolute -top-36 sm:-top-40 left-1/2 -translate-x-1/2 flex flex-col items-center z-30 pointer-events-none"
               >
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  Hello, <span className="text-[#c6ff3d]">{firstName}</span>! 👋
-                </h2>
+                {/* Floating Bobbing Rexi */}
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
+                  className="relative flex items-center justify-center"
+                >
+                  <div className="w-[240px] h-[200px] sm:w-[280px] sm:h-[220px] relative flex items-center justify-center">
+                    <Rexi3DCanvas step="greeting" />
+                  </div>
+                  <span className="absolute top-4 right-2 bg-[#c6ff3d] text-black text-[9px] font-bold font-mono px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-[0_0_15px_rgba(198,255,61,0.6)]">
+                    3D AI Guide
+                  </span>
+                </motion.div>
 
-                <p className="text-sm text-[#b8cbb5] max-w-xs mx-auto leading-relaxed">
-                  I'm <strong className="text-white">Rexi</strong>, your personal 3D AI fitness companion.
-                </p>
+                {/* Ground Pulse Halo directly above the box */}
+                <div className="w-28 h-3 rounded-[100%] bg-[#c6ff3d]/25 blur-[5px] -mt-5" />
+              </motion.div>
 
-                <p className="text-xs text-[#718270] font-mono">
-                  Let's calibrate your training protocol in 2 quick steps.
-                </p>
+              {/* Cloud-Like Speech Bubble Structure for the Welcome Message */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.45, ease: "easeOut" }}
+                className="w-full relative bg-gradient-to-b from-[#142017] to-[#0e1610] border-2 border-[#c6ff3d]/40 rounded-[2.5rem] p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.6),0_0_30px_rgba(198,255,61,0.12)] text-center mt-2 mb-2"
+              >
+                {/* Speech Bubble Tail pointing up to Rexi */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#142017] border-t-2 border-l-2 border-[#c6ff3d]/40 rotate-45" />
+
+                {/* Cloud Highlight Accents */}
+                <div className="absolute top-2 left-6 w-14 h-3.5 rounded-full bg-white/[0.04] blur-sm pointer-events-none" />
+                <div className="absolute top-2 right-6 w-10 h-3 rounded-full bg-white/[0.04] blur-sm pointer-events-none" />
+
+                <div className="space-y-2.5 relative z-10">
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    Hello, <span className="text-[#c6ff3d]">{firstName}</span>! 👋
+                  </h2>
+
+                  <p className="text-sm text-[#b8cbb5] max-w-xs mx-auto leading-relaxed">
+                    I'm <strong className="text-white">Rexi</strong>, your personal 3D AI fitness companion.
+                  </p>
+
+                  <p className="text-xs text-[#718270] font-mono bg-black/40 py-1.5 px-3.5 rounded-full inline-block border border-white/5">
+                    Let's calibrate your training protocol in 2 quick steps.
+                  </p>
+                </div>
               </motion.div>
 
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
+                transition={{ delay: 0.38 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => setStage("ask_level")}
-                className="w-full mt-6 py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(198,255,61,0.35)] transition-all flex items-center justify-center gap-2"
+                className="w-full mt-4 py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(198,255,61,0.35)] transition-all flex items-center justify-center gap-2"
               >
                 <span>Let's Get Started</span>
                 <ArrowRight size={15} />
