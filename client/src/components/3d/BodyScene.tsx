@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Sparkles } from "@react-three/drei";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useReducedMotion } from "framer-motion";
 import { BodyControls, type BodyView } from "./BodyControls";
@@ -20,25 +20,44 @@ type SceneInnerProps = {
 function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMobile }: SceneInnerProps) {
   const controls = useRef<any>(null);
   const [hovered, setHovered] = useState<MuscleId | null>(null);
-  const targetPosition = useMemo(() => {
-    const distance = isMobile ? 12.5 : 8.8;
-    if (view === "back") return new THREE.Vector3(0, 0.35, -distance);
-    if (view === "side") return new THREE.Vector3(distance - 0.2, 0.35, 0.15);
+  const isTransitioning = useRef<boolean>(false);
+  const prevView = useRef<BodyView>(view);
+
+  const getTargetPosition = (v: BodyView) => {
+    const distance = isMobile ? 12.0 : 8.5;
+    if (v === "back") return new THREE.Vector3(0, 0.35, -distance);
+    if (v === "side") return new THREE.Vector3(distance - 0.2, 0.35, 0.15);
     return new THREE.Vector3(0, 0.35, distance);
-  }, [isMobile, view]);
+  };
+
   const targetLookAt = useMemo(() => new THREE.Vector3(0, 0.15, 0), []);
 
+  useEffect(() => {
+    if (prevView.current !== view) {
+      prevView.current = view;
+      isTransitioning.current = true;
+    }
+  }, [view]);
+
   useFrame(({ camera }, delta) => {
-    const lerp = 1 - Math.exp(-delta * 5.6);
-    camera.position.lerp(targetPosition, lerp);
-    controls.current?.target.lerp(targetLookAt, lerp);
-    controls.current?.update();
+    if (isTransitioning.current) {
+      const targetPos = getTargetPosition(view);
+      const lerp = 1 - Math.exp(-delta * 6.5);
+      camera.position.lerp(targetPos, lerp);
+      controls.current?.target.lerp(targetLookAt, lerp);
+      controls.current?.update();
+
+      if (camera.position.distanceTo(targetPos) < 0.05) {
+        camera.position.copy(targetPos);
+        isTransitioning.current = false;
+      }
+    }
   });
 
   return (
     <>
       <color attach="background" args={["#070908"]} />
-      <fog attach="fog" args={["#070908", 5.8, isMobile ? 17.5 : 10.5]} />
+      <fog attach="fog" args={["#070908", 6.0, isMobile ? 18.0 : 12.0]} />
       <ambientLight intensity={1.8} color="#d5e8d8" />
       <directionalLight
         position={[3.8, 5.2, 4]}
@@ -54,7 +73,7 @@ function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMo
         <HumanBody selected={selected} hovered={hovered} onHover={setHovered} onSelect={onSelected} />
       </group>
       {!reduceMotion && (
-        <Sparkles count={32} scale={[5.7, 8.7, 4.2]} size={1.25} speed={0.22} color="#c6ff3d" opacity={0.24} />
+        <Sparkles count={28} scale={[5.7, 8.7, 4.2]} size={1.2} speed={0.22} color="#c6ff3d" opacity={0.22} />
       )}
       <mesh position={[0, -3.5, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[2.38, 48]} />
@@ -64,14 +83,18 @@ function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMo
         ref={controls}
         enablePan={false}
         enableZoom
-        minDistance={5.8}
-        maxDistance={12.5}
+        minDistance={4.5}
+        maxDistance={14.0}
         autoRotate={!reduceMotion && autoRotate}
-        autoRotateSpeed={0.8}
+        autoRotateSpeed={1.0}
         enableDamping
-        dampingFactor={0.08}
-        maxPolarAngle={Math.PI / 1.7}
-        minPolarAngle={Math.PI / 3.4}
+        dampingFactor={0.06}
+        rotateSpeed={1.1}
+        minPolarAngle={0.08}
+        maxPolarAngle={Math.PI - 0.08}
+        onStart={() => {
+          isTransitioning.current = false;
+        }}
       />
     </>
   );
