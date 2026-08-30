@@ -138,13 +138,12 @@ export function WhatShouldIDoTodayCard() {
             </span>
           </div>
 
-          {/* 4-Tier Mode Selector Pills */}
+          {/* 3-Tier Mode Selector Pills */}
           <div className="flex items-center gap-1 bg-black/40 p-1 rounded-2xl border border-white/5 overflow-x-auto scrollbar-none">
             {[
-              { id: "complete_beginner" as const, label: "🌱 Beginner" },
-              { id: "beginner" as const, label: "🚀 Standard" },
-              { id: "intermediate" as const, label: "⚡ Intermed" },
-              { id: "advanced" as const, label: "🔥 Gym Rat" },
+              { id: "beginner" as const, label: "Beginner" },
+              { id: "intermediate" as const, label: "Intermediate" },
+              { id: "advanced" as const, label: "Advanced Gym Rat" },
             ].map((tier) => (
               <button
                 key={tier.id}

@@ -23,10 +23,9 @@ const activityOptions = [
 ];
 
 const experienceTierOptions = [
-  { id: "complete_beginner" as const, label: "Complete Beginner", desc: "0–6 Months • Guided form & simple mode", icon: ShieldCheck, color: "text-emerald-400" },
-  { id: "beginner" as const, label: "Beginner", desc: "6–12 Months • Basic compound lifts", icon: Dumbbell, color: "text-teal-400" },
-  { id: "intermediate" as const, label: "Intermediate", desc: "1–3 Years • Progressive overload & volume", icon: Zap, color: "text-[#c6ff3d]" },
-  { id: "advanced" as const, label: "Advanced / Gym Rat", desc: "3+ Years • Periodization & deep telemetry", icon: Flame, color: "text-amber-400" },
+  { id: "beginner" as const, label: "Beginner", desc: "Learning proper exercise form, guided cues and basic lifts", icon: Dumbbell, color: "text-emerald-400" },
+  { id: "intermediate" as const, label: "Intermediate", desc: "Consistent training, progressive overload and volume", icon: Zap, color: "text-[#c6ff3d]" },
+  { id: "advanced" as const, label: "Advanced Gym Rat", desc: "Biomechanics mastery, periodization and deep telemetry", icon: Flame, color: "text-amber-400" },
 ];
 
 function calcBmr(settings: CalibrationSettings) {
@@ -143,7 +142,7 @@ export default function Settings() {
           {/* 02 / Experience Tier */}
           <section className="settings-section">
             <div className="section-marker"><Sparkles size={16} /><div><span>02 / experience</span><b>Training Experience Level</b></div></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {experienceTierOptions.map((opt) => {
                 const isSelected = experienceTier === opt.id;
                 const Icon = opt.icon;
