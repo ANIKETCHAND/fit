@@ -14,26 +14,26 @@ type BodySceneProps = {
 // Sketchfab Male Anatomy Study Model ID: 8b6b4d5daad74da8bd821eef5a0a8511
 const MODEL_UID = "8b6b4d5daad74da8bd821eef5a0a8511";
 
-// Centered Full-Body Framing: Z=1.65, Distance=3.85
-const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.65];
+// Centered Full-Body Framing: Z=1.05, Distance=4.95
+const FIXED_CENTER_TARGET: [number, number, number] = [0, 0, 1.05];
 
 const viewPositions: Record<BodyView, { eye: [number, number, number]; target: [number, number, number] }> = {
-  front: { eye: [0, -3.85, 1.65], target: FIXED_CENTER_TARGET },
-  back: { eye: [0, 3.85, 1.65], target: FIXED_CENTER_TARGET },
-  side: { eye: [3.85, 0, 1.65], target: FIXED_CENTER_TARGET },
+  front: { eye: [0, -4.95, 1.05], target: FIXED_CENTER_TARGET },
+  back: { eye: [0, 4.95, 1.05], target: FIXED_CENTER_TARGET },
+  side: { eye: [4.95, 0, 1.05], target: FIXED_CENTER_TARGET },
 };
 
 const musclePositions: Record<string, { eye: [number, number, number]; target: [number, number, number] }> = {
-  chest: { eye: [0, -2.8, 1.75], target: [0, 0, 1.75] },
-  back: { eye: [0, 2.8, 1.75], target: [0, 0, 1.75] },
-  shoulders: { eye: [1.7, -2.2, 1.85], target: [0, 0, 1.85] },
-  biceps: { eye: [2.1, -1.6, 1.65], target: [0.3, 0, 1.65] },
-  triceps: { eye: [2.1, 1.6, 1.65], target: [0.3, 0, 1.65] },
-  core: { eye: [0, -2.7, 1.45], target: [0, 0, 1.45] },
-  glutes: { eye: [0, 2.9, 1.25], target: [0, 0, 1.25] },
-  quads: { eye: [0, -3.1, 0.95], target: [0, 0, 0.95] },
-  hamstrings: { eye: [0, 3.1, 0.95], target: [0, 0, 0.95] },
-  calves: { eye: [0, -3.1, 0.55], target: [0, 0, 0.55] },
+  chest: { eye: [0, -4.75, 1.15], target: [0, 0, 1.15] },
+  back: { eye: [0, 4.75, 1.15], target: [0, 0, 1.15] },
+  shoulders: { eye: [1.8, -4.2, 1.2], target: [0, 0, 1.2] },
+  biceps: { eye: [2.2, -3.8, 1.1], target: [0.15, 0, 1.1] },
+  triceps: { eye: [2.2, 3.8, 1.1], target: [0.15, 0, 1.1] },
+  core: { eye: [0, -4.75, 1.05], target: [0, 0, 1.05] },
+  glutes: { eye: [0, 4.75, 0.95], target: [0, 0, 0.95] },
+  quads: { eye: [0, -4.75, 0.85], target: [0, 0, 0.85] },
+  hamstrings: { eye: [0, 4.75, 0.85], target: [0, 0, 0.85] },
+  calves: { eye: [0, -4.75, 0.65], target: [0, 0, 0.65] },
 };
 
 export function BodyScene({ selected }: BodySceneProps) {
