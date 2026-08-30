@@ -522,7 +522,6 @@ export default function GpsTracker() {
       <section className="gps-history-section">
         <div className="gps-history-title">
           <div>
-            <span className="panel-label">History / saved traces</span>
             <h2>Recent movement routes</h2>
           </div>
           <span>{savedSessions.length} secured</span>
