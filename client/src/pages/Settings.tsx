@@ -92,7 +92,7 @@ export default function Settings() {
   };
 
   return (
-    <WorkflowLayout title="Settings" detail="Manage your personal profile, activity schedule, daily nutrition targets, and data backups.">
+    <WorkflowLayout title="Settings">
       <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
         <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
           <div className="command-deck-head">
