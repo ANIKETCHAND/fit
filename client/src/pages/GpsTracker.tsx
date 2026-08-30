@@ -393,7 +393,7 @@ export default function GpsTracker() {
   const canSave = isTracking || livePoints.length > 0 || userLocationInfo !== null;
 
   return (
-    <WorkflowLayout kicker="GPS" title="Route your training signal" detail="Capture an outdoor movement route.">
+    <WorkflowLayout title="GPS Run Tracker">
       <motion.section className="gps-command-deck" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
         <div className="gps-route-stage">
           <div className="gps-map-head">
