@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Activity, Calculator, Check, Database, Download, FileSpreadsheet, Gauge, HardDrive, Save, Scale, Sparkles, Target, UserRound, Zap, Flame, Dumbbell } from "lucide-react";
+import { useState } from "react";
+import { Activity, Calculator, Check, Dumbbell, Flame, Gauge, Save, Scale, Sparkles, Target, UserRound, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
@@ -11,7 +11,6 @@ import {
   saveExperienceTier, 
   type ExperienceTier 
 } from "@/lib/user-store";
-import { getDatabaseTelemetry, exportDatabaseJson, exportWorkoutHistoryCsv } from "@/lib/database-sync";
 import "./CommandDeck.css";
 
 const activityOptions = [
@@ -54,21 +53,6 @@ export default function Settings() {
   const [form, setForm] = useState<CalibrationSettings>(() => getCalibrationSettings());
   const [saved, setSaved] = useState(true);
   const [experienceTier, setExperienceTierState] = useState<ExperienceTier>(() => getExperienceTier());
-  const [dbStats, setDbStats] = useState(() => getDatabaseTelemetry());
-
-  useEffect(() => {
-    setDbStats(getDatabaseTelemetry());
-  }, []);
-
-  const exportAthleteDatabase = () => {
-    exportDatabaseJson();
-    toast.success("Downloaded FitTrack offline database backup in JSON format.");
-  };
-
-  const exportWorkoutCsv = () => {
-    exportWorkoutHistoryCsv();
-    toast.success("Downloaded workout history spreadsheet in CSV format.");
-  };
 
   const updateBiometric = <Key extends keyof CalibrationSettings>(key: Key, value: CalibrationSettings[Key]) => {
     setSaved(false);
@@ -196,54 +180,6 @@ export default function Settings() {
               <label className="deck-field"><span>Protein <em>g</em></span><input type="number" min="40" max="450" value={form.goalProtein} onChange={(event) => update("goalProtein", Number(event.target.value))} /></label>
               <label className="deck-field"><span>Carbohydrates <em>g</em></span><input type="number" min="0" max="800" value={form.goalCarbs} onChange={(event) => update("goalCarbs", Number(event.target.value))} /></label>
               <label className="deck-field"><span>Fat <em>g</em></span><input type="number" min="20" max="300" value={form.goalFat} onChange={(event) => update("goalFat", Number(event.target.value))} /></label>
-            </div>
-          </section>
-          
-          {/* 05: Data Export and Backup */}
-          <section className="settings-section">
-            <div className="section-marker">
-              <Database size={16} />
-              <div>
-                <span>05</span>
-                <b>Data Export and Backup</b>
-              </div>
-            </div>
-            <div className="bg-[#0e1610] border border-white/10 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-[#8b9c8a] flex items-center gap-2">
-                  <HardDrive size={14} className="text-[#c6ff3d]" />
-                  <span>Storage Usage: {dbStats.storageUsageKb} KB</span>
-                </span>
-                <span className="text-[#c6ff3d] bg-[#c6ff3d]/10 px-2 py-0.5 rounded border border-[#c6ff3d]/30 uppercase text-[10px] font-bold">
-                  ● Ready
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center bg-black/40 p-2.5 rounded-xl border border-white/5 text-[11px] font-mono">
-                <div><span className="text-[#8b9c8a] block text-[9px]">MEALS</span><b className="text-white">{dbStats.totalLoggedMeals}</b></div>
-                <div><span className="text-[#8b9c8a] block text-[9px]">WORKOUTS</span><b className="text-white">{dbStats.totalWorkouts}</b></div>
-                <div><span className="text-[#8b9c8a] block text-[9px]">FAVORITES</span><b className="text-white">{dbStats.totalFavorites}</b></div>
-                <div><span className="text-[#8b9c8a] block text-[9px]">CUSTOM FOODS</span><b className="text-white">{dbStats.totalCustomFoods}</b></div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={exportAthleteDatabase}
-                  className="flex-1 py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono font-medium text-white transition-all flex items-center justify-center gap-2"
-                >
-                  <Download size={14} className="text-[#c6ff3d]" />
-                  <span>Export Backup (JSON)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={exportWorkoutCsv}
-                  className="flex-1 py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono font-medium text-white transition-all flex items-center justify-center gap-2"
-                >
-                  <FileSpreadsheet size={14} className="text-sky-400" />
-                  <span>Export Workouts (CSV)</span>
-                </button>
-              </div>
             </div>
           </section>
 
