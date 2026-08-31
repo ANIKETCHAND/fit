@@ -22,6 +22,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Support from "./pages/Support";
 import GpsTracker from "./pages/GpsTracker";
+import BodyMap from "./pages/BodyMap";
 
 function Router() {
   return (
@@ -30,6 +31,8 @@ function Router() {
       <Route path={"/landing"} component={Landing} />
       <Route path={"/overview"} component={Home} />
       <Route path={"/home"} component={Home} />
+      <Route path={"/body-map"} component={BodyMap} />
+      <Route path={"/anatomy"} component={BodyMap} />
       <Route path={"/log-food"} component={LogFood} />
       <Route path={"/log-workout"} component={LogWorkout} />
       <Route path={"/log-weight"} component={LogWeight} />

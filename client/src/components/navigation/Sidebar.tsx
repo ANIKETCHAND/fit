@@ -21,6 +21,7 @@ import { useSidebar } from "@/lib/sidebar-store";
 
 const nav = [
   { label: "Overview", icon: Gauge, path: "/overview" },
+  { label: "3D Body Map", icon: Activity, path: "/body-map" },
   { label: "Workouts", icon: Dumbbell, path: "/exercise-library" },
   { label: "Nutrition", icon: Utensils, path: "/log-food" },
   { label: "Progress", icon: ChartNoAxesCombined, path: "/log-weight" },
