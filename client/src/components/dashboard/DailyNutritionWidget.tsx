@@ -118,9 +118,6 @@ export function DailyNutritionWidget() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-            <span className="text-[9px] font-mono text-[#8b9c8a] block mt-1">
-              {Math.max(0, goalKcal - currentKcal)} kcal remaining
-            </span>
           </div>
         </div>
 
@@ -145,9 +142,6 @@ export function DailyNutritionWidget() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-            <span className="text-[9px] font-mono text-[#8b9c8a] block mt-1">
-              {Math.max(0, goalProtein - currentProtein)}g to target
-            </span>
           </div>
         </div>
 
@@ -172,9 +166,6 @@ export function DailyNutritionWidget() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-            <span className="text-[9px] font-mono text-[#8b9c8a] block mt-1">
-              {Math.max(0, goalCarbs - currentCarbs)}g to target
-            </span>
           </div>
         </div>
 
@@ -199,9 +190,6 @@ export function DailyNutritionWidget() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
               />
             </div>
-            <span className="text-[9px] font-mono text-[#8b9c8a] block mt-1">
-              {Math.max(0, goalFat - currentFat)}g to target
-            </span>
           </div>
         </div>
       </div>
