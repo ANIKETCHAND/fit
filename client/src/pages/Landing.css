@@ -967,3 +967,51 @@
     text-align: center;
   }
 }
+
+/* Light Mode Landing Page Adaptations */
+html.light .landing-container {
+  background: #f4f8f4;
+  color: #101812;
+}
+html.light .landing-vignette {
+  background: radial-gradient(circle at 50% 50%, rgba(244, 248, 244, 0.2) 0%, rgba(244, 248, 244, 0.65) 65%, #f4f8f4 100%),
+              linear-gradient(180deg, rgba(244, 248, 244, 0.3) 0%, transparent 25%, rgba(244, 248, 244, 0.5) 80%, #f4f8f4 100%);
+}
+html.light .landing-brand strong {
+  color: #101912;
+}
+html.light .landing-theme-toggle-group {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(20, 38, 24, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+html.light .hero-main-title {
+  color: #111a13;
+  text-shadow: none;
+}
+html.light .landing-feature-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(20, 38, 24, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+html.light .feature-card-content h3 {
+  color: #111a13;
+}
+html.light .feature-card-content p {
+  color: #556758;
+}
+html.light .landing-telemetry-badge {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(20, 38, 24, 0.15);
+  color: #111a13;
+}
+html.light .hero-secondary-cta {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(20, 38, 24, 0.15);
+  color: #111a13;
+}
+html.light .hero-secondary-cta:hover {
+  background: #edf6eb;
+  border-color: #4f8e06;
+}
+

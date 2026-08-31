@@ -1,11 +1,10 @@
 /* Kinetic Anatomy Lab workflow shell: a linear instrument surface that carries a task-specific athlete scan through every routed flow. */
 /* Carbon Command Deck: shared workflow chrome pairs a task-specific diagnostic strip with a quieter operational topbar. */
 import type { ReactNode } from "react";
-import { Activity, ArrowLeft, Bell, ChevronDown, Moon, Sun } from "lucide-react";
+import { Activity, ArrowLeft, Bell, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/navigation/Sidebar";
-import { useTheme } from "@/contexts/ThemeContext";
 
 import { getAthleteProfile } from "@/lib/user-store";
 
@@ -13,7 +12,6 @@ type WorkflowLayoutProps = { kicker?: string; title: string; detail?: string; ch
 
 export function WorkflowLayout({ kicker, title, detail, children }: WorkflowLayoutProps) {
   const [, setLocation] = useLocation();
-  const { isDark, toggleTheme } = useTheme();
   const profile = getAthleteProfile();
   const initials = profile.name ? profile.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "AT";
 
@@ -35,14 +33,6 @@ export function WorkflowLayout({ kicker, title, detail, children }: WorkflowLayo
           </div>
           <div className="workflow-status">
             <span><i />Active protocol</span>
-            <button 
-              className="icon-button" 
-              aria-label="Toggle theme" 
-              title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
-              onClick={toggleTheme}
-            >
-              {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-sky-500" />}
-            </button>
             <button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}>
               <Bell size={18} />
             </button>
