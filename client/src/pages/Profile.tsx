@@ -150,25 +150,25 @@ export default function Profile() {
     <main className="profile-main">
       <header className="profile-topbar">
         <div className="profile-heading"><div className="header-wordmark"><div className="brand-logo-icon" style={{ width: 26, height: 26, marginRight: 6, display: "flex", alignItems: "center", justifyContent: "center" }}><Activity size={15} /></div><strong>FIT<span>TRACK</span></strong></div><div><span className="eyebrow">Activity & Contributions</span><h1>{athlete.name.split(" ")[0]}'s <em>contribution ledger.</em></h1></div></div>
-        <div className="profile-top-actions"><button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}><Bell size={19} /><b /></button><button className="avatar-button profile-avatar" aria-label="Edit athlete profile" onClick={openProfileEditor}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt="" /> : initials(athlete.name)}<ChevronDown size={14} /></button></div>
+        <div className="profile-top-actions"><button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}><Bell size={19} /><b /></button><button className="avatar-button profile-avatar" aria-label="Open athlete profile" onClick={() => setLocation("/settings")}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt="" /> : initials(athlete.name)}<ChevronDown size={14} /></button></div>
       </header>
 
       <motion.section className="profile-identity-bar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .32 }}>
-        <div className="identity-athlete">
-          <div className={`profile-orb ${athlete.photoDataUrl ? "has-photo" : ""}`}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt={`${athlete.name} profile`} /> : initials(athlete.name)}</div>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#c6ff3d]/10 border border-[#c6ff3d]/30 flex items-center justify-center text-[#c6ff3d]">
+            <CalendarDays size={18} />
+          </div>
           <div>
-            <span className="panel-label">Athlete record</span>
+            <span className="panel-label">Activity Ledger</span>
             <div className="flex items-center gap-2">
-              <strong>{athlete.name}</strong>
+              <strong className="text-sm text-white font-mono">{rangeOptions[range].period}</strong>
               <span className="px-2 py-0.5 rounded-full bg-[#c6ff3d]/15 border border-[#c6ff3d]/30 text-[#c6ff3d] text-[10px] font-mono font-bold uppercase">
-                {getExperienceTier().replace("_", " ")}
+                {rangeOptions[range].label}
               </span>
             </div>
-            <p>{athlete.location || "Local profile"} · <b>{athlete.focus}</b></p>
           </div>
-          <button className="profile-edit-action" onClick={openProfileEditor}><Pencil size={13} /> Edit profile</button>
         </div>
-        <div className="profile-mark-stamp" aria-hidden="true"><Activity size={16} /><span>Signal / identity</span></div>
+        <div className="profile-mark-stamp" aria-hidden="true"><Activity size={16} /><span>Activity / History</span></div>
         <label className="profile-range profile-range-control"><CalendarDays size={14} /><span className="sr-only">Contribution ledger period</span><select aria-label="Contribution ledger period" value={range} onChange={(event) => setRange(event.target.value as RangeKey)}>{Object.entries(rangeOptions).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
       </motion.section>
 

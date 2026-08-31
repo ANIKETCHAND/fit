@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, Save, Scale, Sparkles, Target, UserRound, Zap } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
+import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, Pencil, Save, Scale, Sparkles, Target, Upload, UserRound, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   getCalibrationSettings, 
   saveCalibrationSettings, 
@@ -11,9 +12,13 @@ import {
   getExperienceTier, 
   saveExperienceTier, 
   type ExperienceTier,
-  markProfileConfigured
+  markProfileConfigured,
+  getAthleteProfile,
+  saveAthleteProfile,
+  type AthleteProfile
 } from "@/lib/user-store";
 import "./CommandDeck.css";
+import "./ProfileInteractions.css";
 
 const activityOptions = [
   { value: "light" as const, label: "Light", detail: "1 to 2 sessions each week" },
@@ -51,12 +56,60 @@ function computeTargets(settings: CalibrationSettings) {
   return { goalKcal: tdee, goalProtein, goalCarbs: Math.max(0, goalCarbs), goalFat: Math.max(0, goalFat) };
 }
 
+const initials = (name: string) => name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "FT";
+
 export default function Settings() {
   const [, setLocation] = useLocation();
   const isOnboarding = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("onboarding") === "true";
   const [form, setForm] = useState<CalibrationSettings>(() => getCalibrationSettings());
   const [saved, setSaved] = useState(true);
   const [experienceTier, setExperienceTierState] = useState<ExperienceTier>(() => getExperienceTier());
+
+  // Athlete Identity state
+  const [athlete, setAthlete] = useState<AthleteProfile>(() => getAthleteProfile());
+  const [draft, setDraft] = useState<AthleteProfile>(() => getAthleteProfile());
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const openProfileEditor = () => {
+    setDraft(athlete);
+    setProfileOpen(true);
+  };
+
+  const saveProfile = () => {
+    const trimmedName = draft.name.trim();
+    if (!trimmedName) {
+      toast.error("Add an athlete name before saving the record.");
+      return;
+    }
+    const next = { 
+      ...draft, 
+      name: trimmedName, 
+      email: draft.email.trim(), 
+      location: draft.location.trim(), 
+      focus: draft.focus.trim() || "Hypertrophy & Strength" 
+    };
+    saveAthleteProfile(next);
+    setAthlete(next);
+    setForm((current) => ({ ...current, name: trimmedName }));
+    setProfileOpen(false);
+    toast.success("Athlete profile updated.");
+  };
+
+  const updatePhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose an image file for the profile photo.");
+      return;
+    }
+    if (file.size > 1_500_000) {
+      toast.error("Choose an image below 1.5 MB for local device storage.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setDraft((current) => ({ ...current, photoDataUrl: String(reader.result) }));
+    reader.readAsDataURL(file);
+  };
 
   const updateBiometric = <Key extends keyof CalibrationSettings>(key: Key, value: CalibrationSettings[Key]) => {
     setSaved(false);
@@ -127,6 +180,40 @@ export default function Settings() {
           </span>
         </div>
       )}
+      {/* 🌟 Athlete Record Identity Card */}
+      <motion.section 
+        className="profile-identity-bar mb-4" 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.32 }}
+      >
+        <div className="identity-athlete">
+          <div className={`profile-orb ${athlete.photoDataUrl ? "has-photo" : ""}`}>
+            {athlete.photoDataUrl ? (
+              <img src={athlete.photoDataUrl} alt={`${athlete.name} profile`} />
+            ) : (
+              initials(athlete.name || form.name)
+            )}
+          </div>
+          <div>
+            <span className="panel-label">Athlete Record</span>
+            <div className="flex items-center gap-2">
+              <strong>{athlete.name || form.name}</strong>
+              <span className="px-2 py-0.5 rounded-full bg-[#c6ff3d]/15 border border-[#c6ff3d]/30 text-[#c6ff3d] text-[10px] font-mono font-bold uppercase">
+                {experienceTier.replace("_", " ")}
+              </span>
+            </div>
+            <p>{athlete.location || "Local profile"} · <b>{athlete.focus || "Hypertrophy & Strength"}</b></p>
+          </div>
+          <button type="button" className="profile-edit-action" onClick={openProfileEditor}>
+            <Pencil size={13} /> Edit Bio / Photo
+          </button>
+        </div>
+        <div className="profile-mark-stamp" aria-hidden="true">
+          <Activity size={16} />
+          <span>Profile / Biometrics</span>
+        </div>
+      </motion.section>
 
       <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
         <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
@@ -252,6 +339,52 @@ export default function Settings() {
           </div>
         </aside>
       </motion.section>
+
+      {/* Edit Bio / Photo Dialog */}
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="profile-dialog">
+          <DialogHeader>
+            <DialogTitle>Edit Athlete Profile</DialogTitle>
+            <DialogDescription>Update your display name, profile picture, location, and training focus.</DialogDescription>
+          </DialogHeader>
+          <form className="profile-form" onSubmit={(event) => { event.preventDefault(); saveProfile(); }}>
+            <label className="profile-photo-upload">
+              <div className={`profile-photo-preview ${draft.photoDataUrl ? "has-photo" : ""}`}>
+                {draft.photoDataUrl ? <img src={draft.photoDataUrl} alt="Preview" /> : initials(draft.name)}
+              </div>
+              <span>
+                <b><Upload size={14} /> Upload profile photo</b>
+                <small>PNG, JPG up to 1.5MB</small>
+              </span>
+              <input type="file" accept="image/*" onChange={updatePhoto} />
+            </label>
+
+            <div className="profile-form-grid">
+              <label>
+                <span>Full Name</span>
+                <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} placeholder="Athlete Name" />
+              </label>
+              <label>
+                <span>Email Address</span>
+                <input value={draft.email} onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))} placeholder="athlete@example.com" />
+              </label>
+              <label>
+                <span>Location</span>
+                <input value={draft.location} onChange={(event) => setDraft((current) => ({ ...current, location: event.target.value }))} placeholder="e.g. New York, USA" />
+              </label>
+              <label>
+                <span>Training Focus</span>
+                <input value={draft.focus} onChange={(event) => setDraft((current) => ({ ...current, focus: event.target.value }))} placeholder="e.g. Hypertrophy & Strength" />
+              </label>
+            </div>
+
+            <div className="profile-dialog-actions">
+              <button type="button" onClick={() => setProfileOpen(false)}>Cancel</button>
+              <button type="submit">Save Athlete Profile</button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </WorkflowLayout>
   );
 }
