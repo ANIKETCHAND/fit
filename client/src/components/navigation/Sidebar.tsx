@@ -21,13 +21,14 @@ import { useLocation } from "wouter";
 import { useSidebar } from "@/lib/sidebar-store";
 
 const nav = [
-  { label: "Overview", icon: Gauge, path: "/overview" },
+  { label: "Profile", icon: UserRound, path: "/settings" },
   { label: "3D Body Map", icon: Activity, path: "/body-map" },
   { label: "Workouts", icon: Dumbbell, path: "/exercise-library" },
   { label: "Nutrition", icon: Utensils, path: "/log-food" },
-  { label: "Progress", icon: ChartNoAxesCombined, path: "/log-weight" },
   { label: "GPS trace", icon: MapPinned, path: "/gps" },
+  { label: "Progress", icon: ChartNoAxesCombined, path: "/log-weight" },
   { label: "Achievements", icon: Award, path: "/achievements" },
+  { label: "Contributions", icon: CalendarDays, path: "/profile" },
   { label: "Notifications", icon: Bell, path: "/notifications" },
 ];
 
@@ -76,7 +77,12 @@ export function Sidebar() {
         className={`sidebar ${open ? "open" : ""}`}
         aria-hidden={!open}
       >
-        <div className="brand-row">
+        <div
+          className="brand-row"
+          onClick={() => { route("/overview"); }}
+          style={{ cursor: "pointer" }}
+          title="Command Center Overview"
+        >
           <div className="brand-logo-icon" style={{ width: 34, height: 34, borderRadius: 8, background: "radial-gradient(circle, rgba(186,255,87,0.2) 0%, rgba(13,24,16,0.95) 100%)", border: "1px solid rgba(186,255,87,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#baff57", boxShadow: "0 0 14px rgba(186,255,87,0.25)", flexShrink: 0, marginRight: 10 }}>
             <Activity size={20} />
           </div>
@@ -102,23 +108,7 @@ export function Sidebar() {
 
         <div className="sidebar-bottom">
           <button
-            className={location === "/profile" ? "nav-item active" : "nav-item"}
-            onClick={() => route("/profile")}
-          >
-            <CalendarDays size={18} />
-            <span>Contributions</span>
-            {location === "/profile" && <i />}
-          </button>
-          <button
-            className={location === "/settings" ? "nav-item active" : "nav-item"}
-            onClick={() => route("/settings")}
-          >
-            <UserRound size={18} />
-            <span>Profile</span>
-            {location === "/settings" && <i />}
-          </button>
-          <button
-            className="nav-item"
+            className={location === "/support" ? "nav-item active" : "nav-item"}
             onClick={() => route("/support")}
           >
             <CircleHelp size={18} />
