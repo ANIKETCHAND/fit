@@ -375,9 +375,9 @@ export default function Settings() {
                   setTheme("dark");
                   toast.success("Dark Mode (Performance OS) activated");
                 }}
-                className={`theme-choice-card p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
                   isDark
-                    ? "active bg-[#c6ff3d]/15 border-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
+                    ? "bg-[#c6ff3d]/15 border-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
                     : "bg-[#0e1610] border-white/10 hover:border-white/20"
                 }`}
               >
@@ -386,14 +386,14 @@ export default function Settings() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <b className="text-sm font-sans uppercase tracking-wide block">Dark Mode</b>
+                    <b className="text-sm font-sans uppercase tracking-wide text-white block">Dark Mode</b>
                     {isDark && (
                       <span className="text-[9px] font-mono uppercase bg-[#c6ff3d]/20 text-[#c6ff3d] px-2 py-0.5 rounded font-bold border border-[#c6ff3d]/40">
                         Active
                       </span>
                     )}
                   </div>
-                  <span className="text-xs block mt-1 opacity-80">
+                  <span className="text-xs text-[#8b9c8a] block mt-1">
                     Cybernetic high-contrast UI engineered for physical focus and low glare.
                   </span>
                 </div>
@@ -405,9 +405,9 @@ export default function Settings() {
                   setTheme("light");
                   toast.success("Light Mode (Daylight Clarity) activated");
                 }}
-                className={`theme-choice-card p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
                   !isDark
-                    ? "active bg-[#4f8e06]/15 border-[#4f8e06] shadow-[0_0_20px_rgba(79,142,6,0.15)]"
+                    ? "bg-[#4f8e06]/15 border-[#4f8e06] shadow-[0_0_20px_rgba(79,142,6,0.15)]"
                     : "bg-[#0e1610] border-white/10 hover:border-white/20"
                 }`}
               >
@@ -416,14 +416,14 @@ export default function Settings() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <b className="text-sm font-sans uppercase tracking-wide block">Light Mode</b>
+                    <b className="text-sm font-sans uppercase tracking-wide text-white block">Light Mode</b>
                     {!isDark && (
                       <span className="text-[9px] font-mono uppercase bg-[#4f8e06]/20 text-[#4f8e06] px-2 py-0.5 rounded font-bold border border-[#4f8e06]/40">
                         Active
                       </span>
                     )}
                   </div>
-                  <span className="text-xs block mt-1 opacity-80">
+                  <span className="text-xs text-[#8b9c8a] block mt-1">
                     Clean, high-legibility daytime palette with bright crisp surfaces.
                   </span>
                 </div>

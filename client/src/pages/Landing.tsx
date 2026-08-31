@@ -13,14 +13,11 @@ import {
   LogIn,
   Quote,
   Sparkles,
-  Sun,
-  Moon,
   UserCheck,
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Landing3DScene } from "@/components/3d/Landing3DScene";
-import { useTheme } from "@/contexts/ThemeContext";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { saveAthleteProfile } from "@/lib/user-store";
 import { sanitizeText, sanitizeEmail } from "@/lib/sanitize";
@@ -54,7 +51,6 @@ const GOOGLE_CLIENT_ID = "583335952268-9ibrvhstkajdn9ik9did17ml3pldijuk.apps.goo
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const { theme, setTheme, isDark } = useTheme();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -387,43 +383,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="landing-topbar-right flex items-center gap-3">
-          {/* Dark / Light Mode Choosing Option */}
-          <div className="landing-theme-toggle-group flex items-center p-1 rounded-full border border-white/15 bg-black/40 backdrop-blur-md">
-            <button
-              type="button"
-              onClick={() => {
-                setTheme("dark");
-                toast.success("Dark Mode activated");
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold uppercase transition-all ${
-                isDark
-                  ? "bg-[#c6ff3d] text-black shadow-[0_0_12px_rgba(198,255,61,0.4)]"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-              aria-label="Select Dark Mode"
-            >
-              <Moon size={12} />
-              <span>Dark</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTheme("light");
-                toast.success("Light Mode activated");
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold uppercase transition-all ${
-                !isDark
-                  ? "bg-amber-400 text-black shadow-[0_0_12px_rgba(251,191,36,0.4)]"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-              aria-label="Select Light Mode"
-            >
-              <Sun size={12} />
-              <span>Light</span>
-            </button>
-          </div>
-        </div>
+        <div className="landing-topbar-right"></div>
       </header>
 
       {/* 3. Hero Section */}
