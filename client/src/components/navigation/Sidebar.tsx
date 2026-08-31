@@ -29,7 +29,6 @@ const nav = [
   { label: "Progress", icon: ChartNoAxesCombined, path: "/log-weight" },
   { label: "Achievements", icon: Award, path: "/achievements" },
   { label: "Contributions", icon: CalendarDays, path: "/profile" },
-  { label: "Notifications", icon: Bell, path: "/notifications" },
 ];
 
 export function Sidebar() {
@@ -107,6 +106,14 @@ export function Sidebar() {
         </nav>
 
         <div className="sidebar-bottom">
+          <button
+            className={location === "/notifications" ? "nav-item active" : "nav-item"}
+            onClick={() => route("/notifications")}
+          >
+            <Bell size={18} />
+            <span>Notifications</span>
+            {location === "/notifications" && <i />}
+          </button>
           <button
             className={location === "/support" ? "nav-item active" : "nav-item"}
             onClick={() => route("/support")}
