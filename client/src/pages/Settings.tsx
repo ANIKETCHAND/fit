@@ -259,10 +259,6 @@ export default function Settings() {
           </div>
         </div>
         <div className="flex items-center gap-4 ml-auto">
-          <div className="profile-mark-stamp hidden md:flex" aria-hidden="true">
-            <Activity size={16} />
-            <span>Profile / Biometrics</span>
-          </div>
           <button 
             type="button" 
             className="profile-edit-box-btn" 

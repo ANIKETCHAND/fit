@@ -168,7 +168,6 @@ export default function Profile() {
             </div>
           </div>
         </div>
-        <div className="profile-mark-stamp" aria-hidden="true"><Activity size={16} /><span>Activity / History</span></div>
         <label className="profile-range profile-range-control"><CalendarDays size={14} /><span className="sr-only">Contribution ledger period</span><select aria-label="Contribution ledger period" value={range} onChange={(event) => setRange(event.target.value as RangeKey)}>{Object.entries(rangeOptions).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
       </motion.section>
 
