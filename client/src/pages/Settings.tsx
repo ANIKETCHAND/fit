@@ -1,5 +1,5 @@
-import { useState, type ChangeEvent } from "react";
-import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, Pencil, Save, Scale, Sparkles, Target, Upload, UserRound, Zap } from "lucide-react";
+import { useState, useEffect, type ChangeEvent } from "react";
+import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, LoaderCircle, MapPin, Pencil, Save, Scale, Sparkles, Target, Upload, UserRound, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -17,6 +17,7 @@ import {
   saveAthleteProfile,
   type AthleteProfile
 } from "@/lib/user-store";
+import { autoSyncAthleteLocation, requestDeviceLocation } from "@/lib/location-resolver";
 import "./CommandDeck.css";
 import "./ProfileInteractions.css";
 
@@ -69,6 +70,45 @@ export default function Settings() {
   const [athlete, setAthlete] = useState<AthleteProfile>(() => getAthleteProfile());
   const [draft, setDraft] = useState<AthleteProfile>(() => getAthleteProfile());
   const [profileOpen, setProfileOpen] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  useEffect(() => {
+    // Auto-detect and sync real device location on mount
+    autoSyncAthleteLocation().then((detected) => {
+      if (detected) {
+        setAthlete((prev) => ({ ...prev, location: detected }));
+        setDraft((prev) => ({ ...prev, location: detected }));
+      }
+    });
+
+    const handleLocUpdate = (e: CustomEvent<string>) => {
+      if (e.detail) {
+        setAthlete((prev) => ({ ...prev, location: e.detail }));
+        setDraft((prev) => ({ ...prev, location: e.detail }));
+      }
+    };
+
+    window.addEventListener("fittrack_location_updated" as any, handleLocUpdate);
+    return () => window.removeEventListener("fittrack_location_updated" as any, handleLocUpdate);
+  }, []);
+
+  const handleAutoDetectLocation = async () => {
+    setIsLocating(true);
+    try {
+      const loc = await requestDeviceLocation();
+      if (loc) {
+        setDraft((prev) => ({ ...prev, location: loc }));
+        const updated = { ...athlete, location: loc };
+        saveAthleteProfile(updated);
+        setAthlete(updated);
+        toast.success(`Current location detected: ${loc}`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Could not detect location. Please check browser location permissions.");
+    } finally {
+      setIsLocating(false);
+    }
+  };
 
   const openProfileEditor = () => {
     setDraft(athlete);
@@ -203,7 +243,19 @@ export default function Settings() {
                 {experienceTier.replace("_", " ")}
               </span>
             </div>
-            <p>{athlete.location || "Local profile"} · <b>{athlete.focus || "Hypertrophy & Strength"}</b></p>
+            <p className="flex items-center gap-1.5">
+              <span className="text-[#a6d9ff] font-medium">{athlete.location || "Detecting location..."}</span>
+              <button
+                type="button"
+                onClick={handleAutoDetectLocation}
+                disabled={isLocating}
+                title="Detect GPS Location"
+                className="p-1 rounded text-[#c6ff3d] hover:bg-[#c6ff3d]/10 transition-colors inline-flex items-center"
+              >
+                <MapPin size={11} className={isLocating ? "animate-pulse" : ""} />
+              </button>
+              · <b>{athlete.focus || "Hypertrophy & Strength"}</b>
+            </p>
           </div>
           <button type="button" className="profile-edit-action" onClick={openProfileEditor}>
             <Pencil size={13} /> Edit Bio / Photo
@@ -369,8 +421,19 @@ export default function Settings() {
                 <input value={draft.email} onChange={(event) => setDraft((current) => ({ ...current, email: event.target.value }))} placeholder="athlete@example.com" />
               </label>
               <label>
-                <span>Location</span>
-                <input value={draft.location} onChange={(event) => setDraft((current) => ({ ...current, location: event.target.value }))} placeholder="e.g. New York, USA" />
+                <div className="flex items-center justify-between mb-1">
+                  <span>Location</span>
+                  <button
+                    type="button"
+                    onClick={handleAutoDetectLocation}
+                    disabled={isLocating}
+                    className="text-[#c6ff3d] hover:text-[#d4ff66] text-[10px] font-mono uppercase flex items-center gap-1 bg-[#c6ff3d]/10 px-2 py-0.5 rounded border border-[#c6ff3d]/30"
+                  >
+                    <MapPin size={11} className={isLocating ? "animate-spin" : ""} />
+                    {isLocating ? "Detecting..." : "Auto-Detect GPS"}
+                  </button>
+                </div>
+                <input value={draft.location} onChange={(event) => setDraft((current) => ({ ...current, location: event.target.value }))} placeholder="e.g. City, State, Country" />
               </label>
               <label>
                 <span>Training Focus</span>

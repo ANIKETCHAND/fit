@@ -1,4 +1,5 @@
 /* Carbon Command Deck: Settings and Support are full command-center routes with the shared FitTrack shell. */
+import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import NotFound from "@/pages/NotFound";
@@ -9,6 +10,7 @@ import { AnimatedBackground } from "./components/AnimatedBackground";
 import { EchoAssistant } from "./components/ai/EchoAssistant";
 import { RexiOnboardingModal } from "./components/onboarding/RexiOnboardingModal";
 import { RexiGuidedTour } from "./components/onboarding/RexiGuidedTour";
+import { autoSyncAthleteLocation } from "./lib/location-resolver";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import LogFood from "./pages/LogFood";
@@ -52,6 +54,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Proactively request and auto-sync athlete location on app initialization
+    autoSyncAthleteLocation().catch(() => {});
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
