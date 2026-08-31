@@ -171,7 +171,7 @@ export default function Profile() {
         <label className="profile-range profile-range-control"><CalendarDays size={14} /><span className="sr-only">Contribution ledger period</span><select aria-label="Contribution ledger period" value={range} onChange={(event) => setRange(event.target.value as RangeKey)}>{Object.entries(rangeOptions).map(([key, option]) => <option key={key} value={key}>{option.label}</option>)}</select><ChevronDown size={13} /></label>
       </motion.section>
 
-      <motion.section className="profile-metric-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: .035 } } }}>{summaryMetrics.map(({ label, value, unit, detail, icon: Icon, tone, size }) => <motion.article key={label} className={`profile-metric metric-${tone} metric-${size}`} variants={{ hidden: { opacity: 0, y: 9 }, visible: { opacity: 1, y: 0 } }}><Icon size={16} /><span>{label}</span><strong>{value}{unit && <small>{unit}</small>}</strong><p>{detail}</p></motion.article>)}</motion.section>
+      <motion.section className="profile-metric-grid" initial="hidden" animate="visible" variants={{ hidden: {}, visible: { transition: { staggerChildren: .035 } } }}>{summaryMetrics.map(({ label, value, unit, icon: Icon, tone, size }) => <motion.article key={label} className={`profile-metric metric-${tone} metric-${size}`} variants={{ hidden: { opacity: 0, y: 9 }, visible: { opacity: 1, y: 0 } }}><Icon size={16} /><span>{label}</span><strong>{value}{unit && <small>{unit}</small>}</strong></motion.article>)}</motion.section>
 
       <motion.section className="profile-contribution-wrapper" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .12 }}>
         <GithubContributionGraph />
