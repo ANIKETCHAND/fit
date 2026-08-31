@@ -203,7 +203,7 @@ export default function Settings() {
   };
 
   return (
-    <WorkflowLayout title="Profile" kicker="Athlete Profile & Calibration">
+    <WorkflowLayout title="Profile">
       {isOnboarding && (
         <div className="bg-gradient-to-r from-[#c6ff3d]/20 via-[#c6ff3d]/10 to-transparent border border-[#c6ff3d]/40 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-[0_0_30px_rgba(198,255,61,0.12)]">
           <div className="flex items-center gap-3">
