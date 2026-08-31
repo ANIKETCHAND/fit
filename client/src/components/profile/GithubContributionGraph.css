@@ -289,34 +289,3 @@
     flex: 1;
   }
 }
-
-/* Light Mode Contribution Graph */
-html.light .gh-contribution-box {
-  background: #ffffff;
-  border-color: rgba(20, 38, 24, 0.12);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-}
-html.light .gh-contribution-title {
-  color: #101912;
-}
-html.light .gh-year-btn {
-  color: #55685a;
-  background: transparent;
-}
-html.light .gh-year-btn:hover {
-  color: #101912;
-  background: #edf5eb;
-}
-html.light .gh-year-btn.active {
-  color: #ffffff;
-  background: #4f8e06;
-}
-html.light .gh-month-label,
-html.light .gh-day-label,
-html.light .gh-footer-label {
-  color: #637667;
-}
-html.light .gh-cell-empty {
-  background-color: #ebf1eb;
-}
-

@@ -11,17 +11,14 @@ import {
   Gauge,
   LogOut,
   MapPinned,
-  Moon,
   MoreVertical,
   Settings,
-  Sun,
   UserRound,
   Utensils,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useSidebar } from "@/lib/sidebar-store";
-import { useTheme } from "@/contexts/ThemeContext";
 
 const nav = [
   { label: "Overview", icon: Gauge, path: "/overview" },
@@ -37,7 +34,6 @@ const nav = [
 export function Sidebar() {
   const { open, toggleSidebar, setSidebarOpen } = useSidebar();
   const [location, setLocation] = useLocation();
-  const { isDark, toggleTheme } = useTheme();
   const sidebarRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -128,15 +124,6 @@ export function Sidebar() {
             <CircleHelp size={18} />
             <span>Support</span>
             {location === "/support" && <i />}
-          </button>
-          <button
-            type="button"
-            className="nav-item"
-            onClick={toggleTheme}
-            title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
-          >
-            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-sky-500" />}
-            <span>{isDark ? "Light mode" : "Dark mode"}</span>
           </button>
           <button
             className="nav-item"

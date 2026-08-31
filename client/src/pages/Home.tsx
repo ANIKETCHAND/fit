@@ -1,8 +1,7 @@
-import { Activity, Bell, ChevronDown, Moon, Sun } from "lucide-react";
+import { Activity, Bell, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/navigation/Sidebar";
-import { useTheme } from "@/contexts/ThemeContext";
 import { DailyNutritionWidget } from "@/components/dashboard/DailyNutritionWidget";
 import { WhatShouldIDoTodayCard } from "@/components/dashboard/WhatShouldIDoTodayCard";
 import { MuscleRecoveryOverviewCard } from "@/components/dashboard/MuscleRecoveryOverviewCard";
@@ -12,7 +11,6 @@ import { getAthleteProfile } from "@/lib/user-store";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { isDark, toggleTheme } = useTheme();
   const profile = getAthleteProfile();
   const firstName = profile.name.split(" ")[0].toUpperCase();
 
@@ -36,14 +34,6 @@ export default function Home() {
             </div>
           </div>
           <div className="topbar-actions flex items-center gap-2">
-            <button 
-              className="icon-button" 
-              aria-label="Toggle theme" 
-              title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
-              onClick={toggleTheme}
-            >
-              {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-sky-500" />}
-            </button>
             <button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}>
               <Bell size={19} />
               <b />

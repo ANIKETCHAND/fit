@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
 
 export function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { isDark } = useTheme();
-  const isDarkRef = useRef(isDark);
-  isDarkRef.current = isDark;
   const [motionIntensity, setMotionIntensity] = useState<"subtle" | "active">("subtle");
 
   useEffect(() => {
@@ -72,8 +68,7 @@ export function AnimatedBackground() {
     const render = () => {
       time += 0.006;
 
-      // 1. Base gradient background
-      const dark = isDarkRef.current;
+      // 1. Base gradient background (Deep obsidian cybernetic space)
       const bgGrad = ctx.createRadialGradient(
         width * 0.5,
         height * 0.4,
@@ -82,15 +77,9 @@ export function AnimatedBackground() {
         height * 0.5,
         width * 0.85
       );
-      if (dark) {
-        bgGrad.addColorStop(0, "#0e1611");
-        bgGrad.addColorStop(0.5, "#080c0a");
-        bgGrad.addColorStop(1, "#040605");
-      } else {
-        bgGrad.addColorStop(0, "#f8faf7");
-        bgGrad.addColorStop(0.5, "#f1f6f0");
-        bgGrad.addColorStop(1, "#e8f1e7");
-      }
+      bgGrad.addColorStop(0, "#0e1611");
+      bgGrad.addColorStop(0.5, "#080c0a");
+      bgGrad.addColorStop(1, "#040605");
 
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, width, height);

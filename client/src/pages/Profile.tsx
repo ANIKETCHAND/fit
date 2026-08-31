@@ -1,11 +1,10 @@
 /* Kinetic Anatomy Lab: athlete identity remains personal and editable while analytics read as calibrated training instruments. */
-import { Activity, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, CircleCheck, Clock3, Dumbbell, Footprints, Layers3, LoaderCircle, MapPin, Moon, Pencil, Smartphone, Sparkles, Sun, Timer, Upload, Watch } from "lucide-react";
+import { Activity, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, CircleCheck, Clock3, Dumbbell, Footprints, Layers3, LoaderCircle, MapPin, Pencil, Smartphone, Sparkles, Timer, Upload, Watch } from "lucide-react";
 import { motion } from "framer-motion";
 import { type ChangeEvent, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { Sidebar } from "@/components/navigation/Sidebar";
-import { useTheme } from "@/contexts/ThemeContext";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices, getScopedKey, getExperienceTier, saveExperienceTier } from "@/lib/user-store";
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
@@ -40,7 +39,6 @@ const deviceIcon = (kind: ConnectedDevice["kind"]) => kind === "watch" ? Watch :
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const { isDark, toggleTheme } = useTheme();
   const [range, setRange] = useState<RangeKey>("12m");
   const [athlete, setAthlete] = useState<AthleteProfile>(() => getAthleteProfile());
   const [draft, setDraft] = useState<AthleteProfile>(() => getAthleteProfile());
@@ -152,18 +150,7 @@ export default function Profile() {
     <main className="profile-main">
       <header className="profile-topbar">
         <div className="profile-heading"><div className="header-wordmark"><div className="brand-logo-icon" style={{ width: 26, height: 26, marginRight: 6, display: "flex", alignItems: "center", justifyContent: "center" }}><Activity size={15} /></div><strong>FIT<span>TRACK</span></strong></div><div><span className="eyebrow">Activity & Contributions</span><h1>{athlete.name.split(" ")[0]}'s <em>contribution ledger.</em></h1></div></div>
-        <div className="profile-top-actions">
-          <button 
-            className="icon-button" 
-            aria-label="Toggle theme" 
-            title={`Switch to ${isDark ? "Light" : "Dark"} mode`}
-            onClick={toggleTheme}
-          >
-            {isDark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-sky-500" />}
-          </button>
-          <button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}><Bell size={19} /><b /></button>
-          <button className="avatar-button profile-avatar" aria-label="Open athlete profile" onClick={() => setLocation("/settings")}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt="" /> : initials(athlete.name)}<ChevronDown size={14} /></button>
-        </div>
+        <div className="profile-top-actions"><button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}><Bell size={19} /><b /></button><button className="avatar-button profile-avatar" aria-label="Open athlete profile" onClick={() => setLocation("/settings")}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt="" /> : initials(athlete.name)}<ChevronDown size={14} /></button></div>
       </header>
 
       <motion.section className="profile-identity-bar" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .32 }}>
