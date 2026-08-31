@@ -111,24 +111,24 @@ export default function Settings() {
 
   return (
     <WorkflowLayout title="Settings">
-      <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
-        {isOnboarding && (
-          <div className="bg-gradient-to-r from-[#c6ff3d]/20 via-[#c6ff3d]/10 to-transparent border border-[#c6ff3d]/40 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-[0_0_30px_rgba(198,255,61,0.12)]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#c6ff3d] text-black flex items-center justify-center font-bold">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <b className="text-sm text-white block font-sans uppercase tracking-wide">Welcome to FitTrack Calibration</b>
-                <p className="text-xs text-[#8b9c8a] mt-0.5">Let's calibrate your daily biometrics and nutrition targets to personalize your command center.</p>
-              </div>
+      {isOnboarding && (
+        <div className="bg-gradient-to-r from-[#c6ff3d]/20 via-[#c6ff3d]/10 to-transparent border border-[#c6ff3d]/40 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-[0_0_30px_rgba(198,255,61,0.12)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#c6ff3d] text-black flex items-center justify-center font-bold">
+              <Sparkles size={20} />
             </div>
-            <span className="text-[10px] font-mono uppercase bg-[#c6ff3d]/20 text-[#c6ff3d] px-3 py-1 rounded-full border border-[#c6ff3d]/40 font-bold">
-              Step 2 of 2
-            </span>
+            <div>
+              <b className="text-sm text-white block font-sans uppercase tracking-wide">Welcome to FitTrack Calibration</b>
+              <p className="text-xs text-[#8b9c8a] mt-0.5">Let's calibrate your daily biometrics and nutrition targets to personalize your command center.</p>
+            </div>
           </div>
-        )}
+          <span className="text-[10px] font-mono uppercase bg-[#c6ff3d]/20 text-[#c6ff3d] px-3 py-1 rounded-full border border-[#c6ff3d]/40 font-bold">
+            Step 2 of 2
+          </span>
+        </div>
+      )}
 
+      <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
         <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
           <div className="command-deck-head">
             <div>
