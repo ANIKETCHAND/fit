@@ -370,23 +370,15 @@ export default function Landing() {
             <strong>FIT<span>TRACK</span></strong>
           </div>
 
-          {/* Top Left Sign In and Sign Up Action Buttons */}
+          {/* Top Sign Up Action Button */}
           <div className="landing-auth-buttons">
             <button
-              className="landing-auth-btn login-btn"
+              className="landing-auth-btn signup-btn"
               onClick={() => openAuth("signin")}
               aria-label="Sign In to FitTrack"
             >
               <LogIn size={13} />
               Sign In
-            </button>
-            <button
-              className="landing-auth-btn signup-btn"
-              onClick={() => openAuth("signup")}
-              aria-label="Create Athlete Account"
-            >
-              <UserPlus size={13} />
-              Sign Up
             </button>
           </div>
         </div>
