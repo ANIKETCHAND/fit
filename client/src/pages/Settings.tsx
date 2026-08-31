@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Activity, Calculator, Check, Dumbbell, Flame, Gauge, Save, Scale, Sparkles, Target, UserRound, Zap } from "lucide-react";
+import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, Save, Scale, Sparkles, Target, UserRound, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
 import { 
   getCalibrationSettings, 
@@ -9,7 +10,8 @@ import {
   type CalibrationSettings, 
   getExperienceTier, 
   saveExperienceTier, 
-  type ExperienceTier 
+  type ExperienceTier,
+  markProfileConfigured
 } from "@/lib/user-store";
 import "./CommandDeck.css";
 
@@ -50,6 +52,8 @@ function computeTargets(settings: CalibrationSettings) {
 }
 
 export default function Settings() {
+  const [, setLocation] = useLocation();
+  const isOnboarding = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("onboarding") === "true";
   const [form, setForm] = useState<CalibrationSettings>(() => getCalibrationSettings());
   const [saved, setSaved] = useState(true);
   const [experienceTier, setExperienceTierState] = useState<ExperienceTier>(() => getExperienceTier());
@@ -87,13 +91,44 @@ export default function Settings() {
   const save = () => { 
     saveCalibrationSettings(form); 
     saveExperienceTier(experienceTier);
+    markProfileConfigured();
     setSaved(true); 
-    toast.success("Settings saved successfully."); 
+    
+    if (isOnboarding) {
+      toast.success("Profile calibrated successfully! Launching your Overview Dashboard...");
+      setTimeout(() => {
+        setLocation("/overview");
+        if (experienceTier === "beginner") {
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
+          }, 400);
+        }
+      }, 500);
+    } else {
+      toast.success("Settings saved successfully."); 
+    }
   };
 
   return (
     <WorkflowLayout title="Settings">
       <motion.section className="settings-deck" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}>
+        {isOnboarding && (
+          <div className="bg-gradient-to-r from-[#c6ff3d]/20 via-[#c6ff3d]/10 to-transparent border border-[#c6ff3d]/40 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-[0_0_30px_rgba(198,255,61,0.12)]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#c6ff3d] text-black flex items-center justify-center font-bold">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <b className="text-sm text-white block font-sans uppercase tracking-wide">Welcome to FitTrack Calibration</b>
+                <p className="text-xs text-[#8b9c8a] mt-0.5">Let's calibrate your daily biometrics and nutrition targets to personalize your command center.</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono uppercase bg-[#c6ff3d]/20 text-[#c6ff3d] px-3 py-1 rounded-full border border-[#c6ff3d]/40 font-bold">
+              Step 2 of 2
+            </span>
+          </div>
+        )}
+
         <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
           <div className="command-deck-head">
             <div>
@@ -184,9 +219,9 @@ export default function Settings() {
           </section>
 
           <div className="settings-actions">
-            <button type="submit" className="save-calibration">
+            <button type="submit" className="save-calibration flex items-center gap-2">
               <Save size={16} />
-              Save Changes
+              <span>{isOnboarding ? "Complete Calibration & Launch Dashboard →" : "Save Changes"}</span>
             </button>
           </div>
         </form>

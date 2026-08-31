@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, Dumbbell, Flame, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Rexi3DCanvas } from "./Rexi3DCanvas";
-import { getAthleteProfile, saveExperienceMode, getScopedKey } from "@/lib/user-store";
+import { getAthleteProfile, saveExperienceMode, getScopedKey, isProfileConfigured } from "@/lib/user-store";
 
 export function RexiOnboardingModal() {
   const [location, setLocation] = useLocation();
@@ -23,6 +23,13 @@ export function RexiOnboardingModal() {
       try {
         const trigger = localStorage.getItem("fittrack_trigger_rexi_welcome");
         const welcomed = sessionStorage.getItem("fittrack_rexi_welcomed");
+        const configured = isProfileConfigured();
+
+        // If returning user already configured profile and no explicit trigger, bypass
+        if (configured && trigger !== "true") {
+          return;
+        }
+
         if (trigger === "true" || !welcomed) {
           localStorage.removeItem("fittrack_trigger_rexi_welcome");
           setStage("greeting");
@@ -31,11 +38,11 @@ export function RexiOnboardingModal() {
           setIsOpen(true);
         }
       } catch {
-        setIsOpen(true);
+        // Safe fallback
       }
     };
 
-    const timer = setTimeout(checkAndOpen, 200);
+    const timer = setTimeout(checkAndOpen, 250);
 
     const handleOpen = () => {
       setStage("greeting");
@@ -63,11 +70,11 @@ export function RexiOnboardingModal() {
 
     if (level === "beginner") {
       setIsTransitioning(true);
-      toast.success("Beginner Mode activated! Launching Rexi Guided Tour...");
+      toast.success("Beginner Mode activated! Let's calibrate your daily targets.");
       setTimeout(() => {
         setIsOpen(false);
-        window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
-      }, 1200);
+        setLocation("/settings?onboarding=true");
+      }, 800);
     } else {
       // Open dedicated "Welcome Gym rat" popup box!
       setStage("gym_rat_popup");
@@ -78,7 +85,7 @@ export function RexiOnboardingModal() {
     setIsTransitioning(true);
     setTimeout(() => {
       setIsOpen(false);
-      setLocation("/settings");
+      setLocation("/settings?onboarding=true");
     }, 400);
   };
 

@@ -257,4 +257,29 @@ export function playHydrationChime(soundType: "water_droplet" | "gentle_bell" | 
   }
 }
 
+export const isProfileConfigured = (): boolean => {
+  try {
+    const configured = localStorage.getItem(getScopedKey("fittrack_profile_configured"));
+    return configured === "true";
+  } catch {
+    return false;
+  }
+};
+
+export const markProfileConfigured = (): void => {
+  try {
+    localStorage.setItem(getScopedKey("fittrack_profile_configured"), "true");
+    localStorage.setItem(getScopedKey("fittrack_onboarding_completed"), "true");
+    sessionStorage.setItem("fittrack_rexi_welcomed", "true");
+  } catch {}
+};
+
+export const resetProfileConfigured = (): void => {
+  try {
+    localStorage.removeItem(getScopedKey("fittrack_profile_configured"));
+    localStorage.removeItem(getScopedKey("fittrack_onboarding_completed"));
+    sessionStorage.removeItem("fittrack_rexi_welcomed");
+  } catch {}
+};
+
 
