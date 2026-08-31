@@ -110,7 +110,7 @@ export default function Settings() {
   };
 
   return (
-    <WorkflowLayout title="Settings">
+    <WorkflowLayout title="Profile" kicker="Athlete Profile & Calibration">
       {isOnboarding && (
         <div className="bg-gradient-to-r from-[#c6ff3d]/20 via-[#c6ff3d]/10 to-transparent border border-[#c6ff3d]/40 rounded-2xl p-4 mb-6 flex items-center justify-between shadow-[0_0_30px_rgba(198,255,61,0.12)]">
           <div className="flex items-center gap-3">
@@ -132,7 +132,7 @@ export default function Settings() {
         <form className="settings-command" onSubmit={(event) => { event.preventDefault(); save(); }}>
           <div className="command-deck-head">
             <div>
-              <span className="deck-kicker"><i /> Profile Settings</span>
+              <span className="deck-kicker"><i /> Athlete Profile</span>
               <h2>Personal Profile and Goals</h2>
               <p>Enter your measurements to automatically calculate daily calorie and macronutrient targets.</p>
             </div>

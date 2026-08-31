@@ -3,6 +3,7 @@ import {
   Activity,
   Award,
   Bell,
+  CalendarDays,
   ChartNoAxesCombined,
   ChevronRight,
   CircleHelp,
@@ -104,16 +105,16 @@ export function Sidebar() {
             className={location === "/profile" ? "nav-item active" : "nav-item"}
             onClick={() => route("/profile")}
           >
-            <UserRound size={18} />
-            <span>Profile analytics</span>
+            <CalendarDays size={18} />
+            <span>Contributions</span>
             {location === "/profile" && <i />}
           </button>
           <button
             className={location === "/settings" ? "nav-item active" : "nav-item"}
             onClick={() => route("/settings")}
           >
-            <Settings size={18} />
-            <span>Settings</span>
+            <UserRound size={18} />
+            <span>Profile</span>
             {location === "/settings" && <i />}
           </button>
           <button

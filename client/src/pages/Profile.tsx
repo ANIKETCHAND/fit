@@ -149,7 +149,7 @@ export default function Profile() {
     <Sidebar />
     <main className="profile-main">
       <header className="profile-topbar">
-        <div className="profile-heading"><div className="header-wordmark"><div className="brand-logo-icon" style={{ width: 26, height: 26, marginRight: 6, display: "flex", alignItems: "center", justifyContent: "center" }}><Activity size={15} /></div><strong>FIT<span>TRACK</span></strong></div><div><span className="eyebrow">Athlete identity / analytics</span><h1>{athlete.name.split(" ")[0]}'s <em>training profile.</em></h1></div></div>
+        <div className="profile-heading"><div className="header-wordmark"><div className="brand-logo-icon" style={{ width: 26, height: 26, marginRight: 6, display: "flex", alignItems: "center", justifyContent: "center" }}><Activity size={15} /></div><strong>FIT<span>TRACK</span></strong></div><div><span className="eyebrow">Activity & Contributions</span><h1>{athlete.name.split(" ")[0]}'s <em>contribution ledger.</em></h1></div></div>
         <div className="profile-top-actions"><button className="icon-button" aria-label="Notifications" onClick={() => setLocation("/notifications")}><Bell size={19} /><b /></button><button className="avatar-button profile-avatar" aria-label="Edit athlete profile" onClick={openProfileEditor}>{athlete.photoDataUrl ? <img src={athlete.photoDataUrl} alt="" /> : initials(athlete.name)}<ChevronDown size={14} /></button></div>
       </header>
 
