@@ -243,7 +243,7 @@ export default function Settings() {
                 {experienceTier.replace("_", " ")}
               </span>
             </div>
-            <p className="flex items-center gap-1.5">
+            <p className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[#a6d9ff] font-medium">{athlete.location || "Detecting location..."}</span>
               <button
                 type="button"
@@ -257,13 +257,20 @@ export default function Settings() {
               · <b>{athlete.focus || "Hypertrophy & Strength"}</b>
             </p>
           </div>
-          <button type="button" className="profile-edit-action" onClick={openProfileEditor}>
-            <Pencil size={13} /> Edit Bio / Photo
-          </button>
         </div>
-        <div className="profile-mark-stamp" aria-hidden="true">
-          <Activity size={16} />
-          <span>Profile / Biometrics</span>
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="profile-mark-stamp hidden md:flex" aria-hidden="true">
+            <Activity size={16} />
+            <span>Profile / Biometrics</span>
+          </div>
+          <button 
+            type="button" 
+            className="profile-edit-box-btn" 
+            onClick={openProfileEditor}
+          >
+            <Pencil size={12} />
+            <span>Edit Profile</span>
+          </button>
         </div>
       </motion.section>
 
