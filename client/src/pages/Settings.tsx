@@ -1,9 +1,10 @@
 import { useState, useEffect, type ChangeEvent } from "react";
-import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, LoaderCircle, MapPin, Pencil, Save, Scale, Sparkles, Target, Upload, UserRound, Zap } from "lucide-react";
+import { Activity, ArrowRight, Calculator, Check, Dumbbell, Flame, Gauge, LoaderCircle, MapPin, Moon, Pencil, Save, Scale, Sparkles, Sun, Target, Upload, UserRound, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   getCalibrationSettings, 
@@ -61,6 +62,7 @@ const initials = (name: string) => name.split(" ").filter(Boolean).slice(0, 2).m
 
 export default function Settings() {
   const [, setLocation] = useLocation();
+  const { theme, setTheme, isDark } = useTheme();
   const isOnboarding = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("onboarding") === "true";
   const [form, setForm] = useState<CalibrationSettings>(() => getCalibrationSettings());
   const [saved, setSaved] = useState(true);
@@ -357,6 +359,75 @@ export default function Settings() {
               <label className="deck-field"><span>Protein <em>g</em></span><input type="number" min="40" max="450" value={form.goalProtein} onChange={(event) => update("goalProtein", Number(event.target.value))} /></label>
               <label className="deck-field"><span>Carbohydrates <em>g</em></span><input type="number" min="0" max="800" value={form.goalCarbs} onChange={(event) => update("goalCarbs", Number(event.target.value))} /></label>
               <label className="deck-field"><span>Fat <em>g</em></span><input type="number" min="20" max="300" value={form.goalFat} onChange={(event) => update("goalFat", Number(event.target.value))} /></label>
+            </div>
+          </section>
+
+          {/* 05: Interface Theme & Appearance */}
+          <section className="settings-section">
+            <div className="section-marker">
+              {isDark ? <Moon size={16} /> : <Sun size={16} />}
+              <div><span>05</span><b>Interface Theme &amp; Appearance</b></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setTheme("dark");
+                  toast.success("Dark Mode (Performance OS) activated");
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
+                  isDark
+                    ? "bg-[#c6ff3d]/15 border-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
+                    : "bg-[#0e1610] border-white/10 hover:border-white/20"
+                }`}
+              >
+                <div className="p-2.5 rounded-xl bg-black/40 text-[#c6ff3d] flex-shrink-0 mt-0.5 border border-white/10">
+                  <Moon size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <b className="text-sm font-sans uppercase tracking-wide text-white block">Dark Mode</b>
+                    {isDark && (
+                      <span className="text-[9px] font-mono uppercase bg-[#c6ff3d]/20 text-[#c6ff3d] px-2 py-0.5 rounded font-bold border border-[#c6ff3d]/40">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-[#8b9c8a] block mt-1">
+                    Cybernetic high-contrast UI engineered for physical focus and low glare.
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTheme("light");
+                  toast.success("Light Mode (Daylight Clarity) activated");
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
+                  !isDark
+                    ? "bg-[#4f8e06]/15 border-[#4f8e06] shadow-[0_0_20px_rgba(79,142,6,0.15)]"
+                    : "bg-[#0e1610] border-white/10 hover:border-white/20"
+                }`}
+              >
+                <div className="p-2.5 rounded-xl bg-amber-400/10 text-amber-500 flex-shrink-0 mt-0.5 border border-amber-400/20">
+                  <Sun size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <b className="text-sm font-sans uppercase tracking-wide text-white block">Light Mode</b>
+                    {!isDark && (
+                      <span className="text-[9px] font-mono uppercase bg-[#4f8e06]/20 text-[#4f8e06] px-2 py-0.5 rounded font-bold border border-[#4f8e06]/40">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-[#8b9c8a] block mt-1">
+                    Clean, high-legibility daytime palette with bright crisp surfaces.
+                  </span>
+                </div>
+              </button>
             </div>
           </section>
 

@@ -1,16 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: Theme;
-  toggleTheme?: () => void;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+  isDark: boolean;
+  isLight: boolean;
   switchable: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-interface ThemeProviderProps {
+export interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
   switchable?: boolean;
@@ -18,14 +21,16 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
-  switchable = false,
+  defaultTheme = "dark",
+  switchable = true,
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
-    }
+  const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      const stored = localStorage.getItem("fittrack_theme") || localStorage.getItem("theme");
+      if (stored === "dark" || stored === "light") {
+        return stored;
+      }
+    } catch {}
     return defaultTheme;
   });
 
@@ -33,23 +38,39 @@ export function ThemeProvider({
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
+      root.classList.remove("light");
+      root.style.colorScheme = "dark";
     } else {
+      root.classList.add("light");
       root.classList.remove("dark");
+      root.style.colorScheme = "light";
     }
 
-    if (switchable) {
+    try {
+      localStorage.setItem("fittrack_theme", theme);
       localStorage.setItem("theme", theme);
-    }
-  }, [theme, switchable]);
+    } catch {}
+  }, [theme]);
 
-  const toggleTheme = switchable
-    ? () => {
-        setTheme(prev => (prev === "light" ? "dark" : "light"));
-      }
-    : undefined;
+  const setTheme = (nextTheme: Theme) => {
+    setThemeState(nextTheme);
+  };
+
+  const toggleTheme = () => {
+    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, switchable }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        setTheme,
+        toggleTheme,
+        isDark: theme === "dark",
+        isLight: theme === "light",
+        switchable,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -62,3 +83,4 @@ export function useTheme() {
   }
   return context;
 }
+
