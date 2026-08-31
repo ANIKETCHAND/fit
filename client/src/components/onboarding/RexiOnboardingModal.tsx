@@ -70,11 +70,16 @@ export function RexiOnboardingModal() {
 
     if (level === "beginner") {
       setIsTransitioning(true);
-      toast.success("Beginner Mode activated! Let's calibrate your daily targets.");
+      toast.success("Beginner Mode activated! Starting interactive app tour...");
       setTimeout(() => {
         setIsOpen(false);
-        setLocation("/settings?onboarding=true");
-      }, 800);
+        sessionStorage.setItem("fittrack_beginner_tour_active", "true");
+        sessionStorage.setItem("fittrack_beginner_tour_step", "0");
+        setLocation("/overview");
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
+        }, 200);
+      }, 600);
     } else {
       // Open dedicated "Welcome Gym rat" popup box!
       setStage("gym_rat_popup");
@@ -86,6 +91,19 @@ export function RexiOnboardingModal() {
     setTimeout(() => {
       setIsOpen(false);
       setLocation("/settings?onboarding=true");
+    }, 400);
+  };
+
+  const handleLaunchTourFromGymRat = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      sessionStorage.setItem("fittrack_beginner_tour_active", "true");
+      sessionStorage.setItem("fittrack_beginner_tour_step", "0");
+      setLocation("/overview");
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
+      }, 200);
     }, 400);
   };
 
@@ -209,17 +227,31 @@ export function RexiOnboardingModal() {
                 </p>
               </motion.div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                onClick={handleProceedToSettings}
-                disabled={isTransitioning}
-                className="w-full mt-5 py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(198,255,61,0.35)] transition-all flex items-center justify-center gap-2"
-              >
-                <span>Calibrate Body Mass in Settings</span>
-                <ArrowRight size={15} />
-              </motion.button>
+              <div className="w-full space-y-2 mt-5">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={handleProceedToSettings}
+                  disabled={isTransitioning}
+                  className="w-full py-3.5 bg-[#c6ff3d] hover:bg-[#b0f028] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(198,255,61,0.35)] transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Calibrate in Settings</span>
+                  <ArrowRight size={15} />
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="button"
+                  onClick={handleLaunchTourFromGymRat}
+                  disabled={isTransitioning}
+                  className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white font-mono text-xs uppercase tracking-wider rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2"
+                >
+                  <Sparkles size={13} className="text-[#c6ff3d]" />
+                  <span>Take Guided App Tour</span>
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         ) : (

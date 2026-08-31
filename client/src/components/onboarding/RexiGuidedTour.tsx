@@ -19,23 +19,23 @@ export interface TourStep {
 export const tourSteps: TourStep[] = [
   {
     stepIndex: 0,
-    title: "Profile Settings",
-    path: "/settings",
-    pageName: "Settings",
+    title: "Overview Dashboard",
+    path: "/overview",
+    pageName: "Command Center",
     category: "Step 1 of 5",
     speechText:
-      "Set your current body weight, height, and weekly workout schedule so the system can personalize your daily calorie and protein recommendations.",
-    quickHighlight: "Enter your profile metrics to customize your workout plan.",
+      "Welcome to your Command Center! View your daily calorie & macro targets, training streak, and daily recommendations here.",
+    quickHighlight: "Monitor daily nutrition goals, streak, and quick actions.",
   },
   {
     stepIndex: 1,
-    title: "Interactive 3D Body",
-    path: "/overview",
-    pageName: "Dashboard",
+    title: "3D Muscle Studio",
+    path: "/body-map",
+    pageName: "3D Body Map",
     category: "Step 2 of 5",
     speechText:
-      "Rotate the 3D model and tap any muscle group to view targeted exercises and track your recovery readiness.",
-    quickHighlight: "Tap any muscle on the 3D model to see targeted exercises.",
+      "Rotate the full 3D anatomical model in 360 degrees, tap any muscle group, and check recovery readiness before training.",
+    quickHighlight: "Explore 3D muscle groups and track physical recovery status.",
   },
   {
     stepIndex: 2,
@@ -93,9 +93,10 @@ export function RexiGuidedTour() {
       setLocation(tourSteps[0].path);
     };
 
+    (window as any).startRexiTour = handleStartTour;
     window.addEventListener("fittrack_start_beginner_tour", handleStartTour);
     return () => window.removeEventListener("fittrack_start_beginner_tour", handleStartTour);
-  }, []);
+  }, [location]);
 
   const currentStep = tourSteps[currentStepIndex] || tourSteps[0];
 
