@@ -2,7 +2,6 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/navigation/Sidebar";
-import { OrbitalReadinessScene } from "@/components/3d/OrbitalReadinessScene";
 import { WorkoutRecommendationCard } from "@/components/dashboard/WorkoutRecommendationCard";
 import { NutritionLedgerCard } from "@/components/dashboard/NutritionLedgerCard";
 import { TrainingRhythmCard } from "@/components/dashboard/TrainingRhythmCard";
@@ -81,11 +80,6 @@ export default function Home() {
                 Based on your logged training, movement, and recovery signals.
               </p>
             </div>
-          </div>
-
-          {/* Right Hero Column: 3D Orbital Readiness Form */}
-          <div className="editorial-hero-right">
-            <OrbitalReadinessScene score={0} />
           </div>
         </section>
 
