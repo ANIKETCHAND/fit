@@ -155,9 +155,6 @@ export default function Home() {
                   <span className="denom-label">READINESS</span>
                 </div>
               </div>
-              <p className="editorial-score-caption">
-                Based on your logged training, movement, and recovery signals.
-              </p>
             </div>
           </div>
 
