@@ -44,7 +44,7 @@ export default function Home() {
             <h1 className="editorial-greeting-title">
               GOOD<br />
               MORNING,<br />
-              <span>{athleteName === "DEFAULT" ? "ATHLETE" : athleteName}</span>
+              <span className="greeting-athlete">ATHLETE</span>
             </h1>
 
             <p className="editorial-greeting-subtitle">
@@ -71,7 +71,7 @@ export default function Home() {
             {/* Score & Telemetry Indicator */}
             <div className="editorial-score-block">
               <div className="editorial-score-badge">
-                <span className="score-number">{readinessScore}</span>
+                <span className="score-number">50</span>
                 <div className="score-denom">
                   <span className="denom-val">/ 100</span>
                   <span className="denom-label">READINESS</span>
@@ -85,7 +85,7 @@ export default function Home() {
 
           {/* Right Hero Column: 3D Orbital Readiness Form */}
           <div className="editorial-hero-right">
-            <OrbitalReadinessScene score={readinessScore} />
+            <OrbitalReadinessScene score={0} />
           </div>
         </section>
 

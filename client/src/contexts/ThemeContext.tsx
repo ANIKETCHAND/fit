@@ -23,7 +23,11 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("fittrack-theme");
-    return (stored as Theme) || defaultTheme;
+    if (stored === "dark") {
+      localStorage.setItem("fittrack-theme", "light");
+      return "light";
+    }
+    return (stored as Theme) || "light";
   });
 
   useEffect(() => {
