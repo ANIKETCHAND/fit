@@ -69,7 +69,7 @@ export function NutritionLedgerCard() {
   ];
 
   return (
-    <div className="editorial-card nutrition-card">
+    <div className="editorial-card">
       <div className="card-topline flex items-center justify-between">
         <span className="card-label">NUTRITION LEDGER</span>
         <Utensils size={14} className="text-muted-foreground opacity-60" />

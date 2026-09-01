@@ -1,4 +1,4 @@
-﻿import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface ExerciseItem {
@@ -18,7 +18,7 @@ export function WorkoutRecommendationCard() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="editorial-card workout-card">
+    <div className="editorial-card">
       <div className="card-topline">
         <span className="card-label">WORKOUT RECOMMENDATION</span>
       </div>

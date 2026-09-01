@@ -82,7 +82,7 @@ export function TrainingRhythmCard() {
   }, []);
 
   return (
-    <div className="editorial-card rhythm-card">
+    <div className="editorial-card">
       <div className="card-topline">
         <span className="card-label">TRAINING RHYTHM</span>
       </div>
