@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [motionIntensity, setMotionIntensity] = useState<"subtle" | "active">("subtle");
+  const { theme } = useTheme();
 
   useEffect(() => {
+    if (theme !== "dark") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -230,7 +233,9 @@ export function AnimatedBackground() {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [theme]);
+
+  if (theme !== "dark") return null;
 
   return (
     <div

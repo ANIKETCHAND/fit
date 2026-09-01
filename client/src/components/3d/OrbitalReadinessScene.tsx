@@ -252,15 +252,14 @@ export function OrbitalReadinessScene({ score = 50 }: OrbitalReadinessSceneProps
         }}
       >
         <span
+          className="readiness-orb-digit"
           style={{
             fontFamily: '"Chakra Petch", "Space Mono", sans-serif',
             fontSize: "clamp(64px, 7vw, 84px)",
             fontWeight: 700,
             lineHeight: 1,
-            color: "#50845c",
-            opacity: 0.82,
+            opacity: 0.88,
             letterSpacing: "-0.04em",
-            textShadow: "0 2px 14px rgba(80,132,92,0.2)",
           }}
         >
           {score}
@@ -268,6 +267,7 @@ export function OrbitalReadinessScene({ score = 50 }: OrbitalReadinessSceneProps
       </div>
 
       <div
+        className="readiness-orb-label"
         style={{
           position: "absolute",
           right: "12px",
@@ -277,7 +277,6 @@ export function OrbitalReadinessScene({ score = 50 }: OrbitalReadinessSceneProps
           fontSize: "9px",
           fontFamily: '"Space Mono", monospace',
           letterSpacing: "0.14em",
-          color: "#849285",
           textTransform: "uppercase",
           fontWeight: 700,
         }}

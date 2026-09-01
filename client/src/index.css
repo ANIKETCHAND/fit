@@ -1342,3 +1342,226 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
     z-index: 45;
   }
 }
+
+/* ─── DARK MODE EDITORIAL DASHBOARD & APP STYLES ─── */
+.dark .editorial-app-shell {
+  background-color: transparent !important;
+  color: #f0f3ef !important;
+}
+
+.dark .editorial-sidebar {
+  background-color: rgba(12, 16, 13, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border-right: 1px solid rgba(226, 245, 226, 0.09) !important;
+  color: #f0f3ef !important;
+}
+
+.dark .editorial-wordmark {
+  color: #edf4eb !important;
+}
+
+.dark .editorial-nav-item {
+  color: #8b978e !important;
+}
+
+.dark .editorial-nav-item:hover {
+  color: #ecf3ea !important;
+  background: rgba(226, 245, 226, 0.05) !important;
+}
+
+.dark .editorial-nav-item.active {
+  color: #edf5ea !important;
+  font-weight: 700 !important;
+}
+
+.dark .active-indicator {
+  background: #c6ff3d !important;
+  box-shadow: 0 0 10px #c6ff3d !important;
+}
+
+.dark .editorial-sidebar-bottom {
+  border-top-color: rgba(226, 245, 226, 0.08) !important;
+}
+
+.dark .editorial-nav-item.sub-item {
+  color: #8a988c !important;
+}
+
+.dark .editorial-sidebar-trigger {
+  background: rgba(16, 22, 17, 0.85) !important;
+  border-color: rgba(226, 245, 225, 0.18) !important;
+  color: #c6ff3d !important;
+}
+
+.dark .editorial-timestamp {
+  color: #8a998c !important;
+}
+
+.dark .editorial-greeting-title {
+  color: #f0f3ef !important;
+}
+
+.dark .editorial-greeting-title span {
+  color: #f0f3ef !important;
+}
+
+.dark .editorial-greeting-title .greeting-athlete {
+  color: #c6ff3d !important;
+  text-shadow: 0 0 20px rgba(198, 255, 61, 0.35) !important;
+}
+
+.dark .editorial-greeting-subtitle {
+  color: #9cb09f !important;
+}
+
+.dark .editorial-primary-btn {
+  background-color: #c6ff3d !important;
+  color: #0a0c0b !important;
+  box-shadow: 0 0 20px rgba(198, 255, 61, 0.3) !important;
+}
+
+.dark .editorial-primary-btn:hover {
+  background-color: #d4ff76 !important;
+  box-shadow: 0 0 28px rgba(198, 255, 61, 0.45) !important;
+}
+
+.dark .editorial-secondary-link {
+  color: #d5dcd6 !important;
+}
+
+.dark .editorial-secondary-link:hover {
+  color: #ffffff !important;
+}
+
+.dark .editorial-score-block {
+  border-top-color: rgba(226, 245, 226, 0.08) !important;
+}
+
+.dark .score-number {
+  color: #c6ff3d !important;
+  text-shadow: 0 0 20px rgba(198, 255, 61, 0.35) !important;
+}
+
+.dark .denom-val {
+  color: #edf4eb !important;
+}
+
+.dark .denom-label {
+  color: #849285 !important;
+}
+
+.dark .editorial-score-caption {
+  color: #8d978f !important;
+}
+
+.dark .readiness-orb-digit {
+  color: #c6ff3d !important;
+  text-shadow: 0 0 24px rgba(198, 255, 61, 0.6) !important;
+}
+
+.dark .readiness-orb-label {
+  color: #8d978f !important;
+}
+
+.dark .editorial-card {
+  background-color: rgba(16, 22, 17, 0.84) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(226, 245, 226, 0.09) !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+  color: #edf4eb !important;
+}
+
+.dark .editorial-card:hover {
+  border-color: rgba(198, 255, 61, 0.3) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
+}
+
+.dark .card-label {
+  color: #8d978f !important;
+}
+
+.dark .card-heading {
+  color: #edf4eb !important;
+}
+
+.dark .exercise-name {
+  color: #edf4eb !important;
+}
+
+.dark .exercise-num,
+.dark .exercise-sets,
+.dark .exercise-rpe {
+  color: #8a998c !important;
+}
+
+.dark .nutrition-label {
+  color: #edf4eb !important;
+}
+
+.dark .nutrition-values {
+  color: #8a998c !important;
+}
+
+.dark .nutrition-pct {
+  color: #c6ff3d !important;
+}
+
+.dark .nutrition-track {
+  background: rgba(226, 245, 226, 0.08) !important;
+}
+
+.dark .nutrition-bar {
+  background: #c6ff3d !important;
+  box-shadow: 0 0 8px rgba(198, 255, 61, 0.4) !important;
+}
+
+.dark .rhythm-days-header {
+  color: #8a998c !important;
+}
+
+.dark .rhythm-dot.dot-completed {
+  background: #c6ff3d !important;
+  box-shadow: 0 0 8px rgba(198, 255, 61, 0.4) !important;
+}
+
+.dark .rhythm-dot.dot-today {
+  background: #c6ff3d !important;
+  box-shadow: 0 0 0 3px rgba(198, 255, 61, 0.35) !important;
+}
+
+.dark .rhythm-dot.dot-upcoming {
+  border-color: rgba(226, 245, 226, 0.2) !important;
+}
+
+.dark .rhythm-legend {
+  color: #8a998c !important;
+}
+
+.dark .rhythm-metrics-divider {
+  background: rgba(226, 245, 226, 0.08) !important;
+}
+
+.dark .rhythm-metric-item strong {
+  color: #edf4eb !important;
+}
+
+.dark .rhythm-metric-item small,
+.dark .rhythm-metric-item span {
+  color: #8a998c !important;
+}
+
+.dark .card-footer-link {
+  border-top-color: rgba(226, 245, 226, 0.08) !important;
+  color: #edf4eb !important;
+}
+
+.dark .card-footer-link:hover {
+  color: #c6ff3d !important;
+}
+
+@media (max-width: 860px) {
+  .dark .editorial-sidebar {
+    background: rgba(13, 18, 14, 0.95) !important;
+    box-shadow: 20px 0 60px rgba(0,0,0,0.85) !important;
+  }
+}
