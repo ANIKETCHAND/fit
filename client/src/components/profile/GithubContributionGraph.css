@@ -116,6 +116,15 @@
   stroke-width: 1px;
 }
 
+.gh-svg-cell.cell-future {
+  opacity: 0.22;
+  cursor: default;
+}
+.gh-svg-cell.cell-future:hover {
+  filter: none;
+  stroke: rgba(226, 245, 225, 0.09);
+}
+
 /* FitTrack Theme SVG Colors */
 .gh-svg-cell.level-0 {
   fill: #131b14;

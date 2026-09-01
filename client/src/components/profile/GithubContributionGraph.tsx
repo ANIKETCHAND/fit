@@ -7,6 +7,7 @@ interface DayCell {
   date: string;
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
+  isFuture: boolean;
 }
 
 interface MonthMarker {
@@ -16,46 +17,58 @@ interface MonthMarker {
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-function parseDateKey(val: any): string | null {
+/** Format Date object to YYYY-MM-DD in user's local timezone */
+export function formatLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Convert any timestamp, ISO string, Date object, or date string into strict local YYYY-MM-DD */
+export function parseDateToLocalKey(val: any): string | null {
   if (val === null || val === undefined) return null;
   try {
+    if (val instanceof Date && !isNaN(val.getTime())) {
+      return formatLocalDateKey(val);
+    }
     if (typeof val === "number") {
       if (isNaN(val) || val <= 0) return null;
       const ms = val < 1e11 ? val * 1000 : val;
       const d = new Date(ms);
       if (!isNaN(d.getTime())) {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
+        return formatLocalDateKey(d);
       }
-    }
-    if (val instanceof Date && !isNaN(val.getTime())) {
-      const y = val.getFullYear();
-      const m = String(val.getMonth() + 1).padStart(2, "0");
-      const day = String(val.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+      return null;
     }
     if (typeof val === "string") {
       const clean = val.trim();
       if (!clean) return null;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
-      if (clean.includes("T")) {
-        const p = clean.split("T")[0];
-        if (/^\d{4}-\d{2}-\d{2}$/.test(p)) return p;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+        return clean;
       }
       const d = new Date(clean);
       if (!isNaN(d.getTime())) {
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${y}-${m}-${day}`;
+        return formatLocalDateKey(d);
       }
     }
   } catch {}
   return null;
 }
 
+/** Format YYYY-MM-DD into readable date (e.g. "Sep 1, 2026") */
+function formatHumanDate(dateStr: string): string {
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+  } catch {}
+  return dateStr;
+}
+
+/** Deduplicate and extract all real user activities onto local date keys */
 function extractActivityDates(
   dbWorkouts?: any[],
   dbGps?: any[],
@@ -63,90 +76,95 @@ function extractActivityDates(
   dbMetrics?: any[]
 ): Map<string, number> {
   const map = new Map<string, number>();
+  const seenIds = new Set<string>();
 
-  const registerDate = (raw: any) => {
-    const key = parseDateKey(raw);
-    if (key) {
-      map.set(key, (map.get(key) || 0) + 1);
+  const register = (id: string, dateRaw: any) => {
+    if (!id || seenIds.has(id)) return;
+    seenIds.add(id);
+    const dateKey = parseDateToLocalKey(dateRaw);
+    if (dateKey) {
+      map.set(dateKey, (map.get(dateKey) || 0) + 1);
     }
   };
 
-  const processItem = (item: any) => {
-    if (!item || typeof item !== "object") return;
-    const dateField =
-      item.completedAt ||
-      item.startedAt ||
-      item.createdAt ||
-      item.consumedAt ||
-      item.capturedAt ||
-      item.timestamp ||
-      item.timestampMs ||
-      item.date ||
-      item.time ||
-      item.lastCompletedDate;
-    if (dateField) {
-      registerDate(dateField);
-    }
-  };
-
-  const processArray = (arr: any) => {
-    if (Array.isArray(arr)) {
-      arr.forEach(processItem);
-    }
-  };
-
-  const processKey = (k: string) => {
+  const safeReadJson = (key: string): any[] => {
     try {
-      const raw = localStorage.getItem(k);
-      if (!raw) return;
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        parsed.forEach(processItem);
-      } else if (parsed && typeof parsed === "object") {
-        processItem(parsed);
-        Object.values(parsed).forEach(processItem);
-      }
-    } catch {}
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   };
 
-  // 1. Process all known activity keys (scoped & unscoped)
-  const knownKeys = [
-    "fittrack_workout_logs",
-    "fittrack_workout_history",
-    "fittrack_gps_sessions",
-    "fittrack_sessions",
-    "fittrack_logged_nutrition_today",
-    "fittrack_nutrition_logs",
-    "fittrack_food_logs",
-    "fittrack_custom_indian_foods",
-    "fittrack_metrics",
-    "fittrack_weight_logs",
-    "fittrack-daily-streak",
-    "fittrack_daily_streak",
-    "fittrack-streak-data",
-    "fittrack-exercise-progress",
-  ];
+  // 1. Workouts
+  const localWorkoutsA = safeReadJson(getScopedKey("fittrack_workout_logs"));
+  const localWorkoutsB = safeReadJson("fittrack_workout_logs");
+  const localWorkoutsC = safeReadJson(getScopedKey("fittrack_workout_history"));
+  const localWorkoutsD = safeReadJson("fittrack_workout_history");
+  [...localWorkoutsA, ...localWorkoutsB, ...localWorkoutsC, ...localWorkoutsD, ...(dbWorkouts || [])].forEach(
+    (w, idx) => {
+      const dateVal = w.completedAt || w.startedAt || w.createdAt || w.date;
+      if (!dateVal) return;
+      const id = w.id ? `workout_${w.id}` : `workout_${w.title || w.focus || "log"}_${dateVal}_${w.volumeKg || idx}`;
+      register(id, dateVal);
+    }
+  );
 
-  knownKeys.forEach((k) => {
-    processKey(k);
-    processKey(getScopedKey(k));
+  // 2. GPS Sessions
+  const localGpsA = safeReadJson(getScopedKey("fittrack_gps_sessions"));
+  const localGpsB = safeReadJson("fittrack_gps_sessions");
+  [...localGpsA, ...localGpsB, ...(dbGps || [])].forEach((g, idx) => {
+    const dateVal = g.startedAt || g.endedAt || g.completedAt || g.createdAt || g.date;
+    if (!dateVal) return;
+    const id = g.id ? `gps_${g.id}` : `gps_${g.label || "run"}_${dateVal}_${g.distanceMeters || idx}`;
+    register(id, dateVal);
   });
 
-  // 2. Scan entire localStorage for any fittrack activity keys
+  // 3. Live Sessions
+  const localSessionsA = safeReadJson(getScopedKey("fittrack_sessions"));
+  const localSessionsB = safeReadJson("fittrack_sessions");
+  [...localSessionsA, ...localSessionsB].forEach((s, idx) => {
+    const dateVal = s.startedAt || s.completedAt || s.createdAt || s.date;
+    if (!dateVal) return;
+    const id = s.id ? `session_${s.id}` : `session_${s.mode || "live"}_${dateVal}_${s.durationSeconds || idx}`;
+    register(id, dateVal);
+  });
+
+  // 4. Daily Nutrition Logs
+  const localMealsA = safeReadJson(getScopedKey("fittrack_logged_nutrition_today"));
+  const localMealsB = safeReadJson("fittrack_logged_nutrition_today");
+  const localMealsC = safeReadJson(getScopedKey("fittrack_nutrition_logs"));
+  const localMealsD = safeReadJson("fittrack_nutrition_logs");
+  [...localMealsA, ...localMealsB, ...localMealsC, ...localMealsD, ...(dbNutrition || [])].forEach((m, idx) => {
+    const dateVal = m.consumedAt || m.createdAt || m.date || new Date();
+    const id = m.id ? `meal_${m.id}` : `meal_${m.name || m.label || "food"}_${m.time || ""}_${m.kcal || m.calories || idx}`;
+    register(id, dateVal);
+  });
+
+  // 5. Weight / Biometric Checkpoints
+  const localMetricsA = safeReadJson(getScopedKey("fittrack_metrics"));
+  const localMetricsB = safeReadJson("fittrack_metrics");
+  const localMetricsC = safeReadJson(getScopedKey("fittrack_weight_logs"));
+  const localMetricsD = safeReadJson("fittrack_weight_logs");
+  [...localMetricsA, ...localMetricsB, ...localMetricsC, ...localMetricsD, ...(dbMetrics || [])].forEach((mt, idx) => {
+    const dateVal = mt.capturedAt || mt.createdAt || mt.date;
+    if (!dateVal) return;
+    const id = mt.id ? `metric_${mt.id}` : `metric_${dateVal}_${mt.weightKg || idx}`;
+    register(id, dateVal);
+  });
+
+  // 6. Streak continuity checks
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith("fittrack_") || key.startsWith("fittrack-"))) {
-        processKey(key);
+    const streakRaw = localStorage.getItem(getScopedKey("fittrack-daily-streak")) || localStorage.getItem("fittrack-daily-streak");
+    if (streakRaw) {
+      const parsed = JSON.parse(streakRaw);
+      if (parsed?.lastCompletedDate && !map.has(parsed.lastCompletedDate)) {
+        map.set(parsed.lastCompletedDate, 1);
       }
     }
   } catch {}
-
-  // 3. Process backend database queries
-  if (dbWorkouts) processArray(dbWorkouts);
-  if (dbGps) processArray(dbGps);
-  if (dbNutrition) processArray(dbNutrition);
-  if (dbMetrics) processArray(dbMetrics);
 
   return map;
 }
@@ -187,16 +205,24 @@ export function GithubContributionGraph() {
     let lastMonth = -1;
 
     const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const isCurrentYear = selectedYear === today.getFullYear();
-    const endDate = isCurrentYear ? today : new Date(selectedYear, 11, 31);
 
-    // Align start to 52 weeks prior on Sunday
-    const startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - (totalWeeks * 7 - 1));
-    const dayOfWeek = startDate.getDay();
-    startDate.setDate(startDate.getDate() - dayOfWeek);
+    let startDate: Date;
+    if (isCurrentYear) {
+      // Rolling 52-53 weeks ending on the current week's Saturday
+      const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      const thisWeekSaturday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (6 - dayOfWeek));
+      startDate = new Date(thisWeekSaturday);
+      startDate.setDate(thisWeekSaturday.getDate() - (totalWeeks * 7 - 1));
+    } else {
+      // Calendar year mode: Starts on the Sunday on or before Jan 1
+      const jan1 = new Date(selectedYear, 0, 1);
+      startDate = new Date(jan1);
+      startDate.setDate(jan1.getDate() - jan1.getDay());
+    }
 
-    const cursor = new Date(startDate);
+    const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
 
     for (let w = 0; w < totalWeeks; w++) {
       const week: DayCell[] = [];
@@ -215,20 +241,19 @@ export function GithubContributionGraph() {
       }
 
       for (let d = 0; d < 7; d++) {
-        const y = cursor.getFullYear();
-        const m = String(cursor.getMonth() + 1).padStart(2, "0");
-        const dayNum = String(cursor.getDate()).padStart(2, "0");
-        const dateKey = `${y}-${m}-${dayNum}`;
-        const count = activityMap.get(dateKey) || 0;
+        const cellDate = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+        const dateKey = formatLocalDateKey(cellDate);
+        const isFuture = isCurrentYear && cellDate.getTime() > todayMidnight.getTime();
+        const count = isFuture ? 0 : (activityMap.get(dateKey) || 0);
         sum += count;
 
         let level: 0 | 1 | 2 | 3 | 4 = 0;
         if (count >= 4) level = 4;
         else if (count === 3) level = 3;
         else if (count === 2) level = 2;
-        else if (count === 1) level = 1;
+        else if (count >= 1) level = 1;
 
-        week.push({ date: dateKey, count, level });
+        week.push({ date: dateKey, count, level, isFuture });
         cursor.setDate(cursor.getDate() + 1);
       }
       grid.push(week);
@@ -303,8 +328,9 @@ export function GithubContributionGraph() {
                           height={CELL_SIZE}
                           rx={1.5}
                           ry={1.5}
-                          className={`gh-svg-cell level-${cell.level}`}
+                          className={`gh-svg-cell level-${cell.level} ${cell.isFuture ? "cell-future" : ""}`}
                           onMouseEnter={(e) => {
+                            if (cell.isFuture) return;
                             const rect = e.currentTarget.getBoundingClientRect();
                             setHoveredCell({
                               date: cell.date,
@@ -360,7 +386,7 @@ export function GithubContributionGraph() {
         ))}
       </div>
 
-      {/* Floating Tooltip */}
+      {/* Floating Tooltip with Human Formatted Date */}
       {hoveredCell && (
         <div
           className="gh-tooltip"
@@ -370,8 +396,8 @@ export function GithubContributionGraph() {
           }}
         >
           {hoveredCell.count === 0
-            ? `No contributions on ${hoveredCell.date}`
-            : `${hoveredCell.count} contribution${hoveredCell.count > 1 ? "s" : ""} on ${hoveredCell.date}`}
+            ? `No contributions on ${formatHumanDate(hoveredCell.date)}`
+            : `${hoveredCell.count} contribution${hoveredCell.count > 1 ? "s" : ""} on ${formatHumanDate(hoveredCell.date)}`}
         </div>
       )}
     </div>
