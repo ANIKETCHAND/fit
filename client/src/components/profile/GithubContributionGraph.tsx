@@ -44,28 +44,58 @@ export function parseDateToLocalKey(val: any): string | null {
     if (typeof val === "string") {
       const clean = val.trim();
       if (!clean) return null;
+
+      // Exact YYYY-MM-DD
       if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
         return clean;
       }
+
+      // Parse timestamp string or ISO format into local Date
       const d = new Date(clean);
       if (!isNaN(d.getTime())) {
         return formatLocalDateKey(d);
+      }
+
+      // Fallback regex match for leading YYYY-MM-DD
+      const match = clean.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        return `${match[1]}-${match[2]}-${match[3]}`;
       }
     }
   } catch {}
   return null;
 }
 
-/** Format YYYY-MM-DD into readable date (e.g. "Sep 1, 2026") */
+/** Format YYYY-MM-DD into readable human date (e.g. "Sep 1, 2026") */
 function formatHumanDate(dateStr: string): string {
   try {
     const parts = dateStr.split("-");
     if (parts.length === 3) {
-      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
   } catch {}
   return dateStr;
+}
+
+/** Helper to read arrays or objects flexibly from localStorage */
+function safeReadEntries(key: string): any[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed.items)) return parsed.items;
+      if (Array.isArray(parsed.logs)) return parsed.logs;
+      if (Array.isArray(parsed.routes)) return parsed.routes;
+      if (Array.isArray(parsed.sessions)) return parsed.sessions;
+      return [parsed];
+    }
+    return [];
+  } catch {
+    return [];
+  }
 }
 
 /** Deduplicate and extract all real user activities onto local date keys */
@@ -87,75 +117,91 @@ function extractActivityDates(
     }
   };
 
-  const safeReadJson = (key: string): any[] => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  };
-
-  // 1. Workouts
-  const localWorkoutsA = safeReadJson(getScopedKey("fittrack_workout_logs"));
-  const localWorkoutsB = safeReadJson("fittrack_workout_logs");
-  const localWorkoutsC = safeReadJson(getScopedKey("fittrack_workout_history"));
-  const localWorkoutsD = safeReadJson("fittrack_workout_history");
-  [...localWorkoutsA, ...localWorkoutsB, ...localWorkoutsC, ...localWorkoutsD, ...(dbWorkouts || [])].forEach(
-    (w, idx) => {
-      const dateVal = w.completedAt || w.startedAt || w.createdAt || w.date;
-      if (!dateVal) return;
-      const id = w.id ? `workout_${w.id}` : `workout_${w.title || w.focus || "log"}_${dateVal}_${w.volumeKg || idx}`;
-      register(id, dateVal);
-    }
-  );
-
-  // 2. GPS Sessions
-  const localGpsA = safeReadJson(getScopedKey("fittrack_gps_sessions"));
-  const localGpsB = safeReadJson("fittrack_gps_sessions");
-  [...localGpsA, ...localGpsB, ...(dbGps || [])].forEach((g, idx) => {
-    const dateVal = g.startedAt || g.endedAt || g.completedAt || g.createdAt || g.date;
+  // 1. Workouts (scoped & unscoped keys + database)
+  const workouts = [
+    ...safeReadEntries(getScopedKey("fittrack_workout_logs")),
+    ...safeReadEntries("fittrack_workout_logs"),
+    ...safeReadEntries(getScopedKey("fittrack_workout_history")),
+    ...safeReadEntries("fittrack_workout_history"),
+    ...(dbWorkouts || []),
+  ];
+  workouts.forEach((w, idx) => {
+    const dateVal = w.completedAt || w.startedAt || w.createdAt || w.date;
     if (!dateVal) return;
-    const id = g.id ? `gps_${g.id}` : `gps_${g.label || "run"}_${dateVal}_${g.distanceMeters || idx}`;
+    const id = w.id ? `workout_${w.id}` : `workout_${w.title || w.focus || "log"}_${dateVal}_${w.volumeKg || idx}`;
     register(id, dateVal);
   });
 
-  // 3. Live Sessions
-  const localSessionsA = safeReadJson(getScopedKey("fittrack_sessions"));
-  const localSessionsB = safeReadJson("fittrack_sessions");
-  [...localSessionsA, ...localSessionsB].forEach((s, idx) => {
+  // 2. GPS Sessions & Saved Routes
+  const gpsSessions = [
+    ...safeReadEntries(getScopedKey("fittrack_gps_sessions")),
+    ...safeReadEntries("fittrack_gps_sessions"),
+    ...safeReadEntries(getScopedKey("fittrack_gps_routes")),
+    ...safeReadEntries("fittrack_gps_routes"),
+    ...(dbGps || []),
+  ];
+  gpsSessions.forEach((g, idx) => {
+    const dateVal = g.startedAt || g.endedAt || g.completedAt || g.createdAt || g.savedAt || g.date;
+    if (!dateVal) return;
+    const id = g.id ? `gps_${g.id}` : `gps_${g.label || g.name || "run"}_${dateVal}_${g.distanceMeters || idx}`;
+    register(id, dateVal);
+  });
+
+  // 3. Live Timed Sessions
+  const liveSessions = [
+    ...safeReadEntries(getScopedKey("fittrack_sessions")),
+    ...safeReadEntries("fittrack_sessions"),
+  ];
+  liveSessions.forEach((s, idx) => {
     const dateVal = s.startedAt || s.completedAt || s.createdAt || s.date;
     if (!dateVal) return;
     const id = s.id ? `session_${s.id}` : `session_${s.mode || "live"}_${dateVal}_${s.durationSeconds || idx}`;
     register(id, dateVal);
   });
 
-  // 4. Daily Nutrition Logs
-  const localMealsA = safeReadJson(getScopedKey("fittrack_logged_nutrition_today"));
-  const localMealsB = safeReadJson("fittrack_logged_nutrition_today");
-  const localMealsC = safeReadJson(getScopedKey("fittrack_nutrition_logs"));
-  const localMealsD = safeReadJson("fittrack_nutrition_logs");
-  [...localMealsA, ...localMealsB, ...localMealsC, ...localMealsD, ...(dbNutrition || [])].forEach((m, idx) => {
-    const dateVal = m.consumedAt || m.createdAt || m.date || new Date();
-    const id = m.id ? `meal_${m.id}` : `meal_${m.name || m.label || "food"}_${m.time || ""}_${m.kcal || m.calories || idx}`;
+  // 4. Daily Nutrition Logs & Meals
+  const nutritionLogs = [
+    ...safeReadEntries(getScopedKey("fittrack_logged_nutrition_today")),
+    ...safeReadEntries("fittrack_logged_nutrition_today"),
+    ...safeReadEntries(getScopedKey("fittrack_nutrition_logs")),
+    ...safeReadEntries("fittrack_nutrition_logs"),
+    ...(dbNutrition || []),
+  ];
+  nutritionLogs.forEach((m, idx) => {
+    const dateVal = m.consumedAt || m.createdAt || m.date;
+    if (!dateVal) return;
+    const id = m.id ? `meal_${m.id}` : `meal_${m.name || m.label || "food"}_${dateVal}_${m.kcal || m.calories || idx}`;
     register(id, dateVal);
   });
 
-  // 5. Weight / Biometric Checkpoints
-  const localMetricsA = safeReadJson(getScopedKey("fittrack_metrics"));
-  const localMetricsB = safeReadJson("fittrack_metrics");
-  const localMetricsC = safeReadJson(getScopedKey("fittrack_weight_logs"));
-  const localMetricsD = safeReadJson("fittrack_weight_logs");
-  [...localMetricsA, ...localMetricsB, ...localMetricsC, ...localMetricsD, ...(dbMetrics || [])].forEach((mt, idx) => {
+  // 5. Weight & Biometric Checkpoints
+  const metricLogs = [
+    ...safeReadEntries(getScopedKey("fittrack_metrics")),
+    ...safeReadEntries("fittrack_metrics"),
+    ...safeReadEntries(getScopedKey("fittrack_weight_logs")),
+    ...safeReadEntries("fittrack_weight_logs"),
+    ...(dbMetrics || []),
+  ];
+  metricLogs.forEach((mt, idx) => {
     const dateVal = mt.capturedAt || mt.createdAt || mt.date;
     if (!dateVal) return;
     const id = mt.id ? `metric_${mt.id}` : `metric_${dateVal}_${mt.weightKg || idx}`;
     register(id, dateVal);
   });
 
-  // 6. Streak continuity checks
+  // 6. Exercise Library Progress Checkpoints
+  const exProgress = safeReadEntries(getScopedKey("fittrack-exercise-progress"));
+  exProgress.forEach((entry) => {
+    if (typeof entry === "object" && entry) {
+      Object.entries(entry).forEach(([exId, target]: [string, any]) => {
+        if (target?.completed && target?.completedAt) {
+          register(`ex_${exId}_${target.completedAt}`, target.completedAt);
+        }
+      });
+    }
+  });
+
+  // 7. Streak continuity check
   try {
     const streakRaw = localStorage.getItem(getScopedKey("fittrack-daily-streak")) || localStorage.getItem("fittrack-daily-streak");
     if (streakRaw) {
@@ -204,31 +250,27 @@ export function GithubContributionGraph() {
     let sum = 0;
     let lastMonth = -1;
 
-    const today = new Date();
-    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const isCurrentYear = selectedYear === today.getFullYear();
+    const now = new Date();
+    const todayKey = formatLocalDateKey(now);
+    const isCurrentYear = selectedYear === now.getFullYear();
 
-    let startDate: Date;
+    let startSunday: Date;
     if (isCurrentYear) {
-      // Rolling 52-53 weeks ending on the current week's Saturday
-      const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-      const thisWeekSaturday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (6 - dayOfWeek));
-      startDate = new Date(thisWeekSaturday);
-      startDate.setDate(thisWeekSaturday.getDate() - (totalWeeks * 7 - 1));
+      // 53 columns rolling ending on the current week (column 52 contains today at row = now.getDay())
+      const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      startSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek - 52 * 7, 12, 0, 0);
     } else {
-      // Calendar year mode: Starts on the Sunday on or before Jan 1
-      const jan1 = new Date(selectedYear, 0, 1);
-      startDate = new Date(jan1);
-      startDate.setDate(jan1.getDate() - jan1.getDay());
+      // Calendar year mode: Starts on the Sunday on or before Jan 1 of selectedYear
+      const jan1 = new Date(selectedYear, 0, 1, 12, 0, 0);
+      startSunday = new Date(selectedYear, 0, 1 - jan1.getDay(), 12, 0, 0);
     }
-
-    const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
 
     for (let w = 0; w < totalWeeks; w++) {
       const week: DayCell[] = [];
-      const colMonth = cursor.getMonth();
+      const midWeekDate = new Date(startSunday.getFullYear(), startSunday.getMonth(), startSunday.getDate() + (w * 7 + 3), 12, 0, 0);
+      const colMonth = midWeekDate.getMonth();
 
-      // Check if this week marks a new month (at least 2 weeks apart)
+      // Check if this week marks a new month (spaced at least 2 columns apart)
       if (colMonth !== lastMonth) {
         const prevMarker = markers[markers.length - 1];
         if (!prevMarker || w - prevMarker.colIndex >= 2) {
@@ -241,9 +283,9 @@ export function GithubContributionGraph() {
       }
 
       for (let d = 0; d < 7; d++) {
-        const cellDate = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+        const cellDate = new Date(startSunday.getFullYear(), startSunday.getMonth(), startSunday.getDate() + (w * 7 + d), 12, 0, 0);
         const dateKey = formatLocalDateKey(cellDate);
-        const isFuture = isCurrentYear && cellDate.getTime() > todayMidnight.getTime();
+        const isFuture = isCurrentYear && dateKey > todayKey;
         const count = isFuture ? 0 : (activityMap.get(dateKey) || 0);
         sum += count;
 
@@ -254,7 +296,6 @@ export function GithubContributionGraph() {
         else if (count >= 1) level = 1;
 
         week.push({ date: dateKey, count, level, isFuture });
-        cursor.setDate(cursor.getDate() + 1);
       }
       grid.push(week);
     }
