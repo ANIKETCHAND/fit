@@ -10,19 +10,39 @@ import { getAthleteProfile } from "@/lib/user-store";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const profile = getAthleteProfile();
-  const athleteName = (profile.name?.split(" ")[0] || "ATHLETE").toUpperCase();
 
+  const getGreetingPeriod = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "MORNING";
+    if (hour >= 12 && hour < 17) return "AFTERNOON";
+    if (hour >= 17 && hour < 21) return "EVENING";
+    return "NIGHT";
+  };
+
+  const [greetingWord, setGreetingWord] = useState(getGreetingPeriod());
+  const [userName, setUserName] = useState(() => {
+    const profile = getAthleteProfile();
+    return (profile.name?.split(" ")[0] || "ATHLETE").toUpperCase();
+  });
   const [formattedTime, setFormattedTime] = useState("");
+
   useEffect(() => {
-    const updateTime = () => {
+    const updateTimeAndGreeting = () => {
       const now = new Date();
       const day = now.toLocaleDateString("en-US", { weekday: "long" }).toUpperCase();
       const time = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
       setFormattedTime(`${day} • ${time}`);
+      setGreetingWord(getGreetingPeriod());
+
+      const profile = getAthleteProfile();
+      if (profile.name && profile.name.trim()) {
+        const first = profile.name.trim().split(" ")[0];
+        setUserName(first.toUpperCase());
+      }
     };
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
+
+    updateTimeAndGreeting();
+    const interval = setInterval(updateTimeAndGreeting, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -43,8 +63,8 @@ export default function Home() {
 
             <h1 className="editorial-greeting-title">
               GOOD<br />
-              MORNING,<br />
-              <span className="greeting-athlete">ATHLETE</span>
+              {greetingWord},<br />
+              <span className="greeting-athlete">{userName}</span>
             </h1>
 
             <p className="editorial-greeting-subtitle">
