@@ -311,18 +311,16 @@ export default function Settings() {
                     key={opt.id}
                     type="button"
                     onClick={() => handleSelectTier(opt.id)}
-                    className={`p-3 rounded-2xl border text-left transition-all flex items-start gap-3 ${
-                      isSelected
-                        ? "bg-[#c6ff3d]/15 border-[#c6ff3d] shadow-[0_0_20px_rgba(198,255,61,0.15)]"
-                        : "bg-[#0e1610] border-white/10 hover:border-white/20"
+                    className={`tier-choice-card p-3 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                      isSelected ? "selected" : ""
                     }`}
                   >
-                    <div className={`p-2 rounded-xl bg-white/5 ${opt.color} flex-shrink-0 mt-0.5`}>
+                    <div className={`tier-icon-wrapper p-2 rounded-xl flex-shrink-0 mt-0.5 ${opt.color}`}>
                       <Icon size={16} />
                     </div>
                     <div>
-                      <b className="text-xs text-white block">{opt.label}</b>
-                      <span className="text-[11px] text-[#8b9c8a] block mt-0.5">{opt.desc}</span>
+                      <b className="tier-card-title text-xs block font-bold">{opt.label}</b>
+                      <span className="tier-card-desc text-[11px] block mt-0.5">{opt.desc}</span>
                     </div>
                   </button>
                 );

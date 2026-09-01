@@ -591,6 +591,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   background: #ffffff !important;
   border-color: rgba(20, 36, 54, 0.08) !important;
   box-shadow: 0 4px 24px rgba(20, 36, 54, 0.04) !important;
+  color: #142436 !important;
 }
 
 :root:not(.dark) .command-deck-head h2,
@@ -598,8 +599,38 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   color: #142436 !important;
 }
 
-:root:not(.dark) .command-deck-head p {
+:root:not(.dark) .command-deck-head p,
+:root:not(.dark) .deck-kicker {
   color: #6a786c !important;
+}
+
+:root:not(.dark) .section-marker {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .section-marker svg {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .section-marker span {
+  color: #718173 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .section-marker b {
+  color: #142436 !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+:root:not(.dark) .deck-field > span {
+  color: #6a786c !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+}
+
+:root:not(.dark) .deck-field em {
+  color: #849285 !important;
 }
 
 :root:not(.dark) .deck-field input {
@@ -613,31 +644,186 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
 }
 
-:root:not(.dark) .activity-choice {
-  background: #fdfcf9 !important;
-  border-color: rgba(20, 36, 54, 0.08) !important;
+:root:not(.dark) .sex-control > span {
   color: #6a786c !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .sex-control > div {
+  background: #ece8df !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+}
+
+:root:not(.dark) .sex-control button {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .sex-control button.selected {
+  color: #ffffff !important;
+  background: #142436 !important;
+}
+
+:root:not(.dark) .tier-choice-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(20, 36, 54, 0.03) !important;
+}
+
+:root:not(.dark) .tier-choice-card:hover {
+  border-color: rgba(20, 36, 54, 0.22) !important;
+  background: #faf8f4 !important;
+}
+
+:root:not(.dark) .tier-choice-card.selected {
+  background: #eef5ee !important;
+  border-color: #4b7e56 !important;
+  box-shadow: 0 0 0 1.5px #4b7e56 !important;
+}
+
+:root:not(.dark) .tier-icon-wrapper {
+  background: rgba(20, 36, 54, 0.06) !important;
+}
+
+:root:not(.dark) .tier-card-title {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .tier-card-desc {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .activity-choice {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(20, 36, 54, 0.03) !important;
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .activity-choice span {
+  color: #718173 !important;
+  font-weight: 700 !important;
 }
 
 :root:not(.dark) .activity-choice b {
   color: #142436 !important;
 }
 
+:root:not(.dark) .activity-choice small {
+  color: #6a786c !important;
+}
+
 :root:not(.dark) .activity-choice.selected {
   background: #eef6ed !important;
   border-color: #4b7e56 !important;
+  box-shadow: 0 0 0 1.5px #4b7e56 !important;
+}
+
+:root:not(.dark) .activity-choice.selected > i {
+  background: #4b7e56 !important;
+}
+
+:root:not(.dark) .recalculate-button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #142436 !important;
+}
+
+:root:not(.dark) .recalculate-button:hover {
+  background: #f0ede5 !important;
+  color: #1d4ed8 !important;
+}
+
+:root:not(.dark) .rail-head {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .rail-head span {
+  color: #142436 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .rail-head small {
+  color: #718173 !important;
+}
+
+:root:not(.dark) .metabolism-readout {
+  background: rgba(20, 36, 54, 0.08) !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
 }
 
 :root:not(.dark) .metabolism-readout > div {
   background: #ffffff !important;
 }
 
+:root:not(.dark) .metabolism-readout span {
+  color: #718173 !important;
+  font-weight: 700 !important;
+}
+
 :root:not(.dark) .metabolism-readout strong {
   color: #142436 !important;
 }
 
+:root:not(.dark) .metabolism-readout em {
+  color: #4b7e56 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .metabolism-panel > p {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .target-readout {
+  border-top: 1px solid rgba(20, 36, 54, 0.07) !important;
+}
+
+:root:not(.dark) .target-readout span {
+  color: #142436 !important;
+  font-weight: 600 !important;
+}
+
 :root:not(.dark) .target-readout b {
   color: #142436 !important;
+}
+
+:root:not(.dark) .target-readout b small {
+  color: #718173 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .rail-note,
+:root:not(.dark) .support-privacy-note {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  border-left: 3px solid #4b7e56 !important;
+  box-shadow: 0 4px 16px rgba(20, 36, 54, 0.03) !important;
+  color: #142436 !important;
+}
+
+:root:not(.dark) .rail-note b,
+:root:not(.dark) .support-privacy-note b {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .rail-note p,
+:root:not(.dark) .support-privacy-note p {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .rail-note svg,
+:root:not(.dark) .support-privacy-note svg {
+  color: #4b7e56 !important;
+}
+
+:root:not(.dark) .settings-actions {
+  background: #faf8f4 !important;
+  border-top: 1px solid rgba(20, 36, 54, 0.08) !important;
+}
+
+:root:not(.dark) .reset-calibration {
+  background: #ffffff !important;
+  color: #142436 !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
 }
 
 :root:not(.dark) .save-calibration {
