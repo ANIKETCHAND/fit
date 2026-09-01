@@ -10,7 +10,7 @@ import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnec
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
-function getWorkoutLogs(): { completedAt?: string; date?: string; startedAt?: string; focus?: string }[] {
+function getWorkoutLogs(): { completedAt?: string; date?: string; startedAt?: string; focus?: string; movementCount?: number; durationSeconds?: number }[] {
   try {
     const a = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]");
     const b = JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]");
@@ -20,7 +20,7 @@ function getWorkoutLogs(): { completedAt?: string; date?: string; startedAt?: st
     return Array.from(new Map(merged.map((m) => [JSON.stringify(m), m])).values());
   } catch { return []; }
 }
-function getGpsSessions(): { startedAt?: string; completedAt?: string; date?: string; distanceMeters?: number; durationSeconds?: number }[] {
+function getGpsSessions(): { startedAt?: string; completedAt?: string; endedAt?: string; date?: string; distanceMeters?: number; durationSeconds?: number }[] {
   try {
     const a = JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]");
     const b = JSON.parse(localStorage.getItem("fittrack_gps_sessions") || "[]");
@@ -28,7 +28,7 @@ function getGpsSessions(): { startedAt?: string; completedAt?: string; date?: st
     return Array.from(new Map(merged.map((m) => [JSON.stringify(m), m])).values());
   } catch { return []; }
 }
-function getSessions(): { completedAt?: string; startedAt?: string; date?: string; durationSeconds?: number; category?: string; focus?: string }[] {
+function getSessions(): { completedAt?: string; startedAt?: string; date?: string; durationSeconds?: number; mode?: string; category?: string; focus?: string }[] {
   try {
     const a = JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]");
     const b = JSON.parse(localStorage.getItem("fittrack_sessions") || "[]");
@@ -37,11 +37,22 @@ function getSessions(): { completedAt?: string; startedAt?: string; date?: strin
   } catch { return []; }
 }
 
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const now = new Date();
+const formatPeriod = (days: number) => {
+  const start = new Date(now.getTime() - days * 86400000);
+  const m1 = MONTH_NAMES[start.getMonth()];
+  const y1 = start.getFullYear();
+  const m2 = MONTH_NAMES[now.getMonth()];
+  const y2 = now.getFullYear();
+  return `${m1} ${y1} — ${m2} ${y2}`;
+};
+
 const rangeOptions = {
-  "12m": { label: "Last 12 months", period: "Aug 2025 — Aug 2026", weeks: 52 },
-  "6m": { label: "Last 6 months", period: "Mar 2026 — Aug 2026", weeks: 26 },
-  "90d": { label: "Last 90 days", period: "May 2026 — Aug 2026", weeks: 13 },
-  "30d": { label: "Last 30 days", period: "Jul 2026 — Aug 2026", weeks: 5 },
+  "12m": { label: "Last 12 months", period: formatPeriod(365), days: 365, weeks: 52 },
+  "6m": { label: "Last 6 months", period: formatPeriod(180), days: 180, weeks: 26 },
+  "90d": { label: "Last 90 days", period: formatPeriod(90), days: 90, weeks: 13 },
+  "30d": { label: "Last 30 days", period: formatPeriod(30), days: 30, weeks: 5 },
 } as const;
 type RangeKey = keyof typeof rangeOptions;
 
@@ -70,46 +81,85 @@ export default function Profile() {
   const realGpsSessions = useMemo(() => getGpsSessions(), []);
   const realSessions = useMemo(() => getSessions(), []);
 
-  const totalSessionCount = realWorkoutLogs.length + realGpsSessions.length + realSessions.length;
+  // Filter sessions based on active range
+  const filteredWorkouts = useMemo(() => {
+    const cutoff = Date.now() - rangeOptions[range].days * 86400000;
+    return realWorkoutLogs.filter((w) => {
+      const rawDate = w.completedAt || w.startedAt || w.date;
+      if (!rawDate) return true;
+      const t = new Date(rawDate).getTime();
+      return isNaN(t) || t >= cutoff;
+    });
+  }, [realWorkoutLogs, range]);
+
+  const filteredGps = useMemo(() => {
+    const cutoff = Date.now() - rangeOptions[range].days * 86400000;
+    return realGpsSessions.filter((g) => {
+      const rawDate = g.startedAt || g.endedAt || g.completedAt || g.date;
+      if (!rawDate) return true;
+      const t = new Date(rawDate).getTime();
+      return isNaN(t) || t >= cutoff;
+    });
+  }, [realGpsSessions, range]);
+
+  const filteredSessions = useMemo(() => {
+    const cutoff = Date.now() - rangeOptions[range].days * 86400000;
+    return realSessions.filter((s) => {
+      const rawDate = s.startedAt || s.completedAt || s.date;
+      if (!rawDate) return true;
+      const t = new Date(rawDate).getTime();
+      return isNaN(t) || t >= cutoff;
+    });
+  }, [realSessions, range]);
+
+  const totalSessionCount = filteredWorkouts.length + filteredGps.length + filteredSessions.length;
 
   const totalDistanceKm = useMemo(() => {
-    const meters = realGpsSessions.reduce((sum, g) => sum + (g.distanceMeters || 0), 0);
+    const meters = filteredGps.reduce((sum, g) => sum + (Number(g.distanceMeters) || 0), 0);
     return (meters / 1000).toFixed(1);
-  }, [realGpsSessions]);
+  }, [filteredGps]);
 
   const totalTimeUnderLoad = useMemo(() => {
     let totalSec = 0;
-    realGpsSessions.forEach((g) => { totalSec += g.durationSeconds || 0; });
-    realSessions.forEach((s) => { totalSec += s.durationSeconds || 0; });
-    realWorkoutLogs.forEach(() => { totalSec += 2400; });
+    filteredGps.forEach((g) => { totalSec += g.durationSeconds || 0; });
+    filteredSessions.forEach((s) => { totalSec += s.durationSeconds || 0; });
+    filteredWorkouts.forEach((w) => {
+      totalSec += w.durationSeconds || (w.movementCount ? w.movementCount * 360 : 1800);
+    });
     if (totalSec === 0) return "0h 00m";
     const hours = Math.floor(totalSec / 3600);
     const minutes = Math.floor((totalSec % 3600) / 60);
     return `${hours}h ${String(minutes).padStart(2, "0")}m`;
-  }, [realWorkoutLogs, realGpsSessions, realSessions]);
+  }, [filteredWorkouts, filteredGps, filteredSessions]);
 
   const movementClassesCount = useMemo(() => {
     const classes = new Set<string>();
-    realWorkoutLogs.forEach((w) => { if (w.focus) classes.add(w.focus); });
-    if (realGpsSessions.length > 0) classes.add("Cardio / GPS");
-    return classes.size;
-  }, [realWorkoutLogs, realGpsSessions]);
+    filteredWorkouts.forEach((w) => { if (w.focus) classes.add(w.focus); });
+    if (filteredGps.length > 0) classes.add("Cardio / GPS");
+    filteredSessions.forEach((s) => {
+      const tag = s.mode || s.category || s.focus;
+      if (tag) classes.add(tag);
+    });
+    return Math.max(totalSessionCount > 0 ? 1 : 0, classes.size);
+  }, [filteredWorkouts, filteredGps, filteredSessions, totalSessionCount]);
 
   const avgDistancePerEntry = useMemo(() => {
-    if (realGpsSessions.length === 0) return "0.0";
-    const meters = realGpsSessions.reduce((sum, g) => sum + (g.distanceMeters || 0), 0);
-    return (meters / 1000 / realGpsSessions.length).toFixed(1);
-  }, [realGpsSessions]);
+    if (filteredGps.length === 0) return "0.0";
+    const meters = filteredGps.reduce((sum, g) => sum + (Number(g.distanceMeters) || 0), 0);
+    return (meters / 1000 / filteredGps.length).toFixed(1);
+  }, [filteredGps]);
 
   const avgSessionCadence = useMemo(() => {
     if (totalSessionCount === 0) return "0m";
     let totalSec = 0;
-    realGpsSessions.forEach((g) => { totalSec += g.durationSeconds || 0; });
-    realSessions.forEach((s) => { totalSec += s.durationSeconds || 0; });
-    realWorkoutLogs.forEach(() => { totalSec += 2400; });
-    const avgMin = Math.round(totalSec / 60 / totalSessionCount);
+    filteredGps.forEach((g) => { totalSec += g.durationSeconds || 0; });
+    filteredSessions.forEach((s) => { totalSec += s.durationSeconds || 0; });
+    filteredWorkouts.forEach((w) => {
+      totalSec += w.durationSeconds || (w.movementCount ? w.movementCount * 360 : 1800);
+    });
+    const avgMin = Math.max(1, Math.round(totalSec / 60 / totalSessionCount));
     return `${avgMin}m`;
-  }, [totalSessionCount, realWorkoutLogs, realGpsSessions, realSessions]);
+  }, [totalSessionCount, filteredWorkouts, filteredGps, filteredSessions]);
 
   const summaryMetrics = useMemo(() => [
     { label: "Logged sessions", value: String(totalSessionCount), detail: "entries in the ledger", icon: Activity, tone: "lime", size: "standard" },
@@ -118,27 +168,27 @@ export default function Profile() {
     { label: "Movement classes", value: String(movementClassesCount), detail: "disciplines detected", icon: Layers3, tone: "bone", size: "standard" },
     { label: "Distance per entry", value: avgDistancePerEntry, unit: "km", detail: "rolling average", icon: Footprints, tone: "blue", size: "standard" },
     { label: "Session cadence", value: avgSessionCadence, detail: "average load window", icon: Timer, tone: "lime", size: "standard" },
-    { label: "Active sources", value: String(devices.length), detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
+    { label: "Active sources", value: String(Math.max(1, devices.length + 1)), detail: "synchronised inputs", icon: Smartphone, tone: "bone", size: "narrow" },
   ], [totalSessionCount, totalDistanceKm, totalTimeUnderLoad, movementClassesCount, avgDistancePerEntry, avgSessionCadence, devices]);
 
   const dynamicActivityTypes = useMemo(() => {
     const counts: Record<string, number> = {};
     let total = 0;
 
-    realWorkoutLogs.forEach((w) => {
+    filteredWorkouts.forEach((w) => {
       const focusName = w.focus || "Strength";
       const cat = focusName.toLowerCase().includes("cardio") || focusName.toLowerCase().includes("endurance") ? "Conditioning" : "Strength";
       counts[cat] = (counts[cat] || 0) + 1;
       total++;
     });
 
-    realGpsSessions.forEach(() => {
+    filteredGps.forEach(() => {
       counts["GPS Activity"] = (counts["GPS Activity"] || 0) + 1;
       total++;
     });
 
-    realSessions.forEach((s: any) => {
-      const cat = s.category || s.focus || "Training";
+    filteredSessions.forEach((s: any) => {
+      const cat = s.category || s.mode || s.focus || "Training";
       counts[cat] = (counts[cat] || 0) + 1;
       total++;
     });
@@ -153,7 +203,7 @@ export default function Profile() {
       idx++;
       return { label, value: val, color };
     });
-  }, [realWorkoutLogs, realGpsSessions, realSessions]);
+  }, [filteredWorkouts, filteredGps, filteredSessions]);
 
   let offset = 0;
 

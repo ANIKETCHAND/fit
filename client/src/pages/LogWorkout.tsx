@@ -37,6 +37,7 @@ export default function LogWorkout() {
   const primaryFocus = lifts[0].focus;
   const [complete, setComplete] = useState<number[]>([]);
   const [load, setLoad] = useState(lifts[0].load);
+  const [startTime] = useState(() => Date.now());
   const [videoExercise, setVideoExercise] = useState<{ name: string; focus?: string } | null>(null);
   const [celebrating, setCelebrating] = useState<Achievement | null>(null);
   const [sharing, setSharing] = useState<Achievement | null>(null);
@@ -63,9 +64,17 @@ export default function LogWorkout() {
 
   const save = () => {
     if (complete.length !== lifts.length) { toast("Complete all movements before closing the training protocol"); return; }
+    const elapsedSeconds = Math.max(900, Math.round((Date.now() - startTime) / 1000));
     try {
       const sessions = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]");
-      sessions.unshift({ title: `${primaryFocus} protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date().toISOString() });
+      sessions.unshift({
+        title: `${primaryFocus} protocol`,
+        focus: primaryFocus,
+        movementCount: lifts.length,
+        volumeKg: Number(volume.toFixed(2)),
+        durationSeconds: elapsedSeconds,
+        completedAt: new Date().toISOString()
+      });
       localStorage.setItem(getScopedKey("fittrack_workout_logs"), JSON.stringify(sessions.slice(0, 50)));
     } catch { /* ignore */ }
     saveWorkout.mutate({ title: `${primaryFocus} hypertrophy protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date() });
