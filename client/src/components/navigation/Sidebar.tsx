@@ -1,40 +1,47 @@
-/** Kinetic Anatomy Lab: an accessible, toggleable navigation drawer with three dots trigger and click-outside dismissal */
 import {
   Activity,
   Award,
   Bell,
   CalendarDays,
   ChartNoAxesCombined,
-  ChevronRight,
   CircleHelp,
   Dumbbell,
-  Gauge,
   LogOut,
   MapPinned,
+  Moon,
   MoreVertical,
   Settings,
+  Sun,
   UserRound,
   Utensils,
+  X,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useSidebar } from "@/lib/sidebar-store";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const nav = [
-  { label: "Profile", icon: UserRound, path: "/settings" },
-  { label: "3D Body Map", icon: Activity, path: "/body-map" },
-  { label: "Workouts", icon: Dumbbell, path: "/exercise-library" },
-  { label: "Nutrition", icon: Utensils, path: "/log-food" },
-  { label: "GPS trace", icon: MapPinned, path: "/gps" },
-  { label: "Progress", icon: ChartNoAxesCombined, path: "/log-weight" },
-  { label: "Achievements", icon: Award, path: "/achievements" },
-  { label: "Contributions", icon: CalendarDays, path: "/profile" },
+  { label: "Overview", path: "/overview" },
+  { label: "Workouts", path: "/exercise-library" },
+  { label: "Nutrition", path: "/log-food" },
+  { label: "GPS trace", path: "/gps" },
+  { label: "Progress", path: "/log-weight" },
+  { label: "Achievements", path: "/achievements" },
+  { label: "Body Map", path: "/body-map" },
+  { label: "Settings", path: "/settings" },
 ];
 
 export function Sidebar() {
   const { open, toggleSidebar, setSidebarOpen } = useSidebar();
   const [location, setLocation] = useLocation();
   const sidebarRef = useRef<HTMLElement>(null);
+  const { theme, toggleTheme } = useTheme();
+
+  const isPathActive = (path: string) => {
+    if (path === "/overview" && (location === "/" || location === "/overview" || location === "/home")) return true;
+    return location === path;
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -42,7 +49,7 @@ export function Sidebar() {
       if (
         sidebarRef.current &&
         !sidebarRef.current.contains(e.target as Node) &&
-        !(e.target as HTMLElement)?.closest(".sidebar-trigger-btn")
+        !(e.target as HTMLElement)?.closest(".editorial-sidebar-trigger")
       ) {
         setSidebarOpen(false);
       }
@@ -62,8 +69,9 @@ export function Sidebar() {
 
   return (
     <>
+      {/* Mobile Toggle Button */}
       <button
-        className="sidebar-trigger-btn"
+        className="editorial-sidebar-trigger"
         onClick={toggleSidebar}
         aria-label="Toggle navigation menu"
         title="Menu"
@@ -71,59 +79,90 @@ export function Sidebar() {
         <MoreVertical size={20} />
       </button>
 
+      {/* Editorial Navigation Rail */}
       <aside
         ref={sidebarRef}
-        className={`sidebar ${open ? "open" : ""}`}
+        className={`editorial-sidebar ${open ? "open" : ""}`}
         aria-hidden={!open}
       >
+        {/* Brand Header */}
         <div
-          className="brand-row"
-          onClick={() => { route("/overview"); }}
-          style={{ cursor: "pointer" }}
-          title="Command Center Overview"
+          className="editorial-brand-row"
+          onClick={() => route("/overview")}
+          title="FitTrack Performance"
         >
-          <div className="brand-logo-icon" style={{ width: 34, height: 34, borderRadius: 8, background: "radial-gradient(circle, rgba(186,255,87,0.2) 0%, rgba(13,24,16,0.95) 100%)", border: "1px solid rgba(186,255,87,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#baff57", boxShadow: "0 0 14px rgba(186,255,87,0.25)", flexShrink: 0, marginRight: 10 }}>
-            <Activity size={20} />
-          </div>
-          <div>
-            <strong>FIT<span>TRACK</span></strong>
-            <small>PERFORMANCE OS</small>
-          </div>
+          <span className="editorial-wordmark">FITTRACK</span>
+          {open && (
+            <button
+              className="editorial-close-mobile md:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSidebarOpen(false);
+              }}
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
-        <nav>
-          {nav.map(({ label, icon: Icon, path }) => (
-            <button
-              key={label}
-              className={location === path ? "nav-item active" : "nav-item"}
-              onClick={() => route(path)}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-              {location === path && <i />}
-            </button>
-          ))}
+        {/* Text Navigation Links */}
+        <nav className="editorial-nav-list">
+          {nav.map(({ label, path }) => {
+            const active = isPathActive(path);
+            return (
+              <button
+                key={label}
+                className={`editorial-nav-item ${active ? "active" : ""}`}
+                onClick={() => route(path)}
+              >
+                {active && <span className="active-indicator" />}
+                <span className="nav-label-text">{label}</span>
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="sidebar-bottom">
+        {/* Bottom Actions */}
+        <div className="editorial-sidebar-bottom">
           <button
-            className={location === "/notifications" ? "nav-item active" : "nav-item"}
+            className="editorial-nav-item sub-item"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            <span className="nav-label-text">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+
+          <button
+            className="editorial-nav-item sub-item"
             onClick={() => route("/notifications")}
+            title="Notifications"
           >
-            <Bell size={18} />
-            <span>Notifications</span>
-            {location === "/notifications" && <i />}
+            <Bell size={15} />
+            <span className="nav-label-text">Notifications</span>
           </button>
+
           <button
-            className={location === "/support" ? "nav-item active" : "nav-item"}
+            className="editorial-nav-item sub-item"
+            onClick={() => route("/profile")}
+            title="Contribution Ledger"
+          >
+            <CalendarDays size={15} />
+            <span className="nav-label-text">Contributions</span>
+          </button>
+
+          <button
+            className="editorial-nav-item sub-item"
             onClick={() => route("/support")}
+            title="Support"
           >
-            <CircleHelp size={18} />
-            <span>Support</span>
-            {location === "/support" && <i />}
+            <CircleHelp size={15} />
+            <span className="nav-label-text">Support</span>
           </button>
+
           <button
-            className="nav-item"
+            className="editorial-nav-item sub-item"
             onClick={() => {
               localStorage.removeItem("fittrack_auth_state");
               localStorage.removeItem("fittrack_user_email");
@@ -133,19 +172,20 @@ export function Sidebar() {
               try { sessionStorage.removeItem("manus-cookie"); } catch {}
               route("/");
             }}
-            title="Sign out to landing page"
+            title="Sign out"
           >
-            <LogOut size={18} />
-            <span>Sign out</span>
+            <LogOut size={15} />
+            <span className="nav-label-text">Sign out</span>
           </button>
         </div>
       </aside>
 
+      {/* Mobile Scrim */}
       {open && (
         <div
-          className="nav-scrim"
+          className="editorial-scrim md:hidden"
           onClick={() => setSidebarOpen(false)}
-          aria-label="Close navigation overlay"
+          aria-label="Close overlay"
         />
       )}
     </>
