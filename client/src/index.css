@@ -650,7 +650,107 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   color: #6a786c !important;
 }
 
+:root:not(.dark) .workflow-topbar .back-button:hover {
+  color: #142436 !important;
+}
+
 :root:not(.dark) .workflow-topbar .workflow-brand strong {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .workflow-topbar .workflow-brand span {
+  color: #4b7e56 !important;
+}
+
+:root:not(.dark) .workflow-topbar .brand-logo-icon {
+  background: #142436 !important;
+  color: #ffffff !important;
+}
+
+:root:not(.dark) .workflow-status span {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .workflow-status .icon-button,
+:root:not(.dark) .workflow-status .avatar-button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #142436 !important;
+}
+
+/* 10. WORKFLOW HEADINGS & TOOLBARS ACROSS ALL PAGES */
+:root:not(.dark) .workflow-intro,
+:root:not(.dark) .workflow-intro h1 {
+  color: #142436 !important;
+  font-weight: 800 !important;
+}
+
+:root:not(.dark) .workflow-intro h1::first-letter {
+  color: #142436 !important;
+}
+
+:root:not(.dark) .workflow-intro .eyebrow {
+  color: #4b7e56 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+}
+
+:root:not(.dark) .workflow-intro p {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .library-toolbar,
+:root:not(.dark) .library-search {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  box-shadow: 0 2px 10px rgba(20, 36, 54, 0.04) !important;
+  color: #142436 !important;
+}
+
+:root:not(.dark) .library-search input {
+  color: #142436 !important;
+  background: transparent !important;
+}
+
+:root:not(.dark) .library-search input::placeholder {
+  color: #849285 !important;
+}
+
+:root:not(.dark) .library-search svg {
+  color: #6a786c !important;
+}
+
+:root:not(.dark) .library-filters button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #6a786c !important;
+  box-shadow: 0 2px 8px rgba(20, 36, 54, 0.03) !important;
+}
+
+:root:not(.dark) .library-filters button:hover {
+  background: #faf8f4 !important;
+  color: #142436 !important;
+}
+
+:root:not(.dark) .library-filters button.selected {
+  background: #142436 !important;
+  border-color: #142436 !important;
+  color: #ffffff !important;
+}
+
+:root:not(.dark) h1,
+:root:not(.dark) h2,
+:root:not(.dark) h3,
+:root:not(.dark) h4,
+:root:not(.dark) h5,
+:root:not(.dark) h6,
+:root:not(.dark) .page-title,
+:root:not(.dark) .section-title,
+:root:not(.dark) .panel-title,
+:root:not(.dark) .heading-title,
+:root:not(.dark) .stage-title,
+:root:not(.dark) .deck-heading,
+:root:not(.dark) .summary-title {
   color: #142436 !important;
 }
 
