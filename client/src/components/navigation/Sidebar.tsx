@@ -22,14 +22,14 @@ import { useSidebar } from "@/lib/sidebar-store";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const nav = [
-  { label: "Overview", path: "/overview" },
+  { label: "Home", path: "/overview" },
   { label: "Workouts", path: "/exercise-library" },
   { label: "Nutrition", path: "/log-food" },
   { label: "GPS trace", path: "/gps" },
   { label: "Progress", path: "/log-weight" },
   { label: "Achievements", path: "/achievements" },
   { label: "Body Map", path: "/body-map" },
-  { label: "Settings", path: "/settings" },
+  { label: "Profile", path: "/profile" },
 ];
 
 export function Sidebar() {
@@ -40,6 +40,7 @@ export function Sidebar() {
 
   const isPathActive = (path: string) => {
     if (path === "/overview" && (location === "/" || location === "/overview" || location === "/home")) return true;
+    if (path === "/profile" && (location === "/profile" || location === "/settings")) return true;
     return location === path;
   };
 
