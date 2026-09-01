@@ -249,7 +249,7 @@ export default function Profile() {
           <div className="profile-panel-head"><div><span className="panel-label">Movement mix</span><h2>Activity types</h2></div><Sparkles size={16} /></div>
           {dynamicActivityTypes.length === 0 ? (
             <div style={{ padding: "32px 16px", textAlign: "center", color: "#819084" }}>
-              <p style={{ margin: "0 0 8px 0", font: "600 14px 'DM Sans'", color: "#d6ded6" }}>No activities recorded yet</p>
+              <p style={{ margin: "0 0 8px 0", fontWeight: 600, fontSize: "14px", fontFamily: '"Manrope", sans-serif', color: "#d6ded6" }}>No activities recorded yet</p>
               <span style={{ fontSize: "12px" }}>Complete a workout or GPS session to generate activity breakdown telemetry.</span>
             </div>
           ) : (
@@ -264,7 +264,7 @@ export default function Profile() {
           <div className="profile-panel-head"><div><span className="panel-label">Input sources</span><h2>Device sync</h2></div><button onClick={() => setDeviceOpen(true)}><ArrowUpRight size={15} /> Manage</button></div>
           {devices.length === 0 ? (
             <div style={{ padding: "28px 16px", textAlign: "center", color: "#819084" }}>
-              <p style={{ margin: "0 0 6px 0", font: "600 13px 'DM Sans'", color: "#d6ded6" }}>No hardware devices connected</p>
+              <p style={{ margin: "0 0 6px 0", fontWeight: 600, fontSize: "13px", fontFamily: '"Manrope", sans-serif', color: "#d6ded6" }}>No hardware devices connected</p>
               <span style={{ fontSize: "11px" }}>Click Manage to pair a smartwatch, fitness band, or activity tracker.</span>
             </div>
           ) : (
