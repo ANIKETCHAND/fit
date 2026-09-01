@@ -1700,11 +1700,11 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 .dark .denom-label {
-  color: #2c3b4a !important;
+  color: #8a998c !important;
 }
 
 .dark .editorial-score-caption {
-  color: #2c3b4a !important;
+  color: #9ba99d !important;
 }
 
 .dark .readiness-orb-digit {
@@ -1713,7 +1713,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 .dark .readiness-orb-label {
-  color: #2c3b4a !important;
+  color: #8a998c !important;
 }
 
 .dark .editorial-card {
