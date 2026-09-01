@@ -67,10 +67,6 @@ export default function Home() {
               <span className="greeting-athlete">{userName}</span>
             </h1>
 
-            <p className="editorial-greeting-subtitle">
-              Your lower body is ready.
-            </p>
-
             <div className="editorial-action-row">
               <button
                 className="editorial-primary-btn"
