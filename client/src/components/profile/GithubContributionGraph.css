@@ -118,58 +118,58 @@
 
 /* FitTrack Theme SVG Colors */
 .gh-svg-cell.level-0 {
-  fill: #141c15;
-  stroke: rgba(226, 245, 225, 0.08);
+  fill: #131b14;
+  stroke: rgba(226, 245, 225, 0.09);
   stroke-width: 0.8px;
 }
 
 .gh-svg-cell.level-1 {
-  fill: #1f3d24;
-  stroke: rgba(198, 255, 61, 0.18);
-  stroke-width: 0.8px;
+  fill: #1f6d2b;
+  stroke: rgba(198, 255, 61, 0.4);
+  stroke-width: 0.9px;
 }
 
 .gh-svg-cell.level-2 {
-  fill: #387032;
-  stroke: rgba(198, 255, 61, 0.3);
-  stroke-width: 0.8px;
+  fill: #2ea043;
+  stroke: rgba(198, 255, 61, 0.55);
+  stroke-width: 0.9px;
 }
 
 .gh-svg-cell.level-3 {
-  fill: #6fb833;
-  stroke: rgba(198, 255, 61, 0.45);
-  stroke-width: 0.8px;
+  fill: #56b329;
+  stroke: rgba(198, 255, 61, 0.7);
+  stroke-width: 0.9px;
 }
 
 .gh-svg-cell.level-4 {
   fill: #c6ff3d;
-  filter: drop-shadow(0 0 4px rgba(198, 255, 61, 0.65));
+  filter: drop-shadow(0 0 5px rgba(198, 255, 61, 0.85));
 }
 
 .gh-legend-cell.level-0 {
-  background-color: #141c15;
-  border: 1px solid rgba(226, 245, 225, 0.07);
+  background-color: #131b14;
+  border: 1px solid rgba(226, 245, 225, 0.08);
 }
 
 .gh-legend-cell.level-1 {
-  background-color: #1f3d24;
-  border: 1px solid rgba(198, 255, 61, 0.18);
+  background-color: #1f6d2b;
+  border: 1px solid rgba(198, 255, 61, 0.4);
 }
 
 .gh-legend-cell.level-2 {
-  background-color: #387032;
-  border: 1px solid rgba(198, 255, 61, 0.3);
+  background-color: #2ea043;
+  border: 1px solid rgba(198, 255, 61, 0.55);
 }
 
 .gh-legend-cell.level-3 {
-  background-color: #6fb833;
-  border: 1px solid rgba(198, 255, 61, 0.45);
+  background-color: #56b329;
+  border: 1px solid rgba(198, 255, 61, 0.7);
 }
 
 .gh-cell.level-4,
 .gh-legend-cell.level-4 {
   background-color: #c6ff3d;
-  box-shadow: 0 0 8px rgba(198, 255, 61, 0.6);
+  box-shadow: 0 0 8px rgba(198, 255, 61, 0.75);
 }
 
 .gh-contribution-footer {

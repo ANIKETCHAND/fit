@@ -10,14 +10,31 @@ import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnec
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
-function getWorkoutLogs(): { completedAt: string; focus: string }[] {
-  try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]"); } catch { return []; }
+function getWorkoutLogs(): { completedAt?: string; date?: string; startedAt?: string; focus?: string }[] {
+  try {
+    const a = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]");
+    const b = JSON.parse(localStorage.getItem("fittrack_workout_logs") || "[]");
+    const c = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_history")) || "[]");
+    const d = JSON.parse(localStorage.getItem("fittrack_workout_history") || "[]");
+    const merged = [...a, ...b, ...c, ...d];
+    return Array.from(new Map(merged.map((m) => [JSON.stringify(m), m])).values());
+  } catch { return []; }
 }
-function getGpsSessions(): { startedAt: string; distanceMeters: number; durationSeconds: number }[] {
-  try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]"); } catch { return []; }
+function getGpsSessions(): { startedAt?: string; completedAt?: string; date?: string; distanceMeters?: number; durationSeconds?: number }[] {
+  try {
+    const a = JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]");
+    const b = JSON.parse(localStorage.getItem("fittrack_gps_sessions") || "[]");
+    const merged = [...a, ...b];
+    return Array.from(new Map(merged.map((m) => [JSON.stringify(m), m])).values());
+  } catch { return []; }
 }
-function getSessions(): { completedAt?: string; startedAt?: string; durationSeconds?: number }[] {
-  try { return JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]"); } catch { return []; }
+function getSessions(): { completedAt?: string; startedAt?: string; date?: string; durationSeconds?: number; category?: string; focus?: string }[] {
+  try {
+    const a = JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]");
+    const b = JSON.parse(localStorage.getItem("fittrack_sessions") || "[]");
+    const merged = [...a, ...b];
+    return Array.from(new Map(merged.map((m) => [JSON.stringify(m), m])).values());
+  } catch { return []; }
 }
 
 const rangeOptions = {

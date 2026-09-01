@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import "./GithubContributionGraph.css";
+import { getScopedKey } from "@/lib/user-store";
+import { trpc } from "@/lib/trpc";
 
 interface DayCell {
   date: string;
@@ -14,57 +16,170 @@ interface MonthMarker {
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-import { getScopedKey } from "@/lib/user-store";
+function parseDateKey(val: any): string | null {
+  if (val === null || val === undefined) return null;
+  try {
+    if (typeof val === "number") {
+      if (isNaN(val) || val <= 0) return null;
+      const ms = val < 1e11 ? val * 1000 : val;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+    }
+    if (val instanceof Date && !isNaN(val.getTime())) {
+      const y = val.getFullYear();
+      const m = String(val.getMonth() + 1).padStart(2, "0");
+      const day = String(val.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+    if (typeof val === "string") {
+      const clean = val.trim();
+      if (!clean) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+      if (clean.includes("T")) {
+        const p = clean.split("T")[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(p)) return p;
+      }
+      const d = new Date(clean);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+    }
+  } catch {}
+  return null;
+}
 
-function getRecordedActivities(): Map<string, number> {
+function extractActivityDates(
+  dbWorkouts?: any[],
+  dbGps?: any[],
+  dbNutrition?: any[],
+  dbMetrics?: any[]
+): Map<string, number> {
   const map = new Map<string, number>();
-  const addDate = (raw?: string) => {
-    if (!raw) return;
+
+  const registerDate = (raw: any) => {
+    const key = parseDateKey(raw);
+    if (key) {
+      map.set(key, (map.get(key) || 0) + 1);
+    }
+  };
+
+  const processItem = (item: any) => {
+    if (!item || typeof item !== "object") return;
+    const dateField =
+      item.completedAt ||
+      item.startedAt ||
+      item.createdAt ||
+      item.consumedAt ||
+      item.capturedAt ||
+      item.timestamp ||
+      item.timestampMs ||
+      item.date ||
+      item.time ||
+      item.lastCompletedDate;
+    if (dateField) {
+      registerDate(dateField);
+    }
+  };
+
+  const processArray = (arr: any) => {
+    if (Array.isArray(arr)) {
+      arr.forEach(processItem);
+    }
+  };
+
+  const processKey = (k: string) => {
     try {
-      const dateStr = raw.includes("T") ? raw.split("T")[0] : raw;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        map.set(dateStr, (map.get(dateStr) || 0) + 1);
+      const raw = localStorage.getItem(k);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(processItem);
+      } else if (parsed && typeof parsed === "object") {
+        processItem(parsed);
+        Object.values(parsed).forEach(processItem);
       }
     } catch {}
   };
 
+  // 1. Process all known activity keys (scoped & unscoped)
+  const knownKeys = [
+    "fittrack_workout_logs",
+    "fittrack_workout_history",
+    "fittrack_gps_sessions",
+    "fittrack_sessions",
+    "fittrack_logged_nutrition_today",
+    "fittrack_nutrition_logs",
+    "fittrack_food_logs",
+    "fittrack_custom_indian_foods",
+    "fittrack_metrics",
+    "fittrack_weight_logs",
+    "fittrack-daily-streak",
+    "fittrack_daily_streak",
+    "fittrack-streak-data",
+    "fittrack-exercise-progress",
+  ];
+
+  knownKeys.forEach((k) => {
+    processKey(k);
+    processKey(getScopedKey(k));
+  });
+
+  // 2. Scan entire localStorage for any fittrack activity keys
   try {
-    const workouts: any[] = JSON.parse(localStorage.getItem(getScopedKey("fittrack_workout_logs")) || "[]");
-    workouts.forEach((w) => addDate(w.completedAt || w.date || w.startedAt));
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith("fittrack_") || key.startsWith("fittrack-"))) {
+        processKey(key);
+      }
+    }
   } catch {}
-  try {
-    const gps: any[] = JSON.parse(localStorage.getItem(getScopedKey("fittrack_gps_sessions")) || "[]");
-    gps.forEach((g) => addDate(g.startedAt || g.completedAt || g.date));
-  } catch {}
-  try {
-    const sessions: any[] = JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]");
-    sessions.forEach((s) => addDate(s.completedAt || s.startedAt || s.date));
-  } catch {}
+
+  // 3. Process backend database queries
+  if (dbWorkouts) processArray(dbWorkouts);
+  if (dbGps) processArray(dbGps);
+  if (dbNutrition) processArray(dbNutrition);
+  if (dbMetrics) processArray(dbMetrics);
+
   return map;
 }
 
 export function GithubContributionGraph() {
   const currentYear = new Date().getFullYear();
 
+  const { data: dbWorkouts } = trpc.workouts.list.useQuery(undefined, { retry: false });
+  const { data: dbGps } = trpc.gps.list.useQuery(undefined, { retry: false });
+  const { data: dbNutrition } = trpc.nutrition.list.useQuery(undefined, { retry: false });
+  const { data: dbMetrics } = trpc.metrics.list.useQuery(undefined, { retry: false });
+
+  const activityMap = useMemo(() => {
+    return extractActivityDates(dbWorkouts, dbGps, dbNutrition, dbMetrics);
+  }, [dbWorkouts, dbGps, dbNutrition, dbMetrics]);
+
   // Dynamic available years based on user's logged activity
   const availableYears = useMemo(() => {
     const years = new Set<number>([currentYear]);
-    const activityMap = getRecordedActivities();
     activityMap.forEach((_, dateStr) => {
       const y = parseInt(dateStr.split("-")[0]);
-      if (!isNaN(y) && y >= 2020 && y <= currentYear) {
+      if (!isNaN(y) && y >= 2020 && y <= currentYear + 1) {
         years.add(y);
       }
     });
     return Array.from(years).sort((a, b) => b - a);
-  }, [currentYear]);
+  }, [activityMap, currentYear]);
 
   const [selectedYear, setSelectedYear] = useState<number>(availableYears[0] || currentYear);
   const [hoveredCell, setHoveredCell] = useState<{ date: string; count: number; x: number; y: number } | null>(null);
 
   // Compute 53 weeks dynamically for the selected year with month markers
   const { weeks, monthMarkers, totalCount } = useMemo(() => {
-    const activityMap = getRecordedActivities();
     const totalWeeks = 53;
     const grid: DayCell[][] = [];
     const markers: MonthMarker[] = [];
@@ -119,7 +234,7 @@ export function GithubContributionGraph() {
       grid.push(week);
     }
     return { weeks: grid, monthMarkers: markers, totalCount: sum };
-  }, [selectedYear]);
+  }, [activityMap, selectedYear]);
 
   const yearHeaderText = selectedYear === currentYear
     ? `${totalCount} contribution${totalCount === 1 ? "" : "s"} in the last year`
