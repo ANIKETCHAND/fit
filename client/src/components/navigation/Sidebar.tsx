@@ -2,7 +2,6 @@ import {
   Activity,
   Award,
   Bell,
-  CalendarDays,
   ChartNoAxesCombined,
   CircleHelp,
   Dumbbell,
@@ -144,14 +143,6 @@ export function Sidebar() {
             <span className="nav-label-text">Notifications</span>
           </button>
 
-          <button
-            className="editorial-nav-item sub-item"
-            onClick={() => route("/profile")}
-            title="Contribution Ledger"
-          >
-            <CalendarDays size={15} />
-            <span className="nav-label-text">Contributions</span>
-          </button>
 
           <button
             className="editorial-nav-item sub-item"
