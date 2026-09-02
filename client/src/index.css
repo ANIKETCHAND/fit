@@ -423,7 +423,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: #1a2530 !important;
+  color: #1a2530;
   text-transform: uppercase;
   margin-bottom: 24px;
 }
@@ -435,16 +435,16 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   line-height: 1.02;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #060b11 !important;
+  color: #060b11;
   margin: 0 0 28px;
 }
 
 .editorial-greeting-title span {
-  color: #060b11 !important;
+  color: #060b11;
 }
 
 .editorial-greeting-title .greeting-athlete {
-  color: #060b11 !important;
+  color: #060b11;
 }
 
 .editorial-greeting-subtitle {
@@ -452,7 +452,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-style: italic;
   font-size: 20px;
   font-weight: 600;
-  color: #1a2530 !important;
+  color: #1a2530;
   margin: 0 0 32px;
 }
 
@@ -465,10 +465,10 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 .editorial-primary-btn {
-  background-color: #060b11 !important;
-  color: #ffffff !important;
+  background-color: #060b11;
+  color: #ffffff;
   padding: 14px 24px;
-  border-radius: 3px;
+  border-radius: 6px;
   font-family: "Space Mono", monospace;
   font-size: 12px;
   font-weight: 700;
@@ -492,7 +492,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Manrope", sans-serif;
   font-size: 13.5px;
   font-weight: 700;
-  color: #060b11 !important;
+  color: #060b11;
   background: none;
   border: none;
   padding: 0;
@@ -525,7 +525,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Chakra Petch", sans-serif;
   font-size: 56px;
   font-weight: 800;
-  color: #1b4332 !important;
+  color: #1b4332;
   line-height: 0.9;
 }
 
@@ -539,7 +539,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Space Mono", monospace;
   font-size: 13px;
   font-weight: 800;
-  color: #060b11 !important;
+  color: #060b11;
 }
 
 .denom-label {
@@ -547,17 +547,67 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.14em;
-  color: #2c3b4a !important;
+  color: #2c3b4a;
   text-transform: uppercase;
 }
 
 .editorial-score-caption {
   font-family: "Manrope", sans-serif;
   font-size: 12px;
-  color: #1a2530 !important;
+  color: #1a2530;
   max-width: 250px;
   line-height: 1.45;
   margin: 0;
+}
+
+/* ─── DARK MODE HERO & SCORE TYPOGRAPHY ─── */
+.dark .editorial-timestamp {
+  color: #8a998c !important;
+}
+
+.dark .editorial-greeting-title {
+  color: #ffffff !important;
+}
+
+.dark .editorial-greeting-title span {
+  color: #ffffff !important;
+}
+
+.dark .editorial-greeting-title .greeting-athlete {
+  color: #baff57 !important;
+  text-shadow: 0 0 24px rgba(186, 255, 87, 0.45) !important;
+}
+
+.dark .editorial-greeting-subtitle {
+  color: #94a3b8 !important;
+}
+
+.dark .editorial-primary-btn {
+  background-color: #baff57 !important;
+  color: #070d0a !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 24px rgba(186, 255, 87, 0.4) !important;
+}
+
+.dark .editorial-secondary-link {
+  color: #ffffff !important;
+}
+
+.dark .editorial-score-block {
+  border-top-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .score-number {
+  color: #baff57 !important;
+  text-shadow: 0 0 28px rgba(186, 255, 87, 0.5) !important;
+}
+
+.dark .denom-val {
+  color: #ffffff !important;
+}
+
+.dark .denom-label {
+  color: #8a998c !important;
 }
 
 .editorial-hero-right {
