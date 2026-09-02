@@ -122,8 +122,8 @@ Ask me **anything** using text or the 🎙️ **Voice Command** button!`,
     };
   }, []);
 
-  // Initialize Speech Recognition
-  const toggleVoiceRecognition = () => {
+  // Initialize Speech Recognition with explicit permission handling
+  const toggleVoiceRecognition = async () => {
     if (typeof window === "undefined") return;
 
     const SpeechRecognition =
@@ -142,6 +142,20 @@ Ask me **anything** using text or the 🎙️ **Voice Command** button!`,
       }
       setIsListening(false);
       return;
+    }
+
+    // Explicitly prompt for microphone permission if needed
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Release audio stream immediately so SpeechRecognition can use it
+        stream.getTracks().forEach((track) => track.stop());
+      } catch (err: any) {
+        toast.error("Microphone access was blocked. Please click the 🔒 lock icon in your browser URL bar to allow Microphone permission.", {
+          duration: 5000,
+        });
+        return;
+      }
     }
 
     try {
@@ -173,8 +187,14 @@ Ask me **anything** using text or the 🎙️ **Voice Command** button!`,
 
       recognition.onerror = (event: any) => {
         setIsListening(false);
-        if (event.error !== "no-speech") {
-          toast.error(`Voice input error: ${event.error}`);
+        if (event.error === "not-allowed" || event.error === "permission-denied") {
+          toast.error("Microphone access blocked. Click the 🔒 lock icon in your browser URL bar and allow Microphone.", {
+            duration: 5000,
+          });
+        } else if (event.error === "no-speech") {
+          toast.info("No speech detected. Tap the mic again when ready.");
+        } else if (event.error !== "aborted") {
+          toast.error(`Voice error: ${event.error}`);
         }
       };
 
@@ -186,7 +206,7 @@ Ask me **anything** using text or the 🎙️ **Voice Command** button!`,
       recognition.start();
     } catch (err: any) {
       setIsListening(false);
-      toast.error("Could not activate microphone access.");
+      toast.error("Click the 🔒 lock icon next to the URL to enable microphone access.");
     }
   };
 
