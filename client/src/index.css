@@ -1017,18 +1017,24 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 .editorial-sidebar {
-  width: 230px;
-  flex-shrink: 0;
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 250px;
   padding: 40px 28px 32px 36px;
   display: flex;
   flex-direction: column;
   background-color: #f5f2eb !important;
   border-right: 1px solid rgba(20, 36, 54, 0.08) !important;
   min-height: 100vh;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  height: 100vh;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.12);
+}
+
+.editorial-sidebar.open {
+  transform: translateX(0);
 }
 
 .editorial-brand-row {
@@ -1108,10 +1114,10 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   position: fixed;
   top: 18px;
   left: 18px;
-  z-index: 90;
+  z-index: 900;
   width: 40px;
   height: 40px;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
@@ -1120,6 +1126,12 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   color: #060b11;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: all 0.16s ease;
+}
+
+.editorial-sidebar-trigger:hover {
+  background: #f0ede4;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.14);
 }
 
 /* Main Content Area */
@@ -1570,30 +1582,18 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 @media (max-width: 860px) {
-  .editorial-sidebar-trigger {
-    display: flex;
-  }
-  .editorial-sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    width: 270px;
-    background: #ffffff;
-    box-shadow: 20px 0 60px rgba(0,0,0,0.12);
-    transform: translateX(-100%);
-  }
-  .editorial-sidebar.open {
-    transform: translateX(0);
-  }
   .editorial-main-content {
     padding: 24px 18px 48px;
   }
-  .editorial-scrim {
-    position: fixed;
-    inset: 0;
-    background: rgba(20, 36, 54, 0.4);
-    backdrop-filter: blur(4px);
-    z-index: 45;
-  }
+}
+
+/* Scrim works at all screen sizes */
+.editorial-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 36, 54, 0.35);
+  backdrop-filter: blur(2px);
+  z-index: 999;
 }
 
 /* ─── DARK MODE EDITORIAL DASHBOARD & APP STYLES ─── */

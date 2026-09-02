@@ -181,10 +181,10 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile Scrim */}
+      {/* Backdrop Scrim — closes sidebar on outside click */}
       {open && (
         <div
-          className="editorial-scrim md:hidden"
+          className="editorial-scrim"
           onClick={() => setSidebarOpen(false)}
           aria-label="Close overlay"
         />
