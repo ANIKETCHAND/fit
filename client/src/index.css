@@ -261,6 +261,22 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 @media (max-width:800px) { .daily-streak-card { padding:14px; }.streak-console { padding:18px; }.streak-console h2 { font-size:45px; } }
 @media (prefers-reduced-motion:reduce) { .streak-pixel-fire i,.hero-pixel-fire i,.streak-embers i,.streak-console { animation:none!important; }.streak-embers { display:none; } }
 .daily-streak-card.active .streak-readout strong { color:#c6ff3d; text-shadow:0 0 16px rgba(198,255,61,.22); }.daily-streak-card.inactive { background:linear-gradient(138deg,rgba(20,24,21,.96),rgba(13,17,14,.96)); border-color:rgba(226,245,225,.13); box-shadow:inset 3px 0 0 rgba(140,153,143,.35),0 14px 34px rgba(0,0,0,.13); }.daily-streak-card.inactive .streak-pixel-fire { opacity:.24; filter:grayscale(.7); }.daily-streak-card.inactive .streak-readout strong { color:#808b81; }
+
+/* ─── COMPREHENSIVE LIGHT EDITORIAL OVERRIDES FOR ALL WORKFLOW PAGES ─── */
+:root:not(.dark) {
+  --background: #f5f2eb !important;
+  --foreground: #060b11 !important;
+  --card: #ffffff !important;
+  --card-foreground: #060b11 !important;
+  --popover: #ffffff !important;
+  --popover-foreground: #060b11 !important;
+  --sidebar: #f5f2eb !important;
+  --sidebar-foreground: #060b11 !important;
+}
+
+:root:not(.dark) body,
+:root:not(.dark) .app-shell,
+:root:not(.dark) .editorial-app-shell,
 :root:not(.dark) .workflow-main {
   background-color: #f5f2eb !important;
   color: #060b11 !important;
@@ -269,21 +285,750 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 /* Consistent light sidebar on all routes */
 :root:not(.dark) .sidebar,
 :root:not(.dark) .editorial-sidebar {
-  position: fixed !important;
-  inset: 0 auto 0 0 !important;
-  width: 260px !important;
-  max-width: 85vw !important;
-  padding: 32px 24px 28px 28px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  background: #080f0b;
-  border-right: 1px solid rgba(186, 255, 87, 0.2);
-  min-height: 100vh !important;
-  height: 100vh !important;
-  z-index: 1000 !important;
-  transform: translateX(-100%);
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  box-shadow: 16px 0 50px rgba(0, 0, 0, 0.6);
+  background: #f5f2eb !important;
+  background-color: #f5f2eb !important;
+  border-right: 1px solid rgba(20, 36, 54, 0.08) !important;
+  color: #060b11 !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) .brand-row strong,
+:root:not(.dark) .editorial-wordmark {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .nav-item,
+:root:not(.dark) .editorial-nav-item {
+  color: #647566 !important;
+}
+
+:root:not(.dark) .nav-item:hover,
+:root:not(.dark) .editorial-nav-item:hover {
+  color: #060b11 !important;
+  background: rgba(20, 36, 54, 0.04) !important;
+}
+
+:root:not(.dark) .nav-item.active,
+:root:not(.dark) .editorial-nav-item.active {
+  color: #060b11 !important;
+  font-weight: 700 !important;
+  background: none !important;
+}
+
+:root:not(.dark) .nav-item.active::before,
+:root:not(.dark) .active-indicator {
+  background: #1d4ed8 !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) .nav-item.active i {
+  background: #1d4ed8 !important;
+}
+
+/* 1. WORKOUTS & EXERCISE LIBRARY (/exercise-library) */
+:root:not(.dark) .exercise-card,
+:root:not(.dark) .exercise-card.exercise-card--compact,
+:root:not(.dark) .exercise-card-face,
+:root:not(.dark) .exercise-card-front,
+:root:not(.dark) .exercise-card-back,
+:root:not(.dark) .exercise-coaching-panel {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(20, 36, 54, 0.04) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .exercise-preference-row {
+  background: #faf8f4 !important;
+  border-bottom: 1px solid rgba(20, 36, 54, 0.06) !important;
+}
+
+:root:not(.dark) .exercise-preference-row button {
+  background: #faf8f4 !important;
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .exercise-preference-row button:hover {
+  background: #f0ede5 !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .exercise-card-copy h2 {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .exercise-prescription {
+  border-top: 1px solid rgba(20, 36, 54, 0.07) !important;
+  border-bottom: 1px solid rgba(20, 36, 54, 0.07) !important;
+}
+
+:root:not(.dark) .exercise-prescription small {
+  color: #2c3b4a !important;
+}
+
+:root:not(.dark) .exercise-prescription b {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .exercise-prescription input {
+  color: #060b11 !important;
+  border-bottom: 1px solid rgba(20, 36, 54, 0.25) !important;
+  background: transparent !important;
+}
+
+:root:not(.dark) .exercise-prescription input:focus {
+  border-color: #1d4ed8 !important;
+}
+
+:root:not(.dark) .card-video-banner-btn {
+  background: #060b11 !important;
+  color: #ffffff !important;
+  border: 1px solid #060b11 !important;
+  box-shadow: 0 2px 10px rgba(20, 36, 54, 0.15) !important;
+}
+
+:root:not(.dark) .card-video-banner-btn:hover {
+  background: #1e3750 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(20, 36, 54, 0.25) !important;
+}
+
+:root:not(.dark) .video-play-pulse-icon {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+:root:not(.dark) .coaching-toggle {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .coaching-toggle:hover {
+  color: #1d4ed8 !important;
+}
+
+:root:not(.dark) .coaching-copy b,
+:root:not(.dark) .coaching-copy strong {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .coaching-copy p {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .exercise-card-actions {
+  border-top: 1px solid rgba(20, 36, 54, 0.07) !important;
+  background: #faf8f4 !important;
+}
+
+:root:not(.dark) .exercise-completion {
+  border-right: 1px solid rgba(20, 36, 54, 0.07) !important;
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .exercise-completion label {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .exercise-card--compact.is-complete .exercise-completion label {
+  color: #4b7e56 !important;
+}
+
+:root:not(.dark) .exercise-completion [data-slot="checkbox"] {
+  border-color: rgba(20, 36, 54, 0.3) !important;
+  background: #ffffff !important;
+}
+
+:root:not(.dark) .stage-movement {
+  background: #faf8f4 !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .stage-movement:hover {
+  background: #ece8df !important;
+}
+
+/* 2. SEARCH BARS & CONTROLS */
+:root:not(.dark) .search-field,
+:root:not(.dark) .search-field input,
+:root:not(.dark) .exercise-search-box,
+:root:not(.dark) .workflow-search-field,
+:root:not(.dark) input[type="text"],
+:root:not(.dark) input[type="search"],
+:root:not(.dark) input[type="number"] {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .segment-control,
+:root:not(.dark) .topic-tabs {
+  background: #ece8df !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+}
+
+:root:not(.dark) .segment-control button,
+:root:not(.dark) .topic-tabs button {
+  background: transparent !important;
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .segment-control button.active,
+:root:not(.dark) .topic-tabs button.selected {
+  background: #ffffff !important;
+  color: #060b11 !important;
+  box-shadow: 0 2px 8px rgba(20, 36, 54, 0.08) !important;
+}
+
+/* 3. NUTRITION & FOOD LOGGING (/log-food) */
+:root:not(.dark) .food-catalog-bay,
+:root:not(.dark) .food-staging-bay,
+:root:not(.dark) .food-option,
+:root:not(.dark) .nutrition-macro-panel,
+:root:not(.dark) .macro-stack > div,
+:root:not(.dark) .summary-note {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .food-option b,
+:root:not(.dark) .macro-stack b {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .food-option small,
+:root:not(.dark) .summary-note span {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .commit-button,
+:root:not(.dark) .add-food-btn {
+  background: #060b11 !important;
+  color: #ffffff !important;
+}
+
+/* 4. PROGRESS & WEIGHT LOGGING (/log-weight) */
+:root:not(.dark) .weight-log-card,
+:root:not(.dark) .weight-history-panel,
+:root:not(.dark) .weight-chart-container,
+:root:not(.dark) .weight-table-row {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .weight-table-row strong {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .weight-table-row span {
+  color: #1a2530 !important;
+}
+
+/* 5. GPS TRACE (/gps) */
+:root:not(.dark) .gps-route-stage,
+:root:not(.dark) .gps-control-bay,
+:root:not(.dark) .gps-history-section,
+:root:not(.dark) .gps-history-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(20, 36, 54, 0.04) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .gps-map-head {
+  border-bottom: 1px solid rgba(20, 36, 54, 0.06) !important;
+}
+
+:root:not(.dark) .gps-map-head b,
+:root:not(.dark) .gps-control-heading b,
+:root:not(.dark) .gps-metrics-strip b,
+:root:not(.dark) .gps-history-title h2,
+:root:not(.dark) .gps-history-select b {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .gps-metrics-strip {
+  border-top: 1px solid rgba(20, 36, 54, 0.06) !important;
+}
+
+:root:not(.dark) .gps-metrics-strip > div {
+  border-right: 1px solid rgba(20, 36, 54, 0.06) !important;
+}
+
+:root:not(.dark) .gps-metrics-strip span,
+:root:not(.dark) .gps-control-bay > p,
+:root:not(.dark) .gps-history-select small,
+:root:not(.dark) .gps-history-select div > span {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .gps-primary-control {
+  background: #060b11 !important;
+  color: #ffffff !important;
+  border: 1px solid #060b11 !important;
+}
+
+:root:not(.dark) .gps-primary-control:hover {
+  background: #1e3750 !important;
+}
+
+:root:not(.dark) .gps-map-frame {
+  background: #f0ece3 !important;
+}
+
+/* 6. ACHIEVEMENTS (/achievements) */
+:root:not(.dark) .achievement-entry,
+:root:not(.dark) .achievement-badge,
+:root:not(.dark) .badge-copy,
+:root:not(.dark) .milestone-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(20, 36, 54, 0.04) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .achievement-entry h3,
+:root:not(.dark) .badge-topline span,
+:root:not(.dark) .badge-copy p {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .achievement-entry p,
+:root:not(.dark) .badge-copy span,
+:root:not(.dark) .badge-progress small {
+  color: #1a2530 !important;
+}
+
+/* 7. 3D BODY MAP (/body-map) */
+:root:not(.dark) .muscle-panel,
+:root:not(.dark) .diagnostic-column {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(20, 36, 54, 0.04) !important;
+}
+
+:root:not(.dark) .muscle-heading h2 {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .training-meta > div {
+  background: #faf8f4 !important;
+  border-left-color: #4b7e56 !important;
+}
+
+:root:not(.dark) .training-meta strong {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .training-meta span {
+  color: #1a2530 !important;
+}
+
+/* 8. PROFILE & CONTRIBUTION LEDGER (/profile) */
+:root:not(.dark) .profile-heading h1,
+:root:not(.dark) .profile-panel h2,
+:root:not(.dark) .profile-metric strong {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .profile-panel,
+:root:not(.dark) .profile-metric {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(20, 36, 54, 0.04) !important;
+}
+
+:root:not(.dark) .gh-contribution-box {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(20, 36, 54, 0.04) !important;
+}
+
+:root:not(.dark) .gh-contribution-title {
+  color: #060b11 !important;
+}
+
+/* 9. SETTINGS & BIOMETRIC CALIBRATION (/settings) */
+:root:not(.dark) .settings-command,
+:root:not(.dark) .support-knowledge,
+:root:not(.dark) .rail-panel {
+  background: #ffffff !important;
+  border-color: rgba(20, 36, 54, 0.08) !important;
+  box-shadow: 0 4px 24px rgba(20, 36, 54, 0.04) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .command-deck-head h2,
+:root:not(.dark) .support-deck-head h2 {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .command-deck-head p,
+:root:not(.dark) .deck-kicker {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .section-marker {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .section-marker svg {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .section-marker span {
+  color: #2c3b4a !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .section-marker b {
+  color: #060b11 !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+:root:not(.dark) .deck-field > span {
+  color: #1a2530 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.09em !important;
+}
+
+:root:not(.dark) .deck-field em {
+  color: #2c3b4a !important;
+}
+
+:root:not(.dark) .deck-field input {
+  background: #f8f6f0 !important;
+  border-color: rgba(20, 36, 54, 0.12) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .deck-field input:focus {
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+}
+
+:root:not(.dark) .sex-control > span {
+  color: #1a2530 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .sex-control > div {
+  background: #ece8df !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+}
+
+:root:not(.dark) .sex-control button {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .sex-control button.selected {
+  color: #ffffff !important;
+  background: #060b11 !important;
+}
+
+:root:not(.dark) .tier-choice-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(20, 36, 54, 0.03) !important;
+}
+
+:root:not(.dark) .tier-choice-card:hover {
+  border-color: rgba(20, 36, 54, 0.22) !important;
+  background: #faf8f4 !important;
+}
+
+:root:not(.dark) .tier-choice-card.selected {
+  background: #eef5ee !important;
+  border-color: #4b7e56 !important;
+  box-shadow: 0 0 0 1.5px #4b7e56 !important;
+}
+
+:root:not(.dark) .tier-icon-wrapper {
+  background: rgba(20, 36, 54, 0.06) !important;
+}
+
+:root:not(.dark) .tier-card-title {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .tier-card-desc {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .activity-choice {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(20, 36, 54, 0.03) !important;
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .activity-choice span {
+  color: #2c3b4a !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .activity-choice b {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .activity-choice small {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .activity-choice.selected {
+  background: #eef6ed !important;
+  border-color: #4b7e56 !important;
+  box-shadow: 0 0 0 1.5px #4b7e56 !important;
+}
+
+:root:not(.dark) .activity-choice.selected > i {
+  background: #4b7e56 !important;
+}
+
+:root:not(.dark) .recalculate-button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .recalculate-button:hover {
+  background: #f0ede5 !important;
+  color: #1d4ed8 !important;
+}
+
+:root:not(.dark) .rail-head {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .rail-head span {
+  color: #060b11 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .rail-head small {
+  color: #2c3b4a !important;
+}
+
+:root:not(.dark) .metabolism-readout {
+  background: rgba(20, 36, 54, 0.08) !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+}
+
+:root:not(.dark) .metabolism-readout > div {
+  background: #ffffff !important;
+}
+
+:root:not(.dark) .metabolism-readout span {
+  color: #2c3b4a !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .metabolism-readout strong {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .metabolism-readout em {
+  color: #4b7e56 !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .metabolism-panel > p {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .target-readout {
+  border-top: 1px solid rgba(20, 36, 54, 0.07) !important;
+}
+
+:root:not(.dark) .target-readout span {
+  color: #060b11 !important;
+  font-weight: 600 !important;
+}
+
+:root:not(.dark) .target-readout b {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .target-readout b small {
+  color: #2c3b4a !important;
+  font-weight: 700 !important;
+}
+
+:root:not(.dark) .rail-note,
+:root:not(.dark) .support-privacy-note {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.08) !important;
+  border-left: 3px solid #4b7e56 !important;
+  box-shadow: 0 4px 16px rgba(20, 36, 54, 0.03) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .rail-note b,
+:root:not(.dark) .support-privacy-note b {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .rail-note p,
+:root:not(.dark) .support-privacy-note p {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .rail-note svg,
+:root:not(.dark) .support-privacy-note svg {
+  color: #4b7e56 !important;
+}
+
+:root:not(.dark) .settings-actions {
+  background: #faf8f4 !important;
+  border-top: 1px solid rgba(20, 36, 54, 0.08) !important;
+}
+
+:root:not(.dark) .reset-calibration {
+  background: #ffffff !important;
+  color: #060b11 !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+}
+
+:root:not(.dark) .save-calibration {
+  background: #060b11 !important;
+  color: #ffffff !important;
+  border-color: #060b11 !important;
+}
+
+:root:not(.dark) .workflow-topbar .back-button {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .workflow-topbar .back-button:hover {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .workflow-topbar .workflow-brand strong {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .workflow-topbar .workflow-brand span {
+  color: #4b7e56 !important;
+}
+
+:root:not(.dark) .workflow-topbar .brand-logo-icon {
+  background: #060b11 !important;
+  color: #ffffff !important;
+}
+
+:root:not(.dark) .workflow-status span {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .workflow-status .icon-button,
+:root:not(.dark) .workflow-status .avatar-button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #060b11 !important;
+}
+
+/* 10. WORKFLOW HEADINGS & TOOLBARS ACROSS ALL PAGES */
+:root:not(.dark) .workflow-intro,
+:root:not(.dark) .workflow-intro h1 {
+  color: #060b11 !important;
+  font-weight: 800 !important;
+}
+
+:root:not(.dark) .workflow-intro h1::first-letter {
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .workflow-intro .eyebrow {
+  color: #4b7e56 !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+}
+
+:root:not(.dark) .workflow-intro p {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .library-toolbar,
+:root:not(.dark) .library-search {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  box-shadow: 0 2px 10px rgba(20, 36, 54, 0.04) !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .library-search input {
+  color: #060b11 !important;
+  background: transparent !important;
+}
+
+:root:not(.dark) .library-search input::placeholder {
+  color: #2c3b4a !important;
+}
+
+:root:not(.dark) .library-search svg {
+  color: #1a2530 !important;
+}
+
+:root:not(.dark) .library-filters button {
+  background: #ffffff !important;
+  border: 1px solid rgba(20, 36, 54, 0.12) !important;
+  color: #1a2530 !important;
+  box-shadow: 0 2px 8px rgba(20, 36, 54, 0.03) !important;
+}
+
+:root:not(.dark) .library-filters button:hover {
+  background: #faf8f4 !important;
+  color: #060b11 !important;
+}
+
+:root:not(.dark) .library-filters button.selected {
+  background: #060b11 !important;
+  border-color: #060b11 !important;
+  color: #ffffff !important;
+}
+
+:root:not(.dark) h1,
+:root:not(.dark) h2,
+:root:not(.dark) h3,
+:root:not(.dark) h4,
+:root:not(.dark) h5,
+:root:not(.dark) h6,
+:root:not(.dark) .page-title,
+:root:not(.dark) .section-title,
+:root:not(.dark) .panel-title,
+:root:not(.dark) .heading-title,
+:root:not(.dark) .stage-title,
+:root:not(.dark) .deck-heading,
+:root:not(.dark) .summary-title {
+  color: #060b11 !important;
+}
+
+.editorial-app-shell {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  background-color: #f5f2eb !important;
+  color: #060b11 !important;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.editorial-sidebar {
+  width: 230px;
+  flex-shrink: 0;
+  padding: 40px 28px 32px 36px;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f2eb !important;
+  border-right: 1px solid rgba(20, 36, 54, 0.08) !important;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .editorial-brand-row {
@@ -407,7 +1152,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
-  color: #1a2530;
+  color: #1a2530 !important;
   text-transform: uppercase;
   margin-bottom: 24px;
 }
@@ -419,17 +1164,16 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   line-height: 1.02;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #ffffff !important;
+  color: #060b11 !important;
   margin: 0 0 28px;
 }
 
 .editorial-greeting-title span {
-  color: #ffffff !important;
+  color: #060b11 !important;
 }
 
 .editorial-greeting-title .greeting-athlete {
-  color: #baff57 !important;
-  text-shadow: 0 0 24px rgba(186, 255, 87, 0.45) !important;
+  color: #060b11 !important;
 }
 
 .editorial-greeting-subtitle {
@@ -437,7 +1181,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-style: italic;
   font-size: 20px;
   font-weight: 600;
-  color: #1a2530;
+  color: #1a2530 !important;
   margin: 0 0 32px;
 }
 
@@ -450,10 +1194,10 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 .editorial-primary-btn {
-  background-color: #060b11;
-  color: #ffffff;
+  background-color: #060b11 !important;
+  color: #ffffff !important;
   padding: 14px 24px;
-  border-radius: 6px;
+  border-radius: 3px;
   font-family: "Space Mono", monospace;
   font-size: 12px;
   font-weight: 700;
@@ -477,7 +1221,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Manrope", sans-serif;
   font-size: 13.5px;
   font-weight: 700;
-  color: #060b11;
+  color: #060b11 !important;
   background: none;
   border: none;
   padding: 0;
@@ -510,8 +1254,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Chakra Petch", sans-serif;
   font-size: 56px;
   font-weight: 800;
-  color: #baff57 !important;
-  text-shadow: 0 0 28px rgba(186, 255, 87, 0.5) !important;
+  color: #1b4332 !important;
   line-height: 0.9;
 }
 
@@ -525,7 +1268,7 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Space Mono", monospace;
   font-size: 13px;
   font-weight: 800;
-  color: #060b11;
+  color: #060b11 !important;
 }
 
 .denom-label {
@@ -533,67 +1276,17 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.14em;
-  color: #2c3b4a;
+  color: #2c3b4a !important;
   text-transform: uppercase;
 }
 
 .editorial-score-caption {
   font-family: "Manrope", sans-serif;
   font-size: 12px;
-  color: #1a2530;
+  color: #1a2530 !important;
   max-width: 250px;
   line-height: 1.45;
   margin: 0;
-}
-
-/* ─── DARK MODE HERO & SCORE TYPOGRAPHY ─── */
-.dark .editorial-timestamp {
-  color: #8a998c !important;
-}
-
-.dark .editorial-greeting-title {
-  color: #ffffff !important;
-}
-
-.dark .editorial-greeting-title span {
-  color: #ffffff !important;
-}
-
-.dark .editorial-greeting-title .greeting-athlete {
-  color: #baff57 !important;
-  text-shadow: 0 0 24px rgba(186, 255, 87, 0.45) !important;
-}
-
-.dark .editorial-greeting-subtitle {
-  color: #94a3b8 !important;
-}
-
-.dark .editorial-primary-btn {
-  background-color: #baff57 !important;
-  color: #070d0a !important;
-  font-weight: 800 !important;
-  box-shadow: 0 0 24px rgba(186, 255, 87, 0.4) !important;
-}
-
-.dark .editorial-secondary-link {
-  color: #ffffff !important;
-}
-
-.dark .editorial-score-block {
-  border-top-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-.dark .score-number {
-  color: #baff57 !important;
-  text-shadow: 0 0 28px rgba(186, 255, 87, 0.5) !important;
-}
-
-.dark .denom-val {
-  color: #ffffff !important;
-}
-
-.dark .denom-label {
-  color: #8a998c !important;
 }
 
 .editorial-hero-right {
@@ -895,17 +1588,12 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
     padding: 24px 18px 48px;
   }
   .editorial-scrim {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background: rgba(0, 0, 0, 0.65) !important;
-  backdrop-filter: blur(4px) !important;
-  z-index: 995 !important;
-  cursor: pointer !important;
-  pointer-events: auto !important;
-  animation: scrimFade 0.2s ease-out forwards;
-}
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 36, 54, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 45;
+  }
 }
 
 /* ─── DARK MODE EDITORIAL DASHBOARD & APP STYLES ─── */
@@ -915,9 +1603,9 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 }
 
 .dark .editorial-sidebar {
-  background-color: rgba(10, 15, 12, 0.95) !important;
-  backdrop-filter: blur(20px) !important;
-  border-right: 1px solid rgba(186, 255, 87, 0.2) !important;
+  background-color: rgba(12, 16, 13, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border-right: 1px solid rgba(226, 245, 226, 0.09) !important;
   color: #f0f3ef !important;
 }
 

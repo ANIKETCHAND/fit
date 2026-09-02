@@ -1,11 +1,19 @@
 import {
+  Activity,
+  Award,
   Bell,
   CalendarDays,
+  ChartNoAxesCombined,
   CircleHelp,
+  Dumbbell,
   LogOut,
+  MapPinned,
   Moon,
   MoreVertical,
+  Settings,
   Sun,
+  UserRound,
+  Utensils,
   X,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -36,35 +44,22 @@ export function Sidebar() {
     return location === path;
   };
 
-  // Close sidebar on ESC key or any outside click
   useEffect(() => {
     if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSidebarOpen(false);
-      }
-    };
-
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      const target = e.target as HTMLElement;
       if (
         sidebarRef.current &&
-        !sidebarRef.current.contains(target) &&
-        !target.closest(".editorial-sidebar-trigger")
+        !sidebarRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement)?.closest(".editorial-sidebar-trigger")
       ) {
         setSidebarOpen(false);
       }
     };
-
-    document.addEventListener("mousedown", handleClickOutside, true);
-    document.addEventListener("touchstart", handleClickOutside, true);
-    window.addEventListener("keydown", handleKeyDown);
-
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside, true);
-      document.removeEventListener("touchstart", handleClickOutside, true);
-      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [open, setSidebarOpen]);
 
@@ -73,268 +68,102 @@ export function Sidebar() {
     setSidebarOpen(false);
   };
 
-  const isDark = theme === "dark";
-
   return (
     <>
-      {/* 3-Dots Top Left Menu Toggle Button (Visible ONLY when sidebar is closed) */}
-      {!open && (
-        <button
-          className="editorial-sidebar-trigger"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleSidebar();
-          }}
-          aria-label="Open navigation menu"
-          title="Menu (Open Sidebar)"
-          style={{
-            position: "fixed",
-            top: "18px",
-            left: "18px",
-            zIndex: 90,
-            width: "38px",
-            height: "38px",
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            border: isDark ? "1px solid rgba(186, 255, 87, 0.4)" : "1px solid rgba(20, 36, 54, 0.15)",
-            backgroundColor: isDark ? "#0d1410" : "#ffffff",
-            color: isDark ? "#baff57" : "#060b11",
-            boxShadow: isDark ? "0 4px 16px rgba(0, 0, 0, 0.4)" : "0 2px 10px rgba(0, 0, 0, 0.08)",
-            transition: "all 0.18s ease",
-          }}
-        >
-          <MoreVertical size={20} />
-        </button>
-      )}
+      {/* Mobile Toggle Button */}
+      <button
+        className="editorial-sidebar-trigger"
+        onClick={toggleSidebar}
+        aria-label="Toggle navigation menu"
+        title="Menu"
+      >
+        <MoreVertical size={20} />
+      </button>
 
-      {/* Editorial Navigation Drawer */}
+      {/* Editorial Navigation Rail */}
       <aside
         ref={sidebarRef}
         className={`editorial-sidebar ${open ? "open" : ""}`}
         aria-hidden={!open}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: "260px",
-          maxWidth: "85vw",
-          height: "100vh",
-          zIndex: 100,
-          transform: open ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)",
-          boxShadow: open
-            ? (isDark ? "20px 0 60px rgba(0, 0, 0, 0.7)" : "20px 0 50px rgba(20, 36, 54, 0.15)")
-            : "none",
-          backgroundColor: isDark ? "#0b120e" : "#ffffff",
-          borderRight: isDark ? "1px solid rgba(186, 255, 87, 0.2)" : "1px solid rgba(20, 36, 54, 0.08)",
-          padding: "24px 20px 24px 24px",
-          display: "flex",
-          flexDirection: "column",
-        }}
       >
-        {/* Brand Header with Close Button */}
+        {/* Brand Header */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "28px",
-            paddingBottom: "12px",
-            borderBottom: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(20, 36, 54, 0.06)",
-          }}
+          className="editorial-brand-row"
+          onClick={() => route("/overview")}
+          title="FitTrack Performance"
         >
-          <div
-            onClick={() => route("/overview")}
-            title="FitTrack Performance"
-            style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
-          >
-            <span
-              style={{
-                fontFamily: '"Chakra Petch", sans-serif',
-                fontSize: "17px",
-                fontWeight: 800,
-                letterSpacing: "0.22em",
-                color: isDark ? "#ffffff" : "#060b11",
-                textTransform: "uppercase",
+          <span className="editorial-wordmark">FITTRACK</span>
+          {open && (
+            <button
+              className="editorial-close-mobile md:hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSidebarOpen(false);
               }}
+              aria-label="Close menu"
             >
-              FITTRACK
-            </span>
-          </div>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setSidebarOpen(false);
-            }}
-            aria-label="Close sidebar"
-            title="Close sidebar"
-            style={{
-              background: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(20, 36, 54, 0.05)",
-              border: "none",
-              color: isDark ? "#baff57" : "#060b11",
-              cursor: "pointer",
-              padding: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "6px",
-              transition: "all 0.15s ease",
-            }}
-          >
-            <X size={18} />
-          </button>
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Text Navigation Links */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
+        <nav className="editorial-nav-list">
           {nav.map(({ label, path }) => {
             const active = isPathActive(path);
             return (
               <button
                 key={label}
+                className={`editorial-nav-item ${active ? "active" : ""}`}
                 onClick={() => route(path)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  fontFamily: '"Manrope", sans-serif',
-                  fontSize: "14px",
-                  fontWeight: active ? 700 : 500,
-                  color: active
-                    ? (isDark ? "#baff57" : "#060b11")
-                    : (isDark ? "#94a3b8" : "#475569"),
-                  backgroundColor: active
-                    ? (isDark ? "rgba(186, 255, 87, 0.1)" : "rgba(20, 36, 54, 0.06)")
-                    : "transparent",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 12px",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  position: "relative",
-                  transition: "all 0.15s ease",
-                }}
               >
-                {active && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      left: "0",
-                      top: "6px",
-                      bottom: "6px",
-                      width: "3px",
-                      backgroundColor: isDark ? "#baff57" : "#060b11",
-                      borderRadius: "0 2px 2px 0",
-                    }}
-                  />
-                )}
-                <span>{label}</span>
+                {active && <span className="active-indicator" />}
+                <span className="nav-label-text">{label}</span>
               </button>
             );
           })}
         </nav>
 
         {/* Bottom Actions */}
-        <div
-          style={{
-            marginTop: "auto",
-            paddingTop: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            borderTop: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(20, 36, 54, 0.06)",
-          }}
-        >
+        <div className="editorial-sidebar-bottom">
           <button
+            className="editorial-nav-item sub-item"
             onClick={toggleTheme}
-            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "12.5px",
-              color: isDark ? "#94a3b8" : "#64748b",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              textAlign: "left",
-            }}
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            {isDark ? <Sun size={15} /> : <Moon size={15} />}
-            <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            <span className="nav-label-text">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
           </button>
 
           <button
+            className="editorial-nav-item sub-item"
             onClick={() => route("/notifications")}
             title="Notifications"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "12.5px",
-              color: isDark ? "#94a3b8" : "#64748b",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              textAlign: "left",
-            }}
           >
             <Bell size={15} />
-            <span>Notifications</span>
+            <span className="nav-label-text">Notifications</span>
           </button>
 
           <button
+            className="editorial-nav-item sub-item"
             onClick={() => route("/profile")}
             title="Contribution Ledger"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "12.5px",
-              color: isDark ? "#94a3b8" : "#64748b",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              textAlign: "left",
-            }}
           >
             <CalendarDays size={15} />
-            <span>Contributions</span>
+            <span className="nav-label-text">Contributions</span>
           </button>
 
           <button
+            className="editorial-nav-item sub-item"
             onClick={() => route("/support")}
             title="Support"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "12.5px",
-              color: isDark ? "#94a3b8" : "#64748b",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              textAlign: "left",
-            }}
           >
             <CircleHelp size={15} />
-            <span>Support</span>
+            <span className="nav-label-text">Support</span>
           </button>
 
           <button
+            className="editorial-nav-item sub-item"
             onClick={() => {
               localStorage.removeItem("fittrack_auth_state");
               localStorage.removeItem("fittrack_user_email");
@@ -345,45 +174,19 @@ export function Sidebar() {
               route("/");
             }}
             title="Sign out"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "12.5px",
-              color: "#ef4444",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              textAlign: "left",
-            }}
           >
             <LogOut size={15} />
-            <span>Sign out</span>
+            <span className="nav-label-text">Sign out</span>
           </button>
         </div>
       </aside>
 
-      {/* Clean Subtle Backdrop Scrim with Instant Click-to-Close */}
+      {/* Mobile Scrim */}
       {open && (
         <div
-          onClick={(e) => {
-            e.stopPropagation();
-            setSidebarOpen(false);
-          }}
+          className="editorial-scrim md:hidden"
+          onClick={() => setSidebarOpen(false)}
           aria-label="Close overlay"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: isDark ? "rgba(0, 0, 0, 0.45)" : "rgba(15, 23, 42, 0.2)",
-            backdropFilter: "blur(2px)",
-            zIndex: 95,
-            cursor: "pointer",
-          }}
         />
       )}
     </>

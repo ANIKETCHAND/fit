@@ -119,70 +119,20 @@ export default function Home() {
         <section className="editorial-hero-grid">
           {/* Left Hero Column: Typography & Actions */}
           <div className="editorial-hero-left">
-            <div
-              className="editorial-timestamp"
-              style={{
-                color: "#8a998c",
-                fontFamily: '"Space Mono", monospace',
-                fontSize: "11px",
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                marginBottom: "24px",
-              }}
-            >
+            <div className="editorial-timestamp">
               {formattedTime || "TUESDAY • 01:16 PM"}
             </div>
 
-            <h1
-              className="editorial-greeting-title"
-              style={{
-                color: "#ffffff",
-                fontFamily: '"Chakra Petch", sans-serif',
-                fontSize: "clamp(42px, 4.8vw, 62px)",
-                fontWeight: 800,
-                lineHeight: 1.02,
-                letterSpacing: "0.01em",
-                textTransform: "uppercase",
-                margin: "0 0 28px",
-              }}
-            >
+            <h1 className="editorial-greeting-title">
               GOOD<br />
               {greetingWord},<br />
-              <span
-                className="greeting-athlete"
-                style={{
-                  color: "#baff57",
-                  textShadow: "0 0 24px rgba(186, 255, 87, 0.45)",
-                  display: "inline-block",
-                }}
-              >
-                {userName}
-              </span>
+              <span className="greeting-athlete">{userName}</span>
             </h1>
 
-            <div className="editorial-action-row" style={{ display: "flex", alignItems: "center", gap: "22px", marginBottom: "42px", flexWrap: "wrap" }}>
+            <div className="editorial-action-row">
               <button
                 className="editorial-primary-btn"
                 onClick={() => setLocation("/start-session")}
-                style={{
-                  backgroundColor: "#baff57",
-                  color: "#070d0a",
-                  padding: "14px 24px",
-                  borderRadius: "6px",
-                  fontFamily: '"Space Mono", monospace',
-                  fontSize: "12px",
-                  fontWeight: 800,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  border: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  cursor: "pointer",
-                  boxShadow: "0 0 24px rgba(186, 255, 87, 0.4)",
-                  transition: "transform 0.16s ease, filter 0.16s ease",
-                }}
               >
                 <span>BEGIN TODAY'S SESSION</span>
                 <ArrowRight size={16} />
@@ -191,73 +141,18 @@ export default function Home() {
               <button
                 className="editorial-secondary-link"
                 onClick={() => setLocation("/exercise-library")}
-                style={{
-                  fontFamily: '"Manrope", sans-serif',
-                  fontSize: "13.5px",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  textDecoration: "underline",
-                  textUnderlineOffset: "4px",
-                  cursor: "pointer",
-                }}
               >
                 View training plan
               </button>
             </div>
 
             {/* Score & Telemetry Indicator */}
-            <div
-              className="editorial-score-block"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "24px",
-                paddingTop: "14px",
-                borderTop: "1px solid rgba(255, 255, 255, 0.12)",
-              }}
-            >
-              <div className="editorial-score-badge" style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-                <span
-                  className="score-number"
-                  style={{
-                    fontFamily: '"Chakra Petch", sans-serif',
-                    fontSize: "56px",
-                    fontWeight: 800,
-                    color: "#baff57",
-                    textShadow: "0 0 28px rgba(186, 255, 87, 0.5)",
-                    lineHeight: 0.9,
-                  }}
-                >
-                  {readinessScore}
-                </span>
-                <div className="score-denom" style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <span
-                    className="denom-val"
-                    style={{
-                      fontFamily: '"Space Mono", monospace',
-                      fontSize: "13px",
-                      fontWeight: 800,
-                      color: "#ffffff",
-                    }}
-                  >
-                    / 100
-                  </span>
-                  <span
-                    className="denom-label"
-                    style={{
-                      fontFamily: '"Space Mono", monospace',
-                      fontSize: "8px",
-                      fontWeight: 800,
-                      letterSpacing: "0.14em",
-                      color: "#8a998c",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    READINESS
-                  </span>
+            <div className="editorial-score-block">
+              <div className="editorial-score-badge">
+                <span className="score-number">{readinessScore}</span>
+                <div className="score-denom">
+                  <span className="denom-val">/ 100</span>
+                  <span className="denom-label">READINESS</span>
                 </div>
               </div>
             </div>
