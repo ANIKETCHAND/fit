@@ -1,19 +1,11 @@
 import {
-  Activity,
-  Award,
   Bell,
   CalendarDays,
-  ChartNoAxesCombined,
   CircleHelp,
-  Dumbbell,
   LogOut,
-  MapPinned,
   Moon,
   MoreVertical,
-  Settings,
   Sun,
-  UserRound,
-  Utensils,
   X,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -70,17 +62,17 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Toggle Button */}
+      {/* 3-Dots Top Left Menu Toggle Button */}
       <button
-        className="editorial-sidebar-trigger"
+        className={`editorial-sidebar-trigger ${open ? "is-open" : ""}`}
         onClick={toggleSidebar}
         aria-label="Toggle navigation menu"
-        title="Menu"
+        title={open ? "Close Menu" : "Menu (Open Sidebar)"}
       >
         <MoreVertical size={20} />
       </button>
 
-      {/* Editorial Navigation Rail */}
+      {/* Editorial Navigation Drawer */}
       <aside
         ref={sidebarRef}
         className={`editorial-sidebar ${open ? "open" : ""}`}
@@ -93,18 +85,17 @@ export function Sidebar() {
           title="FitTrack Performance"
         >
           <span className="editorial-wordmark">FITTRACK</span>
-          {open && (
-            <button
-              className="editorial-close-mobile md:hidden"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSidebarOpen(false);
-              }}
-              aria-label="Close menu"
-            >
-              <X size={18} />
-            </button>
-          )}
+          <button
+            className="editorial-close-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSidebarOpen(false);
+            }}
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Text Navigation Links */}
@@ -181,10 +172,10 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile Scrim */}
+      {/* Backdrop Scrim */}
       {open && (
         <div
-          className="editorial-scrim md:hidden"
+          className="editorial-scrim"
           onClick={() => setSidebarOpen(false)}
           aria-label="Close overlay"
         />
