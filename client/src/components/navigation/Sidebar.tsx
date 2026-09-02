@@ -73,39 +73,42 @@ export function Sidebar() {
     setSidebarOpen(false);
   };
 
+  const isDark = theme === "dark";
+
   return (
     <>
-      {/* 3-Dots Top Left Menu Toggle Button - ALWAYS Visible */}
-      <button
-        className="editorial-sidebar-trigger"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleSidebar();
-        }}
-        aria-label="Toggle navigation menu"
-        title={open ? "Close Menu" : "Menu (Click to open sidebar)"}
-        style={{
-          position: "fixed",
-          top: "18px",
-          left: "18px",
-          zIndex: 9999,
-          width: "40px",
-          height: "40px",
-          borderRadius: "10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          border: theme === "dark" ? "1px solid rgba(186, 255, 87, 0.45)" : "1px solid rgba(20, 36, 54, 0.18)",
-          backgroundColor: theme === "dark" ? "rgba(10, 16, 12, 0.92)" : "rgba(255, 255, 255, 0.95)",
-          color: theme === "dark" ? "#baff57" : "#060b11",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
-          backdropFilter: "blur(12px)",
-          transition: "all 0.18s ease",
-        }}
-      >
-        <MoreVertical size={22} />
-      </button>
+      {/* 3-Dots Top Left Menu Toggle Button (Visible ONLY when sidebar is closed) */}
+      {!open && (
+        <button
+          className="editorial-sidebar-trigger"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleSidebar();
+          }}
+          aria-label="Open navigation menu"
+          title="Menu (Open Sidebar)"
+          style={{
+            position: "fixed",
+            top: "18px",
+            left: "18px",
+            zIndex: 90,
+            width: "38px",
+            height: "38px",
+            borderRadius: "8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            border: isDark ? "1px solid rgba(186, 255, 87, 0.4)" : "1px solid rgba(20, 36, 54, 0.15)",
+            backgroundColor: isDark ? "#0d1410" : "#ffffff",
+            color: isDark ? "#baff57" : "#060b11",
+            boxShadow: isDark ? "0 4px 16px rgba(0, 0, 0, 0.4)" : "0 2px 10px rgba(0, 0, 0, 0.08)",
+            transition: "all 0.18s ease",
+          }}
+        >
+          <MoreVertical size={20} />
+        </button>
+      )}
 
       {/* Editorial Navigation Drawer */}
       <aside
@@ -120,28 +123,49 @@ export function Sidebar() {
           width: "260px",
           maxWidth: "85vw",
           height: "100vh",
-          zIndex: 10000,
+          zIndex: 100,
           transform: open ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
-          boxShadow: open ? "16px 0 50px rgba(0, 0, 0, 0.6)" : "none",
-          backgroundColor: theme === "dark" ? "rgba(10, 15, 12, 0.98)" : "#ffffff",
-          backdropFilter: "blur(20px)",
-          borderRight: theme === "dark" ? "1px solid rgba(186, 255, 87, 0.2)" : "1px solid rgba(20, 36, 54, 0.08)",
-          padding: "32px 24px 28px 28px",
+          transition: "transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)",
+          boxShadow: open
+            ? (isDark ? "20px 0 60px rgba(0, 0, 0, 0.7)" : "20px 0 50px rgba(20, 36, 54, 0.15)")
+            : "none",
+          backgroundColor: isDark ? "#0b120e" : "#ffffff",
+          borderRight: isDark ? "1px solid rgba(186, 255, 87, 0.2)" : "1px solid rgba(20, 36, 54, 0.08)",
+          padding: "24px 20px 24px 24px",
           display: "flex",
           flexDirection: "column",
         }}
       >
-        {/* Brand Header */}
+        {/* Brand Header with Close Button */}
         <div
-          className="editorial-brand-row"
-          onClick={() => route("/overview")}
-          title="FitTrack Performance"
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px", cursor: "pointer" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "28px",
+            paddingBottom: "12px",
+            borderBottom: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(20, 36, 54, 0.06)",
+          }}
         >
-          <span className="editorial-wordmark" style={{ fontFamily: '"Chakra Petch", sans-serif', fontSize: "16px", fontWeight: 800, letterSpacing: "0.22em", color: theme === "dark" ? "#edf4eb" : "#060b11" }}>
-            FITTRACK
-          </span>
+          <div
+            onClick={() => route("/overview")}
+            title="FitTrack Performance"
+            style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+          >
+            <span
+              style={{
+                fontFamily: '"Chakra Petch", sans-serif',
+                fontSize: "17px",
+                fontWeight: 800,
+                letterSpacing: "0.22em",
+                color: isDark ? "#ffffff" : "#060b11",
+                textTransform: "uppercase",
+              }}
+            >
+              FITTRACK
+            </span>
+          </div>
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -150,57 +174,62 @@ export function Sidebar() {
             aria-label="Close sidebar"
             title="Close sidebar"
             style={{
-              background: "transparent",
+              background: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(20, 36, 54, 0.05)",
               border: "none",
-              color: theme === "dark" ? "#8a988c" : "#64748b",
+              color: isDark ? "#baff57" : "#060b11",
               cursor: "pointer",
-              padding: "4px",
+              padding: "6px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               borderRadius: "6px",
+              transition: "all 0.15s ease",
             }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Text Navigation Links */}
-        <nav className="editorial-nav-list" style={{ display: "flex", flexDirection: "column", gap: "14px", flex: 1 }}>
+        <nav style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
           {nav.map(({ label, path }) => {
             const active = isPathActive(path);
             return (
               <button
                 key={label}
-                className={`editorial-nav-item ${active ? "active" : ""}`}
                 onClick={() => route(path)}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "10px",
+                  gap: "12px",
                   fontFamily: '"Manrope", sans-serif',
-                  fontSize: "14.5px",
+                  fontSize: "14px",
                   fontWeight: active ? 700 : 500,
                   color: active
-                    ? (theme === "dark" ? "#ffffff" : "#060b11")
-                    : (theme === "dark" ? "#8b978e" : "#748392"),
-                  background: "none",
+                    ? (isDark ? "#baff57" : "#060b11")
+                    : (isDark ? "#94a3b8" : "#475569"),
+                  backgroundColor: active
+                    ? (isDark ? "rgba(186, 255, 87, 0.1)" : "rgba(20, 36, 54, 0.06)")
+                    : "transparent",
                   border: "none",
-                  padding: "6px 0",
+                  borderRadius: "6px",
+                  padding: "8px 12px",
                   textAlign: "left",
                   cursor: "pointer",
                   position: "relative",
+                  transition: "all 0.15s ease",
                 }}
               >
                 {active && (
                   <span
                     style={{
                       position: "absolute",
-                      left: "-18px",
+                      left: "0",
+                      top: "6px",
+                      bottom: "6px",
                       width: "3px",
-                      height: "18px",
-                      backgroundColor: theme === "dark" ? "#baff57" : "#1d4ed8",
-                      borderRadius: "2px",
+                      backgroundColor: isDark ? "#baff57" : "#060b11",
+                      borderRadius: "0 2px 2px 0",
                     }}
                   />
                 )}
@@ -211,49 +240,101 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="editorial-sidebar-bottom" style={{ marginTop: "auto", paddingTop: "20px", display: "flex", flexDirection: "column", gap: "10px", borderTop: theme === "dark" ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(20, 36, 54, 0.06)" }}>
+        <div
+          style={{
+            marginTop: "auto",
+            paddingTop: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            borderTop: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(20, 36, 54, 0.06)",
+          }}
+        >
           <button
-            className="editorial-nav-item sub-item"
             onClick={toggleTheme}
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12.5px", color: "#8a988c", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "12.5px",
+              color: isDark ? "#94a3b8" : "#64748b",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              textAlign: "left",
+            }}
           >
-            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
-            <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
           </button>
 
           <button
-            className="editorial-nav-item sub-item"
             onClick={() => route("/notifications")}
             title="Notifications"
-            style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12.5px", color: "#8a988c", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "12.5px",
+              color: isDark ? "#94a3b8" : "#64748b",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              textAlign: "left",
+            }}
           >
             <Bell size={15} />
             <span>Notifications</span>
           </button>
 
           <button
-            className="editorial-nav-item sub-item"
             onClick={() => route("/profile")}
             title="Contribution Ledger"
-            style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12.5px", color: "#8a988c", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "12.5px",
+              color: isDark ? "#94a3b8" : "#64748b",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              textAlign: "left",
+            }}
           >
             <CalendarDays size={15} />
             <span>Contributions</span>
           </button>
 
           <button
-            className="editorial-nav-item sub-item"
             onClick={() => route("/support")}
             title="Support"
-            style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12.5px", color: "#8a988c", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "12.5px",
+              color: isDark ? "#94a3b8" : "#64748b",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              textAlign: "left",
+            }}
           >
             <CircleHelp size={15} />
             <span>Support</span>
           </button>
 
           <button
-            className="editorial-nav-item sub-item"
             onClick={() => {
               localStorage.removeItem("fittrack_auth_state");
               localStorage.removeItem("fittrack_user_email");
@@ -264,7 +345,19 @@ export function Sidebar() {
               route("/");
             }}
             title="Sign out"
-            style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "12.5px", color: "#8a988c", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "12.5px",
+              color: "#ef4444",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              textAlign: "left",
+            }}
           >
             <LogOut size={15} />
             <span>Sign out</span>
@@ -272,10 +365,9 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Full-Screen Backdrop Scrim with Instant Click-to-Close */}
+      {/* Clean Subtle Backdrop Scrim with Instant Click-to-Close */}
       {open && (
         <div
-          className="editorial-scrim"
           onClick={(e) => {
             e.stopPropagation();
             setSidebarOpen(false);
@@ -287,9 +379,9 @@ export function Sidebar() {
             left: 0,
             width: "100vw",
             height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(4px)",
-            zIndex: 9998,
+            backgroundColor: isDark ? "rgba(0, 0, 0, 0.45)" : "rgba(15, 23, 42, 0.2)",
+            backdropFilter: "blur(2px)",
+            zIndex: 95,
             cursor: "pointer",
           }}
         />
