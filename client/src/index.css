@@ -261,22 +261,6 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
 @media (max-width:800px) { .daily-streak-card { padding:14px; }.streak-console { padding:18px; }.streak-console h2 { font-size:45px; } }
 @media (prefers-reduced-motion:reduce) { .streak-pixel-fire i,.hero-pixel-fire i,.streak-embers i,.streak-console { animation:none!important; }.streak-embers { display:none; } }
 .daily-streak-card.active .streak-readout strong { color:#c6ff3d; text-shadow:0 0 16px rgba(198,255,61,.22); }.daily-streak-card.inactive { background:linear-gradient(138deg,rgba(20,24,21,.96),rgba(13,17,14,.96)); border-color:rgba(226,245,225,.13); box-shadow:inset 3px 0 0 rgba(140,153,143,.35),0 14px 34px rgba(0,0,0,.13); }.daily-streak-card.inactive .streak-pixel-fire { opacity:.24; filter:grayscale(.7); }.daily-streak-card.inactive .streak-readout strong { color:#808b81; }
-
-/* ─── COMPREHENSIVE LIGHT EDITORIAL OVERRIDES FOR ALL WORKFLOW PAGES ─── */
-:root:not(.dark) {
-  --background: #f5f2eb !important;
-  --foreground: #060b11 !important;
-  --card: #ffffff !important;
-  --card-foreground: #060b11 !important;
-  --popover: #ffffff !important;
-  --popover-foreground: #060b11 !important;
-  --sidebar: #f5f2eb !important;
-  --sidebar-foreground: #060b11 !important;
-}
-
-:root:not(.dark) body,
-:root:not(.dark) .app-shell,
-:root:not(.dark) .editorial-app-shell,
 :root:not(.dark) .workflow-main {
   background-color: #f5f2eb !important;
   color: #060b11 !important;
