@@ -1,20 +1,13 @@
-/* Echo AI Assistant Floating Mascot & Chat Dialog */
+/* Rexi AI Assistant Floating Mascot & Chat Dialog */
 
 .echo-assistant-container {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 40;
+  bottom: 28px;
+  right: 28px;
+  left: auto;
+  z-index: 9999;
   font-family: inherit;
   user-select: none;
-}
-
-/* When sidebar opens, smoothly tuck Rexi under / hide mascot so it never covers sidebar items */
-.echo-assistant-container.sidebar-open .echo-mascot-trigger {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8) translateY(12px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 /* Floating Mascot Button */
@@ -93,9 +86,10 @@
 /* Floating Tooltip Pill */
 .echo-mascot-tooltip {
   position: absolute;
-  left: calc(100% + 14px);
+  right: calc(100% + 14px);
+  left: auto;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateX(6px);
   background: rgba(13, 24, 16, 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(186, 255, 87, 0.4);
@@ -109,7 +103,6 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   opacity: 0;
-  transform: translateY(-50%) translateX(-6px);
   transition: all 0.2s ease-out;
 }
 
@@ -121,22 +114,24 @@
 .echo-mascot-tooltip::before {
   content: "";
   position: absolute;
-  right: 100%;
+  left: 100%;
+  right: auto;
   top: 50%;
   transform: translateY(-50%);
   border-width: 5px;
   border-style: solid;
-  border-color: transparent rgba(186, 255, 87, 0.4) transparent transparent;
+  border-color: transparent transparent transparent rgba(186, 255, 87, 0.4);
 }
 
 /* Chat Popup Window (Matches TryHackMe Echo Style) */
 .echo-chat-dialog {
   position: fixed;
-  bottom: 92px;
-  left: 24px;
-  width: 380px;
+  bottom: 96px;
+  right: 28px;
+  left: auto;
+  width: 390px;
   max-width: calc(100vw - 48px);
-  height: 520px;
+  height: 540px;
   max-height: calc(100vh - 120px);
   background: #0f161a;
   border: 1px solid rgba(186, 255, 87, 0.35);
@@ -471,7 +466,8 @@
 @media (max-width: 480px) {
   .echo-assistant-container {
     bottom: 16px;
-    left: 16px;
+    right: 16px;
+    left: auto;
   }
   .echo-chat-dialog {
     left: 12px;
