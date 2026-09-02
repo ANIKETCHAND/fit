@@ -414,6 +414,114 @@
   gap: 8px;
 }
 
+.echo-mic-btn {
+  background: rgba(186, 255, 87, 0.12);
+  color: #baff57;
+  border: 1px solid rgba(186, 255, 87, 0.35);
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.echo-mic-btn:hover {
+  background: rgba(186, 255, 87, 0.25);
+  border-color: #baff57;
+  transform: scale(1.05);
+}
+
+.echo-mic-btn.is-listening {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #f87171;
+  animation: micPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    transform: scale(1.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    transform: scale(1);
+  }
+}
+
+/* Active Voice Listening Banner */
+.echo-listening-banner {
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  animation: bannerFade 0.2s ease-out forwards;
+}
+
+@keyframes bannerFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.echo-listening-waves {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 14px;
+}
+
+.wave-bar {
+  width: 3px;
+  background: #ef4444;
+  border-radius: 2px;
+  animation: waveAnim 1s infinite ease-in-out alternate;
+}
+.wave-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+.wave-bar:nth-child(2) { height: 14px; animation-delay: 0.2s; }
+.wave-bar:nth-child(3) { height: 10px; animation-delay: 0.4s; }
+.wave-bar:nth-child(4) { height: 8px; animation-delay: 0.6s; }
+
+@keyframes waveAnim {
+  0% { transform: scaleY(0.4); }
+  100% { transform: scaleY(1.3); }
+}
+
+.echo-listening-text {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #fca5a5;
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.echo-listening-cancel {
+  background: transparent;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.echo-listening-cancel:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+}
+
 .echo-input-field {
   flex: 1;
   background: #0d1612;
@@ -425,6 +533,7 @@
   outline: none;
   transition: border-color 0.2s ease;
   font-family: inherit;
+  resize: none;
 }
 
 .echo-input-field:focus {

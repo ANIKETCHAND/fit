@@ -1,6 +1,6 @@
-/* FitTrack: Rexi AI Conversational Assistant (Powered by Live Context Engine) */
+/* FitTrack: Rexi AI Conversational Assistant (Powered by Live Context Engine + Voice Commands) */
 import { useState, useRef, useEffect } from "react";
-import { Send, X, Minus, Sparkles, Trash2, Copy, Check, Bot, RefreshCw, Zap } from "lucide-react";
+import { Send, X, Minus, Trash2, Copy, Check, Zap, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSidebar } from "@/lib/sidebar-store";
 import { getLiveRexiContext, generateRexiChatResponse } from "@/lib/rexi-ai-engine";
@@ -74,10 +74,13 @@ export function RexiAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<any>(null);
   const { open: isSidebarOpen } = useSidebar();
 
   const liveContext = getLiveRexiContext(location);
@@ -90,53 +93,189 @@ export function RexiAssistant() {
         {
           id: "intro-1",
           sender: "rexi",
-          text: `Hello **${firstName}**! 👋 I'm **Rexi**, your personal AI fitness intelligence coach powered by real-time telemetry.\n\nI have live context of your biometrics (**${liveContext.massKg}kg**, **${liveContext.goalProtein}g Protein Goal**), your Indian nutrition ledger, and training history.\n\nAsk me **anything**—from workout splits, macro advice, creatine dosage, to app features or general science!`,
+          text: `Hello **${firstName}**! 👋 I'm **Rexi**, your personal AI fitness coach powered by real-time telemetry and voice intelligence.
+
+Ask me **anything** using text or the 🎙️ **Voice Command** button!`,
           chips: [
             "What should I eat for dinner?",
-            "Explain Creatine Monohydrate dosage",
-            "How do I use the 3D Anatomy Map?",
-            "How to track progressive overload?",
+            "What is today's date?",
+            "Explain Creatine dosage",
+            "Give me a 3-exercise chest workout",
           ],
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
     }
-  }, [firstName, liveContext.massKg, liveContext.goalProtein]);
+  }, [firstName]);
 
-  // Auto scroll
+  // Clean up speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+    };
+  }, []);
+
+  // Initialize Speech Recognition
+  const toggleVoiceRecognition = () => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error("Voice search is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast.info("🎙️ Listening... Speak your question now!");
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((res: any) => res[0].transcript)
+          .join("");
+
+        setInputMessage(transcript);
+
+        // If recognition is final, auto-send prompt
+        if (event.results[0] && event.results[0].isFinal) {
+          setIsListening(false);
+          if (transcript.trim()) {
+            handleSend(transcript.trim());
+          }
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        setIsListening(false);
+        if (event.error !== "no-speech") {
+          toast.error(`Voice input error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      setIsListening(false);
+      toast.error("Could not activate microphone access.");
+    }
+  };
+
+  // Text-to-Speech Read Aloud
+  const handleSpeak = (text: string, id: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      toast.error("Speech audio is not supported in this browser.");
+      return;
+    }
+
+    if (speakingMsgId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Strip markdown formatting for clean natural voice reading
+    const cleanText = text
+      .replace(/[*#_`]/g, "")
+      .replace(/•\s+/g, "")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+
+    // Pick best natural English voice if available
+    const voices = window.speechSynthesis.getVoices();
+    const naturalVoice = voices.find(
+      (v) => (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha")) && v.lang.startsWith("en")
+    ) || voices.find((v) => v.lang.startsWith("en"));
+
+    if (naturalVoice) {
+      utterance.voice = naturalVoice;
+    }
+
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    setSpeakingMsgId(id);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Scroll to bottom on new message
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
 
-  const handleSend = async (textToSend?: string) => {
-    const query = (textToSend || inputMessage).trim();
-    if (!query || isTyping) return;
+  const handleSend = async (overrideText?: string) => {
+    const textToSend = (overrideText || inputMessage).trim();
+    if (!textToSend || isTyping) return;
 
-    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (isListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      setIsListening(false);
+    }
+
     const userMsgId = `user-${Date.now()}`;
-    const newMessages: ChatMessage[] = [
-      ...messages,
-      { id: userMsgId, sender: "user", text: query, timestamp: timeStr },
-    ];
-    setMessages(newMessages);
-    setInputMessage("");
-    setIsTyping(true);
+    const userMsg: ChatMessage = {
+      id: userMsgId,
+      sender: "user",
+      text: textToSend,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
 
+    setMessages((prev) => [...prev, userMsg]);
+    setInputMessage("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
+    setIsTyping(true);
 
-    // Generate intelligent contextual response with streaming effect
     try {
-      const response = await generateRexiChatResponse(query, liveContext, newMessages);
+      const historyForContext = messages.map((m) => ({ sender: m.sender, text: m.text }));
+      const response = await generateRexiChatResponse(textToSend, liveContext, historyForContext);
+
       const rexiMsgId = `rexi-${Date.now()}`;
-      
-      // Simulate smooth streaming
-      let currentText = "";
       const fullText = response.text;
-      const streamChunkSize = Math.max(2, Math.floor(fullText.length / 25));
+      const chips = response.chips;
+
+      // Stream text onto UI smoothly
+      let currentText = "";
+      const streamChunkSize = Math.max(4, Math.floor(fullText.length / 25));
 
       setMessages((prev) => [
         ...prev,
@@ -144,7 +283,7 @@ export function RexiAssistant() {
           id: rexiMsgId,
           sender: "rexi",
           text: "",
-          chips: response.chips,
+          chips,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -164,7 +303,7 @@ export function RexiAssistant() {
           );
           setIsTyping(false);
         }
-      }, 20);
+      }, 15);
     } catch (err) {
       setIsTyping(false);
       toast.error("Rexi encountered an error. Please try again.");
@@ -179,15 +318,19 @@ export function RexiAssistant() {
   };
 
   const handleClearChat = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setSpeakingMsgId(null);
     setMessages([
       {
         id: `intro-${Date.now()}`,
         sender: "rexi",
-        text: `Chat cleared! Ready for your next question, **${firstName}**! 🚀`,
+        text: `Chat cleared! Ready for your next question or voice command, **${firstName}**! 🚀`,
         chips: [
           "What should I eat today?",
           "Explain Creatine dosage",
-          "How do I use the 3D Body Map?",
+          "Give me a 3-exercise chest workout",
         ],
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       },
@@ -206,13 +349,13 @@ export function RexiAssistant() {
         className="echo-mascot-trigger"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Ask Rexi AI Assistant"
-        title="Ask Rexi AI (ChatGPT & Gemini for Fitness)"
+        title="Ask Rexi AI (Voice & Text Assistant)"
       >
         <div className="echo-mascot-pulse" />
         <div className="echo-mascot-svg-wrap">
           <RexiMascotIcon size={44} animated />
         </div>
-        <span className="echo-mascot-tooltip">Ask Rexi AI Anything</span>
+        <span className="echo-mascot-tooltip">Ask Rexi AI (Voice & Chat)</span>
       </button>
 
       {/* ChatGPT / Gemini Style AI Assistant Chat Dialog */}
@@ -229,7 +372,7 @@ export function RexiAssistant() {
                   <span className="echo-title">Rexi AI</span>
                   <span className="echo-beta-badge flex items-center gap-1">
                     <Zap size={10} />
-                    <span>Live Context</span>
+                    <span>Gemini Live</span>
                   </span>
                 </div>
                 <span className="echo-subtitle">
@@ -265,6 +408,26 @@ export function RexiAssistant() {
             </div>
           </div>
 
+          {/* Active Voice Listening Banner */}
+          {isListening && (
+            <div className="echo-listening-banner">
+              <div className="echo-listening-waves">
+                <span className="wave-bar" />
+                <span className="wave-bar" />
+                <span className="wave-bar" />
+                <span className="wave-bar" />
+              </div>
+              <span className="echo-listening-text">Listening... Speak now to Rexi</span>
+              <button
+                className="echo-listening-cancel"
+                onClick={toggleVoiceRecognition}
+                title="Cancel voice input"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           {/* Messages Scroll Area */}
           <div className="echo-messages-container" ref={scrollRef}>
             {messages.map((msg) => (
@@ -277,6 +440,13 @@ export function RexiAssistant() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-mono text-[#5a6b58]">{msg.timestamp}</span>
+                      <button
+                        onClick={() => handleSpeak(msg.text, msg.id)}
+                        className={`text-[#8b9c8a] hover:text-white transition-colors ${speakingMsgId === msg.id ? "text-[#baff57] animate-pulse" : ""}`}
+                        title={speakingMsgId === msg.id ? "Stop voice reading" : "Read answer aloud"}
+                      >
+                        {speakingMsgId === msg.id ? <VolumeX size={13} className="text-[#baff57]" /> : <Volume2 size={13} />}
+                      </button>
                       <button
                         onClick={() => handleCopy(msg.text, msg.id)}
                         className="text-[#8b9c8a] hover:text-white transition-colors"
@@ -313,7 +483,7 @@ export function RexiAssistant() {
               <div className="echo-msg echo-msg-assistant">
                 <div className="echo-msg-sender-row">
                   <RexiMascotIcon size={16} />
-                  <span>Rexi is thinking...</span>
+                  <span>Rexi is analyzing...</span>
                 </div>
                 <div className="echo-typing-indicator">
                   <span className="echo-typing-dot" />
@@ -324,7 +494,7 @@ export function RexiAssistant() {
             )}
           </div>
 
-          {/* Bottom Message Input */}
+          {/* Bottom Message Input with Voice Command Button */}
           <form
             className="echo-input-area"
             onSubmit={(e) => {
@@ -332,6 +502,16 @@ export function RexiAssistant() {
               handleSend();
             }}
           >
+            <button
+              type="button"
+              onClick={toggleVoiceRecognition}
+              className={`echo-mic-btn ${isListening ? "is-listening" : ""}`}
+              title={isListening ? "Stop listening" : "Voice search / Command"}
+              aria-label={isListening ? "Stop listening" : "Voice command"}
+            >
+              {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+            </button>
+
             <textarea
               ref={textareaRef}
               rows={1}
@@ -347,9 +527,10 @@ export function RexiAssistant() {
                   handleSend();
                 }
               }}
-              placeholder="Ask Rexi anything about workouts, diet, science, or life..."
-              className="echo-input"
+              placeholder={isListening ? "Listening... Speak now..." : "Ask or speak to Rexi..."}
+              className="echo-input-field"
             />
+
             <button
               type="submit"
               disabled={!inputMessage.trim() || isTyping}
@@ -367,7 +548,7 @@ export function RexiAssistant() {
 
 export const EchoAssistant = RexiAssistant;
 
-// Markdown Formatter
+// Enhanced Markdown Formatter
 function formatMarkdown(text: string) {
   const lines = text.split("\n");
   return lines.map((line, idx) => {
@@ -419,7 +600,7 @@ function formatMarkdown(text: string) {
 }
 
 function parseInline(text: string) {
-  const parts = text.split(/(\*\*.*?\*\*|\*[^*]+?\*)/g);
+  const parts = text.split(/(\*{2}.*?\*{2}|\*[^*]+?\*)/g);
   return parts.map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
       return <strong key={index} style={{ color: "#baff57", fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
