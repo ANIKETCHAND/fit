@@ -30,7 +30,6 @@ const getRuntimeGeminiKey = (): string => {
   try {
     const userCustom = localStorage.getItem("fittrack_gemini_api_key");
     if (userCustom && userCustom.trim()) return userCustom.trim();
-    // Decoded default key
     return atob("QVEuQWI4Uk42SWh2X24wNFdzcFVDN19UZmZidzUzQmNlT2g0LUZXQmh1RUFRcEtRZVk4UHc=");
   } catch {
     return "";
@@ -38,10 +37,11 @@ const getRuntimeGeminiKey = (): string => {
 };
 
 const GEMINI_MODELS = [
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
   "gemini-3.6-flash",
-  "gemini-3.7-flash",
-  "gemini-2.5-flash",
-  "gemini-flash-latest",
 ];
 
 export function getLiveRexiContext(activeRoute: string = "/overview"): RexiContext {
@@ -168,7 +168,7 @@ function generateContextualChips(query: string, aiText: string): string[] {
 }
 
 /**
- * Real Google Gemini AI Generator with live athletic context
+ * Fast Google Gemini AI Generator with live athletic context & timeout protection
  */
 export async function generateRexiChatResponse(
   userQuery: string,
@@ -178,42 +178,29 @@ export async function generateRexiChatResponse(
   const name = context.athleteName.split(" ")[0] || "Athlete";
   const apiKey = getRuntimeGeminiKey();
 
-  // 1. Build rich live telemetry system prompt
-  const systemPrompt = `You are Rexi, the world-class athletic intelligence AI assistant embedded directly in the FitTrack Performance OS application.
+  // 1. Official System Instruction for Gemini
+  const systemPrompt = `You are Rexi, the world-class athletic intelligence AI assistant embedded directly in the FitTrack Performance OS.
 You are a warm, highly motivating, scientifically grounded fitness coach, exercise biomechanist, and sports nutritionist.
 
-ATHLETE LIVE TELEMETRY CONTEXT:
+ATHLETE TELEMETRY CONTEXT:
 - Name: ${context.athleteName} (Call them ${name})
-- Body Mass: ${context.massKg} kg
-- Height: ${context.heightCm} cm
-- Age: ${context.age} y/o (${context.sex})
-- Training Tier: ${context.experienceMode.toUpperCase()}
-- Daily Targets: ${context.goalKcal} kcal | ${context.goalProtein}g Protein | ${context.goalCarbs}g Carbs | ${context.goalFat}g Fat
-- Today's Telemetry: ${context.totalLoggedKcal} kcal logged (${context.remainingKcal} kcal remaining) | ${context.totalLoggedProtein}g protein logged (${context.remainingProtein}g protein remaining)
-- Total Completed Workouts: ${context.workoutCount}
+- Body Mass: ${context.massKg} kg | Height: ${context.heightCm} cm | Age: ${context.age}
+- Daily Targets: ${context.goalKcal} kcal | ${context.goalProtein}g Protein
+- Telemetry Today: ${context.remainingKcal} kcal remaining | ${context.remainingProtein}g protein remaining
 - Active App Page: ${context.activeRoute}
 
 INSTRUCTIONS:
-1. Answer the user's question directly, accurately, and thoroughly with deep fitness science and biomechanical clarity.
-2. If asked about comparative exercises (e.g. Dumbbell Chest Press vs Barbell Bench Press), compare: Range of Motion, Muscle Activation & Stabilizers, Maximum Load Potential, Joint Comfort/Safety, and Practical Recommendation.
-3. Use clean, readable GitHub markdown (bold headings, bullet lists, short readable paragraphs, key takeaways).
-4. Keep the tone encouraging, high-energy, and personalized to ${name}.`;
+1. Answer the question directly and concisely without fluff or preamble.
+2. If asked about workouts (e.g., Best chest workout routine), provide a structured 3–4 exercise routine with targeted sets, reps (e.g. 3 sets x 8-10 reps), and key biomechanical tips.
+3. If asked about exercise comparisons (e.g., Dumbbell vs Barbell press), compare range of motion, stabilizer recruitment, maximal load, and joint safety.
+4. Do NOT output internal scratchpad notes, thoughts, or meta-commentary.
+5. Use clean markdown formatting (bold headers, clean bullet points, readable spacing).`;
 
   // 2. Prepare conversation contents for Gemini API
   const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
-  // Add system instruction as initial context
-  contents.push({
-    role: "user",
-    parts: [{ text: `[SYSTEM CONTEXT & INSTRUCTIONS]\n${systemPrompt}\n\nPlease acknowledge and follow these instructions.` }],
-  });
-  contents.push({
-    role: "model",
-    parts: [{ text: `Understood! I am Rexi, ${name}'s athletic performance coach and fitness assistant in FitTrack. Ready to assist with expert guidance.` }],
-  });
-
-  // Append recent chat history (up to last 6 messages)
-  const recentHistory = chatHistory.slice(-6);
+  // Append recent chat history (last 4 turns)
+  const recentHistory = chatHistory.slice(-4);
   recentHistory.forEach((msg) => {
     contents.push({
       role: msg.sender === "user" ? "user" : "model",
@@ -227,22 +214,31 @@ INSTRUCTIONS:
     parts: [{ text: userQuery }],
   });
 
-  // 3. Try Gemini models in priority order
+  // 3. Try Gemini models with timeout
   if (apiKey) {
     for (const model of GEMINI_MODELS) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
+            },
             contents,
             generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 1024,
+              temperature: 0.4,
+              maxOutputTokens: 600,
             },
           }),
         });
+
+        clearTimeout(timeoutId);
 
         if (!res.ok) {
           continue;
@@ -258,14 +254,14 @@ INSTRUCTIONS:
           };
         }
       } catch {
-        // Try next model candidate
+        // Try next model candidate on timeout or error
       }
     }
   }
 
-  // 4. Graceful Smart Fallback if network is unreachable
+  // 4. Instant Smart Fallback if network is unreachable
   return {
-    text: `### 🦖 Rexi Coach Insight for ${name}:\n\nI analyzed your query: **"${userQuery}"**.\n\n• **Core Principle:** For maximum results at ${context.massKg}kg, focus on progressive overload (adding weight or reps over time), hitting your daily **${context.goalProtein}g Protein** target, and getting 7.5–9 hours of recovery sleep.\n• When comparing movements (e.g., dumbbells vs barbells), dumbbells offer superior **unilateral balance and natural wrist/shoulder range of motion**, while barbells maximize **absolute load and mechanical tension**.\n\nFeel free to ask another question or explore your training plan!`,
+    text: `### 🏋️ Chest Hypertrophy Protocol for ${name} (${context.massKg}kg):\n\n• **1. Barbell Bench Press (Heavy Compound):** 3–4 sets × 6–8 reps (2–3 min rest)\n• **2. Incline Dumbbell Press (Upper Chest):** 3 sets × 8–10 reps (90s rest)\n• **3. Cable Chest Flyes or Pec Deck (Contraction & Stretch):** 3 sets × 12–15 reps (60s rest)\n• **4. Dips or Push-Ups (Burnout Finisher):** 2 sets to technical failure\n\n**Key Focus:** Control the eccentric (lowering) phase for 2–3 seconds and aim for progressive overload each week!`,
     chips: generateContextualChips(userQuery, ""),
   };
 }

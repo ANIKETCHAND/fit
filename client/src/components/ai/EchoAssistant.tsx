@@ -371,39 +371,61 @@ export const EchoAssistant = RexiAssistant;
 function formatMarkdown(text: string) {
   const lines = text.split("\n");
   return lines.map((line, idx) => {
-    if (!line.trim()) return <div key={idx} style={{ height: 6 }} />;
+    const trimmed = line.trim();
+    if (!trimmed) return <div key={idx} style={{ height: 6 }} />;
 
-    if (line.startsWith("• ") || line.startsWith("- ")) {
-      const content = line.substring(2);
+    // Headings (### or ##)
+    if (trimmed.startsWith("### ")) {
       return (
-        <li key={idx} style={{ marginLeft: 16, marginBottom: 4 }}>
-          {parseBold(content)}
+        <h4 key={idx} style={{ margin: "10px 0 4px 0", color: "#baff57", fontSize: "0.88rem", fontWeight: 700 }}>
+          {parseInline(trimmed.substring(4))}
+        </h4>
+      );
+    }
+    if (trimmed.startsWith("## ")) {
+      return (
+        <h3 key={idx} style={{ margin: "12px 0 4px 0", color: "#baff57", fontSize: "0.94rem", fontWeight: 800 }}>
+          {parseInline(trimmed.substring(3))}
+        </h3>
+      );
+    }
+
+    // Bullet points (• , - , * )
+    if (/^[\*\-\•]\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^[\*\-\•]\s+/, "");
+      return (
+        <li key={idx} style={{ marginLeft: 16, marginBottom: 4, listStyleType: "disc" }}>
+          {parseInline(content)}
         </li>
       );
     }
 
-    const numberedMatch = line.match(/^(\d+)\.\s+(.*)/);
+    // Numbered list
+    const numberedMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
     if (numberedMatch) {
       return (
-        <li key={idx} style={{ marginLeft: 16, marginBottom: 4 }}>
-          <strong>{numberedMatch[1]}.</strong> {parseBold(numberedMatch[2])}
+        <li key={idx} style={{ marginLeft: 16, marginBottom: 4, listStyleType: "decimal" }}>
+          <strong>{numberedMatch[1]}.</strong> {parseInline(numberedMatch[2])}
         </li>
       );
     }
 
     return (
       <p key={idx} style={{ margin: "0 0 6px 0" }}>
-        {parseBold(line)}
+        {parseInline(line)}
       </p>
     );
   });
 }
 
-function parseBold(text: string) {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+function parseInline(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*|\*[^*]+?\*)/g);
   return parts.map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      return <strong key={index} style={{ color: "#baff57", fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2) {
+      return <em key={index}>{part.slice(1, -1)}</em>;
     }
     return part;
   });
