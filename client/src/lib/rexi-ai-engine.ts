@@ -23,6 +23,12 @@ export interface RexiContext {
   remainingProtein: number;
   workoutCount: number;
   activeRoute: string;
+  // Device & Temporal Context
+  deviceDateString: string;
+  deviceTimeString: string;
+  deviceTimezone: string;
+  deviceDayOfWeek: string;
+  devicePlatform: string;
 }
 
 // Runtime decoded default fallback key
@@ -88,6 +94,28 @@ export function getLiveRexiContext(activeRoute: string = "/overview"): RexiConte
     workoutLogs = savedWorkouts ? JSON.parse(savedWorkouts) : [];
   } catch {}
 
+  // Live Device & Temporal Telemetry
+  const now = new Date();
+  const deviceDateString = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const deviceTimeString = now.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const deviceDayOfWeek = now.toLocaleDateString("en-US", { weekday: "long" });
+  let devicePlatform = "Browser Client";
+  try {
+    if (typeof navigator !== "undefined") {
+      devicePlatform = navigator.userAgent.includes("Mobile") ? "Mobile Device" : "Desktop Workstation";
+    }
+  } catch {}
+
   return {
     athleteName: profile.name || "Athlete",
     athleteEmail: getActiveUserEmail(),
@@ -110,6 +138,11 @@ export function getLiveRexiContext(activeRoute: string = "/overview"): RexiConte
     remainingProtein: Math.max(0, Math.round((goalProtein - totalLoggedProtein) * 10) / 10),
     workoutCount: workoutLogs.length,
     activeRoute,
+    deviceDateString,
+    deviceTimeString,
+    deviceTimezone,
+    deviceDayOfWeek,
+    devicePlatform,
   };
 }
 
@@ -118,6 +151,14 @@ function generateContextualChips(query: string, aiText: string): string[] {
   const q = query.toLowerCase();
   const text = aiText.toLowerCase();
 
+  if (q.includes("date") || q.includes("time") || q.includes("day") || q.includes("today")) {
+    return [
+      "What is my workout split for today?",
+      "What are my remaining calories today?",
+      "How much protein do I have left?",
+      "Recommend a chest workout",
+    ];
+  }
   if (q.includes("chest") || q.includes("bench") || q.includes("press") || text.includes("chest")) {
     return [
       "Incline vs Flat Dumbbell Press",
@@ -168,7 +209,7 @@ function generateContextualChips(query: string, aiText: string): string[] {
 }
 
 /**
- * Fast Google Gemini AI Generator with live athletic context & timeout protection
+ * Fast Google Gemini AI Generator with live device & athletic context
  */
 export async function generateRexiChatResponse(
   userQuery: string,
@@ -182,19 +223,26 @@ export async function generateRexiChatResponse(
   const systemPrompt = `You are Rexi, the world-class athletic intelligence AI assistant embedded directly in the FitTrack Performance OS.
 You are a warm, highly motivating, scientifically grounded fitness coach, exercise biomechanist, and sports nutritionist.
 
+CURRENT DEVICE & TEMPORAL CONTEXT:
+- Current Device Date: ${context.deviceDateString}
+- Current Local Time: ${context.deviceTimeString} (${context.deviceTimezone})
+- Current Day of Week: ${context.deviceDayOfWeek}
+- Client Platform: ${context.devicePlatform}
+
 ATHLETE TELEMETRY CONTEXT:
-- Name: ${context.athleteName} (Call them ${name})
+- Athlete Name: ${context.athleteName} (Call them ${name})
 - Body Mass: ${context.massKg} kg | Height: ${context.heightCm} cm | Age: ${context.age}
 - Daily Targets: ${context.goalKcal} kcal | ${context.goalProtein}g Protein
 - Telemetry Today: ${context.remainingKcal} kcal remaining | ${context.remainingProtein}g protein remaining
-- Active App Page: ${context.activeRoute}
+- Active Screen: ${context.activeRoute}
 
 INSTRUCTIONS:
-1. Answer the question directly and concisely without fluff or preamble.
-2. If asked about workouts (e.g., Best chest workout routine), provide a structured 3–4 exercise routine with targeted sets, reps (e.g. 3 sets x 8-10 reps), and key biomechanical tips.
-3. If asked about exercise comparisons (e.g., Dumbbell vs Barbell press), compare range of motion, stabilizer recruitment, maximal load, and joint safety.
-4. Do NOT output internal scratchpad notes, thoughts, or meta-commentary.
-5. Use clean markdown formatting (bold headers, clean bullet points, readable spacing).`;
+1. Exact Real-World Date & Time: Today is strictly ${context.deviceDateString}. When asked about today's date, day, or time, ALWAYS answer with the exact current device date (${context.deviceDateString}) and time (${context.deviceTimeString}). Never say past cutoff dates or 2025.
+2. Answer all questions directly, accurately, and concisely without fluff or preamble.
+3. If asked about workouts, provide structured routines with targeted sets, reps, and biomechanical cues.
+4. If asked about exercise comparisons, compare range of motion, stabilizer recruitment, maximal load, and joint safety.
+5. Do NOT output internal scratchpad notes, thoughts, or meta-commentary.
+6. Use clean markdown formatting (bold headers, clean bullet points, readable spacing).`;
 
   // 2. Prepare conversation contents for Gemini API
   const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
@@ -259,9 +307,16 @@ INSTRUCTIONS:
     }
   }
 
-  // 4. Instant Smart Fallback if network is unreachable
+  // 4. Instant Fallback
+  if (userQuery.toLowerCase().includes("date") || userQuery.toLowerCase().includes("today")) {
+    return {
+      text: `Today is **${context.deviceDateString}** (${context.deviceTimeString}).\n\nYour FitTrack telemetry is live with **${context.remainingKcal} kcal** and **${context.remainingProtein}g protein** remaining for today!`,
+      chips: generateContextualChips(userQuery, ""),
+    };
+  }
+
   return {
-    text: `### 🏋️ Chest Hypertrophy Protocol for ${name} (${context.massKg}kg):\n\n• **1. Barbell Bench Press (Heavy Compound):** 3–4 sets × 6–8 reps (2–3 min rest)\n• **2. Incline Dumbbell Press (Upper Chest):** 3 sets × 8–10 reps (90s rest)\n• **3. Cable Chest Flyes or Pec Deck (Contraction & Stretch):** 3 sets × 12–15 reps (60s rest)\n• **4. Dips or Push-Ups (Burnout Finisher):** 2 sets to technical failure\n\n**Key Focus:** Control the eccentric (lowering) phase for 2–3 seconds and aim for progressive overload each week!`,
+    text: `### 🦖 Rexi Coach Insight for ${name}:\n\nToday is **${context.deviceDateString}**.\n\n• **Core Principle:** For maximum results at ${context.massKg}kg, focus on progressive overload, hitting your daily **${context.goalProtein}g Protein** target, and getting 7.5–9 hours of recovery sleep.\n\nFeel free to ask about your workouts, meal plans, or exercise form!`,
     chips: generateContextualChips(userQuery, ""),
   };
 }
