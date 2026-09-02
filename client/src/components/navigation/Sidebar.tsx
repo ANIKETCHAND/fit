@@ -36,22 +36,36 @@ export function Sidebar() {
     return location === path;
   };
 
+  // Close sidebar on ESC key or any outside click
   useEffect(() => {
     if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSidebarOpen(false);
+      }
+    };
+
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement;
       if (
         sidebarRef.current &&
-        !sidebarRef.current.contains(e.target as Node) &&
-        !(e.target as HTMLElement)?.closest(".editorial-sidebar-trigger")
+        !sidebarRef.current.contains(target) &&
+        !target.closest(".editorial-sidebar-trigger")
       ) {
         setSidebarOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
+
+    // Use capture phase to catch clicks anywhere on screen
+    document.addEventListener("mousedown", handleClickOutside, true);
+    document.addEventListener("touchstart", handleClickOutside, true);
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside, true);
+      document.removeEventListener("touchstart", handleClickOutside, true);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [open, setSidebarOpen]);
 
@@ -65,7 +79,10 @@ export function Sidebar() {
       {/* 3-Dots Top Left Menu Toggle Button */}
       <button
         className={`editorial-sidebar-trigger ${open ? "is-open" : ""}`}
-        onClick={toggleSidebar}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleSidebar();
+        }}
         aria-label="Toggle navigation menu"
         title={open ? "Close Menu" : "Menu (Open Sidebar)"}
       >
@@ -172,11 +189,14 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* Backdrop Scrim */}
+      {/* Full-Screen Backdrop Scrim with Instant Click-to-Close */}
       {open && (
         <div
           className="editorial-scrim"
-          onClick={() => setSidebarOpen(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSidebarOpen(false);
+          }}
           aria-label="Close overlay"
         />
       )}
