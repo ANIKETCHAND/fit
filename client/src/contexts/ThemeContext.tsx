@@ -18,30 +18,31 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
   switchable = true,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("fittrack-theme");
-    if (stored === "dark") {
-      localStorage.setItem("fittrack-theme", "light");
-      return "light";
+    if (stored === "light" || stored === "dark") {
+      return stored;
     }
-    return (stored as Theme) || "light";
+    return defaultTheme;
   });
 
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
       root.classList.add("dark");
+      root.classList.remove("light");
     } else {
       root.classList.remove("dark");
+      root.classList.add("light");
     }
     localStorage.setItem("fittrack-theme", theme);
   }, [theme, switchable]);
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === "light" ? "dark" : "light"));
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   return (
