@@ -435,16 +435,17 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   line-height: 1.02;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #060b11;
+  color: #ffffff !important;
   margin: 0 0 28px;
 }
 
 .editorial-greeting-title span {
-  color: #060b11;
+  color: #ffffff !important;
 }
 
 .editorial-greeting-title .greeting-athlete {
-  color: #060b11;
+  color: #baff57 !important;
+  text-shadow: 0 0 24px rgba(186, 255, 87, 0.45) !important;
 }
 
 .editorial-greeting-subtitle {
@@ -525,7 +526,8 @@ body :is(h1,h2,h3,h4,h5,h6,.workflow-brand,.header-wordmark,.brand-row strong),b
   font-family: "Chakra Petch", sans-serif;
   font-size: 56px;
   font-weight: 800;
-  color: #1b4332;
+  color: #baff57 !important;
+  text-shadow: 0 0 28px rgba(186, 255, 87, 0.5) !important;
   line-height: 0.9;
 }
 

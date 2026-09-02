@@ -7,12 +7,9 @@ import { WorkoutRecommendationCard } from "@/components/dashboard/WorkoutRecomme
 import { NutritionLedgerCard } from "@/components/dashboard/NutritionLedgerCard";
 import { TrainingRhythmCard } from "@/components/dashboard/TrainingRhythmCard";
 import { getAthleteProfile, getScopedKey } from "@/lib/user-store";
-import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   const getGreetingPeriod = () => {
     const hour = new Date().getHours();
@@ -125,7 +122,7 @@ export default function Home() {
             <div
               className="editorial-timestamp"
               style={{
-                color: isDark ? "#8a998c" : "#1a2530",
+                color: "#8a998c",
                 fontFamily: '"Space Mono", monospace',
                 fontSize: "11px",
                 fontWeight: 700,
@@ -140,7 +137,7 @@ export default function Home() {
             <h1
               className="editorial-greeting-title"
               style={{
-                color: isDark ? "#ffffff" : "#060b11",
+                color: "#ffffff",
                 fontFamily: '"Chakra Petch", sans-serif',
                 fontSize: "clamp(42px, 4.8vw, 62px)",
                 fontWeight: 800,
@@ -155,8 +152,9 @@ export default function Home() {
               <span
                 className="greeting-athlete"
                 style={{
-                  color: isDark ? "#baff57" : "#060b11",
-                  textShadow: isDark ? "0 0 24px rgba(186, 255, 87, 0.45)" : "none",
+                  color: "#baff57",
+                  textShadow: "0 0 24px rgba(186, 255, 87, 0.45)",
+                  display: "inline-block",
                 }}
               >
                 {userName}
@@ -168,8 +166,8 @@ export default function Home() {
                 className="editorial-primary-btn"
                 onClick={() => setLocation("/start-session")}
                 style={{
-                  backgroundColor: isDark ? "#baff57" : "#060b11",
-                  color: isDark ? "#070d0a" : "#ffffff",
+                  backgroundColor: "#baff57",
+                  color: "#070d0a",
                   padding: "14px 24px",
                   borderRadius: "6px",
                   fontFamily: '"Space Mono", monospace',
@@ -182,7 +180,7 @@ export default function Home() {
                   alignItems: "center",
                   gap: "10px",
                   cursor: "pointer",
-                  boxShadow: isDark ? "0 0 24px rgba(186, 255, 87, 0.4)" : "0 4px 18px rgba(6, 11, 17, 0.2)",
+                  boxShadow: "0 0 24px rgba(186, 255, 87, 0.4)",
                   transition: "transform 0.16s ease, filter 0.16s ease",
                 }}
               >
@@ -197,7 +195,7 @@ export default function Home() {
                   fontFamily: '"Manrope", sans-serif',
                   fontSize: "13.5px",
                   fontWeight: 700,
-                  color: isDark ? "#ffffff" : "#060b11",
+                  color: "#ffffff",
                   background: "none",
                   border: "none",
                   padding: 0,
@@ -218,7 +216,7 @@ export default function Home() {
                 alignItems: "center",
                 gap: "24px",
                 paddingTop: "14px",
-                borderTop: isDark ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(6, 11, 17, 0.1)",
+                borderTop: "1px solid rgba(255, 255, 255, 0.12)",
               }}
             >
               <div className="editorial-score-badge" style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
@@ -228,8 +226,8 @@ export default function Home() {
                     fontFamily: '"Chakra Petch", sans-serif',
                     fontSize: "56px",
                     fontWeight: 800,
-                    color: isDark ? "#baff57" : "#1b4332",
-                    textShadow: isDark ? "0 0 28px rgba(186, 255, 87, 0.5)" : "none",
+                    color: "#baff57",
+                    textShadow: "0 0 28px rgba(186, 255, 87, 0.5)",
                     lineHeight: 0.9,
                   }}
                 >
@@ -242,7 +240,7 @@ export default function Home() {
                       fontFamily: '"Space Mono", monospace',
                       fontSize: "13px",
                       fontWeight: 800,
-                      color: isDark ? "#ffffff" : "#060b11",
+                      color: "#ffffff",
                     }}
                   >
                     / 100
@@ -254,7 +252,7 @@ export default function Home() {
                       fontSize: "8px",
                       fontWeight: 800,
                       letterSpacing: "0.14em",
-                      color: isDark ? "#8a998c" : "#2c3b4a",
+                      color: "#8a998c",
                       textTransform: "uppercase",
                     }}
                   >
