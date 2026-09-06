@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
@@ -26,26 +26,45 @@ import Support from "./pages/Support";
 import GpsTracker from "./pages/GpsTracker";
 import BodyMap from "./pages/BodyMap";
 
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const [, setLocation] = useLocation();
+  const isAuthenticated =
+    typeof window !== "undefined" &&
+    localStorage.getItem("fittrack_auth_state") === "authenticated";
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, setLocation]);
+
+  if (!isAuthenticated) {
+    return <Landing />;
+  }
+
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Landing} />
       <Route path={"/landing"} component={Landing} />
-      <Route path={"/overview"} component={Home} />
-      <Route path={"/home"} component={Home} />
-      <Route path={"/body-map"} component={BodyMap} />
-      <Route path={"/anatomy"} component={BodyMap} />
-      <Route path={"/log-food"} component={LogFood} />
-      <Route path={"/log-workout"} component={LogWorkout} />
-      <Route path={"/log-weight"} component={LogWeight} />
-      <Route path={"/start-session"} component={StartSession} />
-      <Route path={"/achievements"} component={Achievements} />
-      <Route path={"/exercise-library"} component={ExerciseLibrary} />
-      <Route path={"/notifications"} component={Notifications} />
-      <Route path={"/profile"} component={Profile} />
-      <Route path={"/settings"} component={Settings} />
-      <Route path={"/support"} component={Support} />
-      <Route path={"/gps"} component={GpsTracker} />
+      <Route path={"/overview"}>{() => <ProtectedRoute component={Home} />}</Route>
+      <Route path={"/home"}>{() => <ProtectedRoute component={Home} />}</Route>
+      <Route path={"/body-map"}>{() => <ProtectedRoute component={BodyMap} />}</Route>
+      <Route path={"/anatomy"}>{() => <ProtectedRoute component={BodyMap} />}</Route>
+      <Route path={"/log-food"}>{() => <ProtectedRoute component={LogFood} />}</Route>
+      <Route path={"/log-workout"}>{() => <ProtectedRoute component={LogWorkout} />}</Route>
+      <Route path={"/log-weight"}>{() => <ProtectedRoute component={LogWeight} />}</Route>
+      <Route path={"/start-session"}>{() => <ProtectedRoute component={StartSession} />}</Route>
+      <Route path={"/achievements"}>{() => <ProtectedRoute component={Achievements} />}</Route>
+      <Route path={"/exercise-library"}>{() => <ProtectedRoute component={ExerciseLibrary} />}</Route>
+      <Route path={"/notifications"}>{() => <ProtectedRoute component={Notifications} />}</Route>
+      <Route path={"/profile"}>{() => <ProtectedRoute component={Profile} />}</Route>
+      <Route path={"/settings"}>{() => <ProtectedRoute component={Settings} />}</Route>
+      <Route path={"/support"}>{() => <ProtectedRoute component={Support} />}</Route>
+      <Route path={"/gps"}>{() => <ProtectedRoute component={GpsTracker} />}</Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -51,6 +51,16 @@ const GOOGLE_CLIENT_ID = "583335952268-9ibrvhstkajdn9ik9did17ml3pldijuk.apps.goo
 
 export default function Landing() {
   const [, setLocation] = useLocation();
+  const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(() => {
+    try {
+      const isAuth = localStorage.getItem("fittrack_auth_state") === "authenticated";
+      const userEmail = localStorage.getItem("fittrack_user_email") || "";
+      const userName = localStorage.getItem("fittrack_user_name") || "Athlete";
+      return isAuth ? { email: userEmail, name: userName } : null;
+    } catch {
+      return null;
+    }
+  });
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -388,58 +398,211 @@ export default function Landing() {
 
       {/* 3. Hero Section */}
       <main className="landing-hero">
-        <motion.h1
-          className="hero-main-title"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.65, delay: 0.1 }}
-        >
-          BUILD STRENGTH
-          <br />
-          <span className="hero-title-highlight">TRACK PROGRESS</span>
-        </motion.h1>
-
-        {/* Action Callouts */}
-        <motion.div
-          className="hero-cta-group"
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-        >
-          <button className="hero-primary-cta" onClick={() => openAuth("signin")}>
-            <Fingerprint size={18} />
-            Start Tracking Free
-            <ArrowRight size={16} />
-          </button>
-        </motion.div>
-
-        {/* 4. Live Motivating Quotes Ticker */}
-        <motion.div
-          className="landing-quote-card"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <div className="quote-header">
-            <div className="quote-kicker">
-              <Quote size={12} />
-              <span>Daily Motivation</span>
-            </div>
-            <span className="quote-author">{motivatingQuotes[quoteIndex].author}</span>
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={quoteIndex}
-              className="quote-text"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.35 }}
+        <div className="landing-hero-split">
+          {/* Left Column: Platform Branding & Motivation */}
+          <div className="hero-left-column">
+            <motion.h1
+              className="hero-main-title text-left"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.65, delay: 0.1 }}
             >
-              “<em>{motivatingQuotes[quoteIndex].quote}</em>”
-            </motion.p>
-          </AnimatePresence>
-        </motion.div>
+              BUILD STRENGTH
+              <br />
+              <span className="hero-title-highlight">TRACK PROGRESS</span>
+            </motion.h1>
+
+            <p className="text-[#a3b899] text-sm sm:text-base font-medium max-w-lg mb-6 leading-relaxed text-left">
+              A high-performance athletic operating system with 3D biomechanical activation, real-time nutrition telemetry, and intelligent performance coaching.
+            </p>
+
+            {/* Live Motivating Quotes Ticker */}
+            <motion.div
+              className="landing-quote-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <div className="quote-header">
+                <div className="quote-kicker">
+                  <Quote size={12} />
+                  <span>Daily Motivation</span>
+                </div>
+                <span className="quote-author">{motivatingQuotes[quoteIndex].author}</span>
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={quoteIndex}
+                  className="quote-text"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  “<em>{motivatingQuotes[quoteIndex].quote}</em>”
+                </motion.p>
+              </AnimatePresence>
+            </motion.div>
+          </div>
+
+          {/* Right Column: Embedded Login & Registration Card (Prominently Visible!) */}
+          <div className="hero-right-column">
+            <motion.div
+              className="embedded-auth-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <div className="embedded-auth-header">
+                <div className="embedded-auth-title">
+                  <KeyRound size={14} />
+                  <span>Athlete Access Console</span>
+                </div>
+                <span className="w-2 h-2 rounded-full bg-[#c6ff3d] animate-pulse" />
+              </div>
+
+              {currentUser ? (
+                <div className="authenticated-badge-box">
+                  <div className="flex items-center justify-center gap-2 text-[#c6ff3d] font-mono text-xs uppercase tracking-wider font-bold">
+                    <UserCheck size={16} />
+                    <span>Session Active</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-white font-sans">
+                    Welcome back, {currentUser.name}!
+                  </h3>
+                  <p className="text-xs font-mono text-[#8a998c]">
+                    {currentUser.email}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/overview")}
+                    className="auth-submit-btn w-full flex items-center justify-center gap-2 mt-2"
+                  >
+                    <span>Launch Dashboard</span>
+                    <ArrowRight size={15} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem("fittrack_auth_state");
+                      localStorage.removeItem("fittrack_user_email");
+                      localStorage.removeItem("fittrack_user_name");
+                      setCurrentUser(null);
+                      toast.success("Signed out successfully.");
+                    }}
+                    className="text-xs font-mono text-[#8a998c] hover:text-white underline mt-1 cursor-pointer"
+                  >
+                    Sign Out / Switch Account
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Sign In vs Create Account Tabs */}
+                  <div className="auth-tab-bar mb-4">
+                    <button
+                      type="button"
+                      className={`auth-tab-button ${authMode === "signin" ? "active" : ""}`}
+                      onClick={() => setAuthMode("signin")}
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      type="button"
+                      className={`auth-tab-button ${authMode === "signup" ? "active" : ""}`}
+                      onClick={() => setAuthMode("signup")}
+                    >
+                      Create Account
+                    </button>
+                  </div>
+
+                  <div className="auth-form-stack">
+                    {/* Google Authentication Button */}
+                    <button
+                      type="button"
+                      className="google-auth-btn"
+                      onClick={handleGoogleOAuthPopup}
+                    >
+                      <svg className="google-icon" viewBox="0 0 24 24" width="18" height="18">
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                        />
+                      </svg>
+                      <span>Continue with Google</span>
+                    </button>
+
+                    <div className="auth-divider">
+                      <span>Or continue with email</span>
+                    </div>
+
+                    <form onSubmit={handleAuthSubmit} className="auth-form-stack">
+                      {authMode === "signup" && (
+                        <div className="auth-input-group">
+                          <label>Full Name</label>
+                          <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Alex Morgan"
+                            required
+                          />
+                        </div>
+                      )}
+
+                      <div className="auth-input-group">
+                        <label>Email Address</label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="athlete@example.com"
+                          required
+                        />
+                      </div>
+
+                      <div className="auth-input-group">
+                        <label>Password</label>
+                        <input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Enter password"
+                          required
+                        />
+                      </div>
+
+                      <button type="submit" className="auth-submit-btn">
+                        {authMode === "signin" ? <LogIn size={15} /> : <UserCheck size={15} />}
+                        <span>{authMode === "signin" ? "Sign In to Dashboard" : "Create Your Account"}</span>
+                      </button>
+                    </form>
+
+                    <button
+                      type="button"
+                      onClick={handleQuickDemo}
+                      className="demo-access-btn"
+                    >
+                      <Sparkles size={13} />
+                      <span>Instant Demo Access</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </div>
+        </div>
 
         {/* 5. Core Platform Pillars */}
         <div className="landing-features-grid">
