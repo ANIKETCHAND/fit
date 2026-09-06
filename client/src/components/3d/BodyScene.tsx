@@ -5,11 +5,13 @@ import * as THREE from "three";
 import { useReducedMotion, AnimatePresence } from "framer-motion";
 import { BodyControls, type BodyView } from "./BodyControls";
 import { CyberHumanBody } from "./CyberHumanBody";
+import { SketchfabBodyViewer } from "./SketchfabBodyViewer";
 import { FloatingBadges } from "./FloatingBadges";
 import { MuscleCalloutCard } from "./MuscleCalloutCard";
 import { DietLedgerCard } from "./DietLedgerCard";
 import { type MuscleId, muscleLibrary } from "@/lib/fitness-data";
 import { useIsMobile } from "@/hooks/useMobile";
+import { Box, Eye } from "lucide-react";
 
 type SceneInnerProps = {
   view: BodyView;
@@ -71,8 +73,7 @@ function SceneInner({
     <>
       <color attach="background" args={["#050806"]} />
       <fog attach="fog" args={["#050806", 5.5, isMobile ? 16.0 : 13.0]} />
-      
-      {/* Cinematic Cyber Lighting */}
+
       <ambientLight intensity={1.5} color="#d1fae5" />
       <directionalLight
         position={[3.5, 6, 4.5]}
@@ -86,7 +87,6 @@ function SceneInner({
       <pointLight position={[3.5, -1.8, 3]} intensity={4.5} distance={8} color="#38bdf8" />
       <pointLight position={[0, 4.5, -3.5]} intensity={3.0} distance={7} color="#a3e635" />
 
-      {/* Cybernetic Human Body Model */}
       <CyberHumanBody
         selected={selected}
         hovered={hovered}
@@ -94,7 +94,6 @@ function SceneInner({
         onSelect={onSelected}
       />
 
-      {/* Ambient Neon Floating Sparkles */}
       {!reduceMotion && (
         <Sparkles
           count={36}
@@ -106,7 +105,6 @@ function SceneInner({
         />
       )}
 
-      {/* Camera Controls */}
       <OrbitControls
         ref={controls}
         enablePan={false}
@@ -128,7 +126,7 @@ function SceneInner({
   );
 }
 
-// Coordinate mappings for the dynamic speech-bubble callout card
+// Coordinate mappings for the callout card
 const CALLOUT_POSITIONS: Record<MuscleId, { top: string; left: string }> = {
   quads: { top: "43%", left: "52%" },
   hamstrings: { top: "43%", left: "52%" },
@@ -148,6 +146,8 @@ type BodySceneProps = {
 };
 
 export function BodyScene({ selected, onSelected }: BodySceneProps) {
+  // Mode toggle: "sketchfab" (Human Body - Ripped Male embed) vs "cyber" (Holographic Wireframe)
+  const [renderMode, setRenderMode] = useState<"sketchfab" | "cyber">("sketchfab");
   const [view, setView] = useState<BodyView>("front");
   const [autoRotate, setAutoRotate] = useState(false);
   const [hovered, setHovered] = useState<MuscleId | null>(null);
@@ -163,6 +163,15 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
   const currentMuscle = muscleLibrary[activeMuscleId] || muscleLibrary.quads;
   const calloutPos = CALLOUT_POSITIONS[activeMuscleId] || CALLOUT_POSITIONS.quads;
 
+  const quickMuscles: { id: MuscleId; label: string }[] = [
+    { id: "quads", label: "Quads" },
+    { id: "chest", label: "Chest" },
+    { id: "core", label: "Core" },
+    { id: "biceps", label: "Biceps" },
+    { id: "shoulders", label: "Delts" },
+    { id: "back", label: "Back" },
+  ];
+
   return (
     <section
       className="relative w-full h-full min-h-[640px] flex flex-col justify-between overflow-hidden select-none"
@@ -172,12 +181,55 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
           "linear-gradient(rgba(186, 255, 87, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(186, 255, 87, 0.04) 1px, transparent 1px)",
         backgroundSize: "36px 36px",
       }}
-      aria-label="Interactive 3D anatomy holographic explorer"
+      aria-label="Interactive 3D anatomy explorer"
     >
-      {/* ─── 1. FLOATING 3D BADGES (KETTLEBELL TOP-LEFT, STOPWATCH TOP-RIGHT, SUPPLEMENT LOWER-RIGHT) ─── */}
+      {/* ─── 1. MODE SELECTOR (SKETCHFAB 3D RIPPED MALE vs CYBER WIREFRAME) ─── */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex items-center gap-1 bg-[#09110d]/85 backdrop-blur-md border border-white/10 rounded-xl p-1 shadow-xl">
+        <button
+          onClick={() => setRenderMode("sketchfab")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 ${
+            renderMode === "sketchfab"
+              ? "bg-[#baff57] text-[#050806] shadow-md shadow-[#baff57]/20"
+              : "text-[#8b9c8a] hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Box size={13} />
+          <span>3D Ripped Male</span>
+        </button>
+        <button
+          onClick={() => setRenderMode("cyber")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5 ${
+            renderMode === "cyber"
+              ? "bg-[#baff57] text-[#050806] shadow-md shadow-[#baff57]/20"
+              : "text-[#8b9c8a] hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Eye size={13} />
+          <span>Cyber Wireframe</span>
+        </button>
+      </div>
+
+      {/* ─── 2. FLOATING 3D BADGES (KETTLEBELL, STOPWATCH, SUPPLEMENT JAR) ─── */}
       <FloatingBadges />
 
-      {/* ─── 2. INTERACTIVE 3D MUSCLE CALLOUT CARD (ATTACHED TO SELECTED MUSCLE) ─── */}
+      {/* ─── 3. QUICK MUSCLE SELECTOR CHIPS ─── */}
+      <div className="absolute top-16 left-6 z-20 pointer-events-auto hidden md:flex items-center gap-1.5 bg-[#09110d]/75 backdrop-blur-md border border-white/10 rounded-xl px-2 py-1.5 shadow-lg">
+        {quickMuscles.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => onSelected(id)}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all ${
+              selected === id
+                ? "bg-[#baff57]/20 border border-[#baff57]/40 text-[#baff57] font-bold"
+                : "text-[#8b9c8a] hover:text-white"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ─── 4. INTERACTIVE 3D MUSCLE CALLOUT CARD (ATTACHED TO SELECTED MUSCLE) ─── */}
       <div
         className="absolute z-30 pointer-events-none hidden sm:block transition-all duration-300 ease-out"
         style={{
@@ -190,49 +242,55 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
         </AnimatePresence>
       </div>
 
-      {/* Mobile-optimized callout position */}
-      <div className="absolute top-18 left-4 z-30 pointer-events-none sm:hidden">
+      {/* Mobile-optimized callout card */}
+      <div className="absolute top-20 left-4 z-30 pointer-events-none sm:hidden">
         <AnimatePresence mode="wait">
           <MuscleCalloutCard key={currentMuscle.id} muscle={currentMuscle} />
         </AnimatePresence>
       </div>
 
-      {/* ─── 3. THREE.JS 3D CANVAS (CYBER HUMAN BODY + PLATFORM + LIGHTING) ─── */}
+      {/* ─── 5. 3D MODEL CANVAS OR SKETCHFAB 3D EMBED ─── */}
       <div className="absolute inset-0 z-0">
-        <Canvas
-          dpr={[1, 1.5]}
-          shadows
-          camera={{ position: [0, 0.25, isMobile ? 12.0 : 8.4], fov: isMobile ? 46 : 38 }}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
-        >
-          <SceneInner
-            view={view}
-            autoRotate={autoRotate}
-            reduceMotion={reduceMotion}
-            selected={selected}
-            hovered={hovered}
-            onSelected={onSelected}
-            onHover={setHovered}
-            isMobile={isMobile}
-          />
-        </Canvas>
+        {renderMode === "sketchfab" ? (
+          <SketchfabBodyViewer />
+        ) : (
+          <Canvas
+            dpr={[1, 1.5]}
+            shadows
+            camera={{ position: [0, 0.25, isMobile ? 12.0 : 8.4], fov: isMobile ? 46 : 38 }}
+            gl={{ antialias: true, powerPreference: "high-performance" }}
+          >
+            <SceneInner
+              view={view}
+              autoRotate={autoRotate}
+              reduceMotion={reduceMotion}
+              selected={selected}
+              hovered={hovered}
+              onSelected={onSelected}
+              onHover={setHovered}
+              isMobile={isMobile}
+            />
+          </Canvas>
+        )}
       </div>
 
-      {/* ─── 4. BOTTOM HUD: FROSTED GLASS DIET LEDGER CARD (ENERGY, PROTEIN, CARBS, FATS) ─── */}
+      {/* ─── 6. BOTTOM HUD: FROSTED GLASS DIET LEDGER CARD ─── */}
       <div className="relative z-20 w-full max-w-sm sm:max-w-md p-4 sm:p-5 mt-auto">
         <DietLedgerCard />
       </div>
 
-      {/* ─── 5. CAMERA CONTROLS (FRONT / BACK / SIDE / ROTATE) ─── */}
-      <div className="absolute bottom-4 right-4 z-20">
-        <BodyControls
-          view={view}
-          autoRotate={autoRotate}
-          onView={setView}
-          onReset={reset}
-          onToggleRotate={() => setAutoRotate((state) => !state)}
-        />
-      </div>
+      {/* ─── 7. CAMERA CONTROLS (AVAILABLE IN CYBER MODE) ─── */}
+      {renderMode === "cyber" && (
+        <div className="absolute bottom-4 right-4 z-20">
+          <BodyControls
+            view={view}
+            autoRotate={autoRotate}
+            onView={setView}
+            onReset={reset}
+            onToggleRotate={() => setAutoRotate((state) => !state)}
+          />
+        </div>
+      )}
     </section>
   );
 }
