@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { AnimatedBackground } from "./components/AnimatedBackground";
 import { EchoAssistant } from "./components/ai/EchoAssistant";
 import { RexiOnboardingModal } from "./components/onboarding/RexiOnboardingModal";
@@ -28,6 +28,7 @@ import BodyMap from "./pages/BodyMap";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const [, setLocation] = useLocation();
+  const { setTheme } = useTheme();
   const isAuthenticated =
     typeof window !== "undefined" &&
     localStorage.getItem("fittrack_auth_state") === "authenticated";
@@ -35,8 +36,15 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   useEffect(() => {
     if (!isAuthenticated) {
       setLocation("/");
+    } else {
+      const storedTheme = localStorage.getItem("fittrack-theme");
+      if (storedTheme !== "light") {
+        setTheme("dark");
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("fittrack-theme", "dark");
+      }
     }
-  }, [isAuthenticated, setLocation]);
+  }, [isAuthenticated, setLocation, setTheme]);
 
   if (!isAuthenticated) {
     return <Landing />;
@@ -80,7 +88,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light" switchable>
+      <ThemeProvider defaultTheme="dark" switchable>
         <TooltipProvider>
           <AnimatedBackground />
           <Toaster />

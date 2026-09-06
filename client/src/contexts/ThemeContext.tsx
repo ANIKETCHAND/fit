@@ -4,6 +4,7 @@ type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme?: () => void;
   switchable: boolean;
 }
@@ -18,16 +19,15 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
   switchable = true,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem("fittrack-theme");
-    if (stored === "dark") {
-      localStorage.setItem("fittrack-theme", "light");
-      return "light";
+    const stored = typeof window !== "undefined" ? localStorage.getItem("fittrack-theme") : null;
+    if (stored === "dark" || stored === "light") {
+      return stored as Theme;
     }
-    return (stored as Theme) || "light";
+    return defaultTheme;
   });
 
   useEffect(() => {
@@ -40,12 +40,29 @@ export function ThemeProvider({
     localStorage.setItem("fittrack-theme", theme);
   }, [theme, switchable]);
 
+  // Ensure app switches to dark mode by default on sign-in
+  useEffect(() => {
+    const handleSignIn = () => {
+      setTheme("dark");
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("fittrack-theme", "dark");
+    };
+
+    window.addEventListener("fittrack:signin", handleSignIn);
+    window.addEventListener("storage", handleSignIn);
+
+    return () => {
+      window.removeEventListener("fittrack:signin", handleSignIn);
+      window.removeEventListener("storage", handleSignIn);
+    };
+  }, []);
+
   const toggleTheme = () => {
     setTheme(prev => (prev === "light" ? "dark" : "light"));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, switchable }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme, switchable }}>
       {children}
     </ThemeContext.Provider>
   );

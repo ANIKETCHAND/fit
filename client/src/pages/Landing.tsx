@@ -88,6 +88,15 @@ export default function Landing() {
     }
   });
 
+  // Ensure dark mode is active by default after sign in
+  const applyDefaultDarkMode = () => {
+    try {
+      localStorage.setItem("fittrack-theme", "dark");
+      document.documentElement.classList.add("dark");
+      window.dispatchEvent(new Event("fittrack:signin"));
+    } catch {}
+  };
+
   // Decode and cryptographically validate JWT helper for Google One Tap
   const handleCredentialResponse = (response: any) => {
     if (response?.credential) {
@@ -131,6 +140,7 @@ export default function Landing() {
             focus: "Strength and Conditioning",
           });
           localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+          applyDefaultDarkMode();
           toast.success(`Welcome, ${cleanName}! Signed in with Google.`);
           setGoogleModalOpen(false);
           setAuthModalOpen(false);
@@ -184,6 +194,7 @@ export default function Landing() {
                   } catch {}
 
                   localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+          applyDefaultDarkMode();
                   setIsGoogleLoading(false);
                   setGoogleModalOpen(false);
                   setAuthModalOpen(false);
@@ -311,6 +322,7 @@ export default function Landing() {
       setIsGoogleLoading(false);
       setGoogleModalOpen(false);
       localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+          applyDefaultDarkMode();
       toast.success(`Google Account connected: ${cleanUserEmail}`);
       setLocation("/overview");
     }, 550);
@@ -333,6 +345,7 @@ export default function Landing() {
     localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_user_email", cleanEmail);
     localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+          applyDefaultDarkMode();
     if (name) {
       localStorage.setItem("fittrack_user_name", cleanName);
     }
@@ -355,6 +368,7 @@ export default function Landing() {
     localStorage.setItem("fittrack_user_email", "demo@fittrack.training");
     localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+          applyDefaultDarkMode();
     toast.success("Welcome! Opening demo dashboard.");
     setLocation("/overview");
   };
@@ -429,7 +443,10 @@ export default function Landing() {
             </p>
             <button
               type="button"
-              onClick={() => setLocation("/overview")}
+              onClick={() => {
+                applyDefaultDarkMode();
+                setLocation("/overview");
+              }}
               className="auth-submit-btn w-full flex items-center justify-center gap-2 mt-2 cursor-pointer"
             >
               <span>Launch Dashboard</span>

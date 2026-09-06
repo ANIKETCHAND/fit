@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -7,6 +7,18 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>FitTrack — Performance OS</title>
     <meta name="theme-color" content="#080a09" />
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem("fittrack-theme");
+          if (stored === "light") {
+            document.documentElement.classList.remove("dark");
+          } else {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -21,7 +33,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Sketchfab 3D Viewer API -->
     <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
-    <script type="module" crossorigin src="/assets/index-Dx8WmsI8.js"></script>
+    <script type="module" crossorigin src="/assets/index-DexEteCT.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-Chl_UVoM.css">
   </head>
 
