@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FitTrack Security Utilities
  * Input sanitization, XSS prevention, and strict format validation.
  */
@@ -32,4 +32,14 @@ export function sanitizeEmail(email: string | undefined | null): string {
 export function sanitizePositiveNumber(val: any, fallback = 0): number {
   const num = Number(val);
   return !isNaN(num) && num >= 0 && isFinite(num) ? num : fallback;
+}
+
+/**
+ * Computes secure SHA-256 hash using browser-native Web Crypto API
+ */
+export async function hashPassword(password: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }

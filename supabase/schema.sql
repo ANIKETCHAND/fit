@@ -206,14 +206,53 @@ ALTER TABLE public.streak_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gps_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_favorites ENABLE ROW LEVEL SECURITY;
 
--- Allow read and write with anon key for FitTrack client sync
-CREATE POLICY "Allow all on users" ON public.users FOR ALL USING (true);
-CREATE POLICY "Allow all on athlete_profiles" ON public.athlete_profiles FOR ALL USING (true);
-CREATE POLICY "Allow all on nutrition_entries" ON public.nutrition_entries FOR ALL USING (true);
-CREATE POLICY "Allow all on custom_indian_foods" ON public.custom_indian_foods FOR ALL USING (true);
-CREATE POLICY "Allow all on workout_entries" ON public.workout_entries FOR ALL USING (true);
-CREATE POLICY "Allow all on workout_sets" ON public.workout_sets FOR ALL USING (true);
-CREATE POLICY "Allow all on metric_entries" ON public.metric_entries FOR ALL USING (true);
-CREATE POLICY "Allow all on streak_records" ON public.streak_records FOR ALL USING (true);
-CREATE POLICY "Allow all on gps_sessions" ON public.gps_sessions FOR ALL USING (true);
-CREATE POLICY "Allow all on user_favorites" ON public.user_favorites FOR ALL USING (true);
+-- Helper function to extract authenticated athlete email
+CREATE OR REPLACE FUNCTION public.current_athlete_email()
+RETURNS TEXT AS $$
+  SELECT COALESCE(
+    auth.jwt() ->> 'email',
+    current_setting('request.jwt.claim.email', true),
+    ''
+  );
+$$ LANGUAGE sql STABLE;
+
+-- Strictly scoped user-level policies: Athletes can only read/write their own records
+CREATE POLICY "Users access own account only" ON public.users FOR ALL
+  USING (email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Athlete profiles own data only" ON public.athlete_profiles FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Nutrition entries own data only" ON public.nutrition_entries FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Custom foods own data only" ON public.custom_indian_foods FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Workout entries own data only" ON public.workout_entries FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Workout sets own data only" ON public.workout_sets FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Metric entries own data only" ON public.metric_entries FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Streak records own data only" ON public.streak_records FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "GPS sessions own data only" ON public.gps_sessions FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Favorites own data only" ON public.user_favorites FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');

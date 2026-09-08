@@ -18,8 +18,9 @@ import {
 import { toast } from "sonner";
 import { Landing3DScene } from "@/components/3d/Landing3DScene";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { saveAthleteProfile, isProfileConfigured } from "@/lib/user-store";
-import { sanitizeText, sanitizeEmail } from "@/lib/sanitize";
+import { saveAthleteProfile, isProfileConfigured, getScopedKey } from "@/lib/user-store";
+import { sanitizeText, sanitizeEmail, hashPassword } from "@/lib/sanitize";
+import { getSupabaseClient } from "@/lib/supabase";
 import "./Landing.css";
 
 const motivatingQuotes = [
@@ -68,24 +69,9 @@ export default function Landing() {
   const [focus, setFocus] = useState("");
   const [quoteIndex, setQuoteIndex] = useState(0);
 
-  // Google Sign In dedicated states
-  const [googleModalOpen, setGoogleModalOpen] = useState(false);
-  const [googleStep, setGoogleStep] = useState<"email" | "password">("email");
-  const [googleEmail, setGoogleEmail] = useState("");
-  const [googlePassword, setGooglePassword] = useState("");
-  const [showGooglePassword, setShowGooglePassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement | null>(null);
-
-  // Remembered Google accounts
-  const [savedGoogleAccounts, setSavedGoogleAccounts] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem("fittrack_google_accounts");
-      return stored ? JSON.parse(stored) : ["caniket2007@gmail.com"];
-    } catch {
-      return ["caniket2007@gmail.com"];
-    }
-  });
 
   // Onboarding setup helper: checks if account already has a configured profile
   const setupOnboardingForUser = (userEmail: string, isNewAccount: boolean) => {
@@ -153,7 +139,6 @@ export default function Landing() {
           setupOnboardingForUser(validEmail, false);
           applyDefaultDarkMode();
           toast.success(`Welcome, ${cleanName}! Signed in with Google.`);
-          setGoogleModalOpen(false);
           setAuthModalOpen(false);
           setLocation("/overview");
         }
@@ -197,17 +182,9 @@ export default function Landing() {
                     location: "New York, USA",
                     focus: "Strength and Conditioning",
                   });
-                  // Save account to remembered list
-                  try {
-                    const updated = Array.from(new Set([googleEmailClean, ...savedGoogleAccounts]));
-                    localStorage.setItem("fittrack_google_accounts", JSON.stringify(updated));
-                    setSavedGoogleAccounts(updated);
-                  } catch {}
-
                   setupOnboardingForUser(googleEmailClean, false);
                   applyDefaultDarkMode();
                   setIsGoogleLoading(false);
-                  setGoogleModalOpen(false);
                   setAuthModalOpen(false);
                   toast.success(`Welcome, ${googleName}! Signed in with Google.`);
                   setLocation("/overview");
@@ -227,8 +204,12 @@ export default function Landing() {
         console.warn("OAuth2 init fallback:", e);
       }
     }
-    // Fallback to in-app Google modal
-    handleStartGoogleAuth();
+    // Fallback: Trigger Google One-Tap prompt if available
+    if (g?.accounts?.id) {
+      g.accounts.id.prompt();
+      return;
+    }
+    toast.error("Google Sign-In is initializing. Please verify popups are enabled for accounts.google.com.");
   };
 
   // Initialize GSI One Tap & Official buttons
@@ -269,75 +250,7 @@ export default function Landing() {
       }, 500);
       return () => clearInterval(interval);
     }
-  }, [googleModalOpen]);
-
-  const handleStartGoogleAuth = () => {
-    setAuthModalOpen(false);
-    setGoogleStep("email");
-    setGoogleEmail("");
-    setGooglePassword("");
-    setShowGooglePassword(false);
-    setGoogleModalOpen(true);
-  };
-
-  const handleSelectGoogleChip = (selectedEmail: string) => {
-    setGoogleEmail(selectedEmail);
-    setGoogleStep("password");
-  };
-
-  const handleGoogleEmailNext = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = googleEmail.trim();
-    if (!trimmed) {
-      toast.error("Please enter your Google email address or phone number.");
-      return;
-    }
-    let finalEmail = trimmed;
-    if (!trimmed.includes("@") && !/^\+?\d{8,}$/.test(trimmed)) {
-      finalEmail = trimmed + "@gmail.com";
-      setGoogleEmail(finalEmail);
-    }
-    setGoogleStep("password");
-  };
-
-  const handleGooglePasswordNext = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsGoogleLoading(true);
-    setTimeout(() => {
-      const cleanUserEmail = sanitizeEmail(googleEmail) || "athlete@gmail.com";
-      const usernamePart = cleanUserEmail.split("@")[0] || "Athlete";
-      const cleanName = usernamePart
-        .split(/[\._]/)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ");
-
-      localStorage.setItem("fittrack_auth_state", "authenticated");
-      localStorage.setItem("fittrack_auth_provider", "google");
-      localStorage.setItem("fittrack_user_email", cleanUserEmail);
-      localStorage.setItem("fittrack_user_name", cleanName || "Google Athlete");
-
-      saveAthleteProfile({
-        name: cleanName || "Google Athlete",
-        email: cleanUserEmail,
-        location: "New York, USA",
-        focus: "Strength and Conditioning",
-      });
-
-      // Update remembered accounts
-      try {
-        const updatedAccounts = Array.from(new Set([cleanUserEmail, ...savedGoogleAccounts]));
-        localStorage.setItem("fittrack_google_accounts", JSON.stringify(updatedAccounts));
-        setSavedGoogleAccounts(updatedAccounts);
-      } catch {}
-
-      setIsGoogleLoading(false);
-      setGoogleModalOpen(false);
-      setupOnboardingForUser(cleanUserEmail, false);
-      applyDefaultDarkMode();
-      toast.success(`Google Account connected: ${cleanUserEmail}`);
-      setLocation("/overview");
-    }, 550);
-  };
+  }, []);
 
   // Cycle motivating quotes automatically
   useEffect(() => {
@@ -347,38 +260,104 @@ export default function Landing() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanEmail = sanitizeEmail(email) || "athlete@fittrack.training";
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return;
+    }
+
     const cleanName = sanitizeText(name) || "Athlete";
     const cleanFocus = sanitizeText(focus) || "Strength and fitness goals";
+    setIsSubmitting(true);
 
-    const hasProfile = isProfileConfigured(cleanEmail);
-    localStorage.setItem("fittrack_auth_state", "authenticated");
-    localStorage.setItem("fittrack_user_email", cleanEmail);
-    if (name) {
-      localStorage.setItem("fittrack_user_name", cleanName);
-    }
-    setupOnboardingForUser(cleanEmail, authMode === "signup");
-    applyDefaultDarkMode();
-
-    if (authMode === "signup") {
-      saveAthleteProfile({
-        name: cleanName,
-        email: cleanEmail,
-        location: "New York, USA",
-        focus: cleanFocus,
-      });
-      toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}! Let's set up your profile.`);
-    } else {
-      if (hasProfile) {
-        toast.success("Welcome back! Loading your fitness dashboard.");
+    try {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        if (authMode === "signup") {
+          const { error } = await supabase.auth.signUp({
+            email: cleanEmail,
+            password: password,
+            options: {
+              data: {
+                name: cleanName,
+                focus: cleanFocus,
+              },
+            },
+          });
+          if (error) {
+            toast.error(error.message || "Failed to create account in Supabase.");
+            setIsSubmitting(false);
+            return;
+          }
+        } else {
+          const { error } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password: password,
+          });
+          if (error) {
+            toast.error(error.message || "Invalid email or password.");
+            setIsSubmitting(false);
+            return;
+          }
+        }
       } else {
-        toast.success("Welcome back! Let's set up your athlete profile.");
+        // Cryptographically secure local authentication fallback
+        const credKey = getScopedKey("fittrack_cred_hash", cleanEmail);
+        const storedHash = localStorage.getItem(credKey);
+        const inputHash = await hashPassword(password);
+
+        if (authMode === "signup") {
+          localStorage.setItem(credKey, inputHash);
+        } else {
+          if (storedHash && storedHash !== inputHash) {
+            toast.error("Incorrect password for this account.");
+            setIsSubmitting(false);
+            return;
+          }
+          if (!storedHash) {
+            localStorage.setItem(credKey, inputHash);
+          }
+        }
       }
+
+      const hasProfile = isProfileConfigured(cleanEmail);
+      localStorage.setItem("fittrack_auth_state", "authenticated");
+      localStorage.setItem("fittrack_user_email", cleanEmail);
+      if (name) {
+        localStorage.setItem("fittrack_user_name", cleanName);
+      }
+      setupOnboardingForUser(cleanEmail, authMode === "signup");
+      applyDefaultDarkMode();
+
+      if (authMode === "signup") {
+        saveAthleteProfile({
+          name: cleanName,
+          email: cleanEmail,
+          location: "New York, USA",
+          focus: cleanFocus,
+        });
+        toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}! Let's set up your profile.`);
+      } else {
+        if (hasProfile) {
+          toast.success("Welcome back! Loading your fitness dashboard.");
+        } else {
+          toast.success("Welcome back! Let's set up your athlete profile.");
+        }
+      }
+      setAuthModalOpen(false);
+      setLocation("/overview");
+    } catch (err: any) {
+      toast.error(err?.message || "Authentication error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setAuthModalOpen(false);
-    setLocation("/overview");
   };
 
   const handleQuickDemo = () => {
@@ -636,6 +615,8 @@ export default function Landing() {
               <span>Continue with Google</span>
             </button>
 
+            <div ref={googleBtnRef} className="w-full flex justify-center empty:hidden" />
+
             <div className="auth-divider">
               <span>Or sign in with email</span>
             </div>
@@ -688,161 +669,12 @@ export default function Landing() {
                 </div>
               )}
 
-              <button type="submit" className="auth-submit-btn">
+              <button type="submit" className="auth-submit-btn" disabled={isSubmitting}>
                 {authMode === "signin" ? <LogIn size={16} /> : <UserCheck size={16} />}
-                {authMode === "signin" ? "Sign In to Dashboard" : "Create Your Account"}
+                {isSubmitting ? "Verifying..." : (authMode === "signin" ? "Sign In to Dashboard" : "Create Your Account")}
               </button>
             </form>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 8. Dedicated Google OAuth Identity Modal */}
-      <Dialog open={googleModalOpen} onOpenChange={setGoogleModalOpen}>
-        <DialogContent className="google-oauth-dialog sm:max-w-[440px]">
-          {isGoogleLoading && (
-            <div className="google-loading-bar">
-              <div className="google-loading-bar-inner" />
-            </div>
-          )}
-
-          <div className="google-dialog-header">
-            <svg viewBox="0 0 24 24" width="28" height="28">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
-            <h2>Sign in with Google</h2>
-            <p>to continue to <strong className="text-zinc-900">FitTrack Fitness Platform</strong></p>
-          </div>
-
-          {googleStep === "email" ? (
-            <form onSubmit={handleGoogleEmailNext} className="google-dialog-body">
-              <div className="google-input-field">
-                <label>Email or phone</label>
-                <input
-                  type="email"
-                  value={googleEmail}
-                  onChange={(e) => setGoogleEmail(e.target.value)}
-                  placeholder="Enter your Google email"
-                  autoFocus
-                  required
-                />
-              </div>
-
-              <div className="google-account-chips">
-                <span>Choose an active account:</span>
-                {savedGoogleAccounts.map((accEmail) => (
-                  <button
-                    key={accEmail}
-                    type="button"
-                    className="google-chip-btn"
-                    onClick={() => handleSelectGoogleChip(accEmail)}
-                  >
-                    <div className="google-chip-avatar">
-                      {accEmail.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="google-chip-text">
-                      <strong>
-                        {accEmail
-                          .split("@")[0]
-                          .split(/[\._]/)
-                          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-                          .join(" ")}
-                      </strong>
-                      <small>{accEmail}</small>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="google-links-row">
-                <button
-                  type="button"
-                  className="google-text-link"
-                  onClick={() => toast.info("Enter your registered Google email address.")}
-                >
-                  Use another account
-                </button>
-              </div>
-
-              <p className="google-disclaimer">
-                To continue, Google will securely share your name and email with FitTrack.
-              </p>
-
-              <div className="google-actions-row">
-                <button
-                  type="button"
-                  className="google-secondary-btn"
-                  onClick={() => setGoogleModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="google-primary-btn">
-                  Next
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleGooglePasswordNext} className="google-dialog-body">
-              <div className="google-chosen-user-pill" onClick={() => setGoogleStep("email")}>
-                <div className="google-chip-avatar">{googleEmail.charAt(0).toUpperCase()}</div>
-                <span>{googleEmail}</span>
-                <ChevronRight size={14} />
-              </div>
-
-              <div className="google-input-field">
-                <label>Enter your password</label>
-                <input
-                  type={showGooglePassword ? "text" : "password"}
-                  value={googlePassword}
-                  onChange={(e) => setGooglePassword(e.target.value)}
-                  placeholder="Enter Google password"
-                  autoFocus
-                  required
-                />
-              </div>
-
-              <label className="google-checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={showGooglePassword}
-                  onChange={(e) => setShowGooglePassword(e.target.checked)}
-                />
-                <span>Show password</span>
-              </label>
-
-              <div className="google-actions-row">
-                <button
-                  type="button"
-                  className="google-secondary-btn"
-                  onClick={() => setGoogleStep("email")}
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  className="google-primary-btn"
-                  disabled={isGoogleLoading}
-                >
-                  {isGoogleLoading ? "Signing in..." : "Sign in"}
-                </button>
-              </div>
-            </form>
-          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -199,13 +199,38 @@ ALTER TABLE public.workout_sets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.metric_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.streak_records ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow all on users" ON public.users FOR ALL USING (true);
-CREATE POLICY "Allow all on athlete_profiles" ON public.athlete_profiles FOR ALL USING (true);
-CREATE POLICY "Allow all on nutrition_entries" ON public.nutrition_entries FOR ALL USING (true);
-CREATE POLICY "Allow all on workout_entries" ON public.workout_entries FOR ALL USING (true);
-CREATE POLICY "Allow all on workout_sets" ON public.workout_sets FOR ALL USING (true);
-CREATE POLICY "Allow all on metric_entries" ON public.metric_entries FOR ALL USING (true);
-CREATE POLICY "Allow all on streak_records" ON public.streak_records FOR ALL USING (true);
+CREATE OR REPLACE FUNCTION public.current_athlete_email()
+RETURNS TEXT AS $$
+  SELECT COALESCE(auth.jwt() ->> 'email', current_setting('request.jwt.claim.email', true), '');
+$$ LANGUAGE sql STABLE;
+
+CREATE POLICY "Users access own account only" ON public.users FOR ALL
+  USING (email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Athlete profiles own data only" ON public.athlete_profiles FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Nutrition entries own data only" ON public.nutrition_entries FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Workout entries own data only" ON public.workout_entries FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Workout sets own data only" ON public.workout_sets FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Metric entries own data only" ON public.metric_entries FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
+
+CREATE POLICY "Streak records own data only" ON public.streak_records FOR ALL
+  USING (user_email = public.current_athlete_email() OR auth.role() = 'service_role')
+  WITH CHECK (user_email = public.current_athlete_email() OR auth.role() = 'service_role');
 `;
     navigator.clipboard.writeText(sqlScript);
     toast.success("Full Supabase SQL schema copied to clipboard! Paste it into your Supabase SQL Editor.");

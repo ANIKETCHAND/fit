@@ -154,7 +154,15 @@ class SDKServer {
   }
 
   private getSessionSecret() {
-    const secret = ENV.cookieSecret;
+    let secret = ENV.cookieSecret;
+    if (!secret || secret.trim().length < 16) {
+      if (ENV.isProduction) {
+        throw new Error(
+          "[Security] FATAL: JWT_SECRET environment variable is missing or too short. A secret of at least 16 characters is required."
+        );
+      }
+      secret = "fittrack_dev_fallback_secret_key_32bytes_minimum!!";
+    }
     return new TextEncoder().encode(secret);
   }
 
