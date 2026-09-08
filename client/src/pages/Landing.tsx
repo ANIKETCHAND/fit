@@ -423,10 +423,6 @@ export default function Landing() {
           <span className="hero-title-highlight">TRACK PROGRESS</span>
         </motion.h1>
 
-        <p className="hero-description text-center max-w-2xl mx-auto mb-8 text-[#a3b899] text-base sm:text-lg leading-relaxed">
-          A high-performance athletic operating system with 3D biomechanical activation, real-time nutrition telemetry, and intelligent performance coaching.
-        </p>
-
         {/* Action Button Row: Sign In Tab / Create Account / Demo */}
         {currentUser ? (
           <div className="authenticated-badge-box max-w-md mx-auto mb-10">
