@@ -22,8 +22,8 @@ export const getActiveUserEmail = (): string => {
   return "default_athlete";
 };
 
-export const getScopedKey = (baseKey: string): string => {
-  const user = getActiveUserEmail();
+export const getScopedKey = (baseKey: string, customEmail?: string): string => {
+  const user = (customEmail && customEmail.trim()) || getActiveUserEmail();
   const cleanScope = user.replace(/[^a-z0-9]/gi, "_");
   return `${baseKey}__${cleanScope}`;
 };

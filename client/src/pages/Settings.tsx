@@ -18,6 +18,7 @@ import {
   type AthleteProfile
 } from "@/lib/user-store";
 import { autoSyncAthleteLocation, requestDeviceLocation } from "@/lib/location-resolver";
+import { SupabaseDatabaseCard } from "@/components/settings/SupabaseDatabaseCard";
 import "./CommandDeck.css";
 import "./ProfileInteractions.css";
 
@@ -392,6 +393,11 @@ export default function Settings() {
           </div>
         </aside>
       </motion.section>
+
+      {/* 🚀 Supabase Cloud Database Panel */}
+      <div className="mt-8 mb-6">
+        <SupabaseDatabaseCard />
+      </div>
 
       {/* Edit Bio / Photo Dialog */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
