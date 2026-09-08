@@ -46,7 +46,7 @@ export const appRouter = router({
     }),
   }),
   gps: router({
-    list: protectedProcedure.query(async ({ ctx }) => (await listGpsSessions(ctx.user.id)).map((session) => ({
+    list: protectedProcedure.query(async ({ ctx }) => (await listGpsSessions(ctx.user.id)).map((session: any) => ({
       ...session,
       distanceMeters: Number(session.distanceMeters),
       averageSpeedKph: Number(session.averageSpeedKph),
