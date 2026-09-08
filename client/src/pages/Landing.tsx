@@ -12,7 +12,6 @@ import {
   KeyRound,
   LogIn,
   Quote,
-  Sparkles,
   UserCheck,
   UserPlus,
 } from "lucide-react";
@@ -487,17 +486,6 @@ export default function Landing() {
             >
               <UserCheck size={15} />
               <span>Create Account</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              className="hero-secondary-cta"
-              style={{ borderColor: "rgba(198, 255, 61, 0.4)", color: "#c6ff3d" }}
-              aria-label="Instant Demo Access"
-            >
-              <Sparkles size={14} />
-              <span>Instant Demo</span>
             </button>
           </div>
         )}
