@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 import { Landing3DScene } from "@/components/3d/Landing3DScene";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { saveAthleteProfile } from "@/lib/user-store";
+import { saveAthleteProfile, isProfileConfigured } from "@/lib/user-store";
 import { sanitizeText, sanitizeEmail } from "@/lib/sanitize";
 import "./Landing.css";
 
@@ -87,6 +87,18 @@ export default function Landing() {
     }
   });
 
+  // Onboarding setup helper: checks if account already has a configured profile
+  const setupOnboardingForUser = (userEmail: string, isNewAccount: boolean) => {
+    const hasProfile = isProfileConfigured(userEmail);
+    if (!hasProfile || isNewAccount) {
+      localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+      sessionStorage.removeItem("fittrack_rexi_welcomed");
+    } else {
+      localStorage.removeItem("fittrack_trigger_rexi_welcome");
+      sessionStorage.setItem("fittrack_rexi_welcomed", "true");
+    }
+  };
+
   // Ensure dark mode is active by default after sign in
   const applyDefaultDarkMode = () => {
     try {
@@ -138,7 +150,7 @@ export default function Landing() {
             location: "New York, USA",
             focus: "Strength and Conditioning",
           });
-          localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
+          setupOnboardingForUser(validEmail, false);
           applyDefaultDarkMode();
           toast.success(`Welcome, ${cleanName}! Signed in with Google.`);
           setGoogleModalOpen(false);
@@ -192,8 +204,8 @@ export default function Landing() {
                     setSavedGoogleAccounts(updated);
                   } catch {}
 
-                  localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
-          applyDefaultDarkMode();
+                  setupOnboardingForUser(googleEmailClean, false);
+                  applyDefaultDarkMode();
                   setIsGoogleLoading(false);
                   setGoogleModalOpen(false);
                   setAuthModalOpen(false);
@@ -320,8 +332,8 @@ export default function Landing() {
 
       setIsGoogleLoading(false);
       setGoogleModalOpen(false);
-      localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
-          applyDefaultDarkMode();
+      setupOnboardingForUser(cleanUserEmail, false);
+      applyDefaultDarkMode();
       toast.success(`Google Account connected: ${cleanUserEmail}`);
       setLocation("/overview");
     }, 550);
@@ -341,23 +353,29 @@ export default function Landing() {
     const cleanName = sanitizeText(name) || "Athlete";
     const cleanFocus = sanitizeText(focus) || "Strength and fitness goals";
 
+    const hasProfile = isProfileConfigured(cleanEmail);
     localStorage.setItem("fittrack_auth_state", "authenticated");
     localStorage.setItem("fittrack_user_email", cleanEmail);
-    localStorage.setItem("fittrack_trigger_rexi_welcome", "true");
-          applyDefaultDarkMode();
     if (name) {
       localStorage.setItem("fittrack_user_name", cleanName);
     }
-    if (authMode === "signup" || name) {
+    setupOnboardingForUser(cleanEmail, authMode === "signup");
+    applyDefaultDarkMode();
+
+    if (authMode === "signup") {
       saveAthleteProfile({
         name: cleanName,
         email: cleanEmail,
         location: "New York, USA",
         focus: cleanFocus,
       });
-      toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}!`);
+      toast.success(`Welcome to FitTrack, ${cleanName.split(" ")[0]}! Let's set up your profile.`);
     } else {
-      toast.success("Welcome back! Loading your fitness dashboard.");
+      if (hasProfile) {
+        toast.success("Welcome back! Loading your fitness dashboard.");
+      } else {
+        toast.success("Welcome back! Let's set up your athlete profile.");
+      }
     }
     setAuthModalOpen(false);
     setLocation("/overview");
@@ -440,6 +458,10 @@ export default function Landing() {
               type="button"
               onClick={() => {
                 applyDefaultDarkMode();
+                if (isProfileConfigured(currentUser.email)) {
+                  localStorage.removeItem("fittrack_trigger_rexi_welcome");
+                  sessionStorage.setItem("fittrack_rexi_welcomed", "true");
+                }
                 setLocation("/overview");
               }}
               className="auth-submit-btn w-full flex items-center justify-center gap-2 mt-2 cursor-pointer"

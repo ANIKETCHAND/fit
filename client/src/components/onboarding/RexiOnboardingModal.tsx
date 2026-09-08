@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, Dumbbell, Flame, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Rexi3DCanvas } from "./Rexi3DCanvas";
-import { getAthleteProfile, saveExperienceMode, getScopedKey, isProfileConfigured } from "@/lib/user-store";
+import { getAthleteProfile, saveExperienceMode, saveExperienceTier, getScopedKey, isProfileConfigured, getActiveUserEmail } from "@/lib/user-store";
 
 export function RexiOnboardingModal() {
   const [location, setLocation] = useLocation();
@@ -21,16 +21,31 @@ export function RexiOnboardingModal() {
   useEffect(() => {
     const checkAndOpen = () => {
       try {
-        const trigger = localStorage.getItem("fittrack_trigger_rexi_welcome");
-        const welcomed = sessionStorage.getItem("fittrack_rexi_welcomed");
-        const configured = isProfileConfigured();
-
-        // If returning user already configured profile and no explicit trigger, bypass
-        if (configured && trigger !== "true") {
+        const isAuth = localStorage.getItem("fittrack_auth_state") === "authenticated";
+        if (!isAuth) {
+          setIsOpen(false);
           return;
         }
 
-        if (trigger === "true" || !welcomed) {
+        const trigger = localStorage.getItem("fittrack_trigger_rexi_welcome");
+        const configured = isProfileConfigured();
+        const cleanScope = getActiveUserEmail().replace(/[^a-z0-9]/gi, "_");
+        const welcomedPermanent = localStorage.getItem(`fittrack_rexi_welcomed__${cleanScope}`) === "true";
+        const welcomedSession = sessionStorage.getItem("fittrack_rexi_welcomed") === "true";
+
+        // If user already configured profile and no explicit trigger, bypass completely
+        if (configured && trigger !== "true") {
+          setIsOpen(false);
+          return;
+        }
+
+        // If user was already welcomed and no explicit trigger, bypass completely
+        if ((welcomedPermanent || welcomedSession) && trigger !== "true") {
+          setIsOpen(false);
+          return;
+        }
+
+        if (trigger === "true" || (!configured && !welcomedPermanent)) {
           localStorage.removeItem("fittrack_trigger_rexi_welcome");
           setStage("greeting");
           setIsTransitioning(false);
@@ -63,23 +78,20 @@ export function RexiOnboardingModal() {
 
     try {
       saveExperienceMode(level === "beginner" ? "beginner" : "advanced");
-      localStorage.setItem(getScopedKey("fittrack-experience-tier"), JSON.stringify(level));
+      saveExperienceTier(level);
+      const cleanScope = getActiveUserEmail().replace(/[^a-z0-9]/gi, "_");
+      localStorage.setItem(`fittrack_rexi_welcomed__${cleanScope}`, "true");
       sessionStorage.setItem("fittrack_rexi_welcomed", "true");
       localStorage.setItem("fittrack_just_onboarded", "true");
     } catch {}
 
     if (level === "beginner") {
       setIsTransitioning(true);
-      toast.success("Beginner Mode activated! Starting interactive app tour...");
+      toast.success("Beginner Mode activated! Let's calibrate your profile in Settings...");
       setTimeout(() => {
         setIsOpen(false);
-        sessionStorage.setItem("fittrack_beginner_tour_active", "true");
-        sessionStorage.setItem("fittrack_beginner_tour_step", "0");
-        setLocation("/overview");
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("fittrack_start_beginner_tour"));
-        }, 200);
-      }, 600);
+        setLocation("/settings?onboarding=true");
+      }, 500);
     } else {
       // Open dedicated "Welcome Gym rat" popup box!
       setStage("gym_rat_popup");

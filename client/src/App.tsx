@@ -11,6 +11,7 @@ import { EchoAssistant } from "./components/ai/EchoAssistant";
 import { RexiOnboardingModal } from "./components/onboarding/RexiOnboardingModal";
 import { RexiGuidedTour } from "./components/onboarding/RexiGuidedTour";
 import { autoSyncAthleteLocation } from "./lib/location-resolver";
+import { isProfileConfigured } from "./lib/user-store";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import LogFood from "./pages/LogFood";
@@ -53,10 +54,38 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+function RootRoute() {
+  const [, setLocation] = useLocation();
+  const isAuthenticated =
+    typeof window !== "undefined" &&
+    localStorage.getItem("fittrack_auth_state") === "authenticated";
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const activeEmail = localStorage.getItem("fittrack_user_email") || "";
+      if (isProfileConfigured(activeEmail)) {
+        setLocation("/overview");
+      }
+    }
+  }, [isAuthenticated, setLocation]);
+
+  if (isAuthenticated) {
+    const activeEmail =
+      typeof window !== "undefined"
+        ? localStorage.getItem("fittrack_user_email") || ""
+        : "";
+    if (isProfileConfigured(activeEmail)) {
+      return <Home />;
+    }
+  }
+
+  return <Landing />;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Landing} />
+      <Route path={"/"} component={RootRoute} />
       <Route path={"/landing"} component={Landing} />
       <Route path={"/overview"}>{() => <ProtectedRoute component={Home} />}</Route>
       <Route path={"/home"}>{() => <ProtectedRoute component={Home} />}</Route>

@@ -257,29 +257,66 @@ export function playHydrationChime(soundType: "water_droplet" | "gentle_bell" | 
   }
 }
 
-export const isProfileConfigured = (): boolean => {
+export const isProfileConfigured = (email?: string): boolean => {
   try {
-    const configured = localStorage.getItem(getScopedKey("fittrack_profile_configured"));
-    return configured === "true";
+    const targetEmail = email || getActiveUserEmail();
+    if (!targetEmail || targetEmail === "default_athlete") {
+      const globalConfigured = localStorage.getItem("fittrack_profile_configured");
+      return globalConfigured === "true";
+    }
+    const cleanScope = targetEmail.replace(/[^a-z0-9]/gi, "_");
+    const configured = localStorage.getItem(`fittrack_profile_configured__${cleanScope}`);
+    if (configured === "true") return true;
+
+    const onboarded = localStorage.getItem(`fittrack_onboarding_completed__${cleanScope}`);
+    if (onboarded === "true") return true;
+
+    // Check if calibration settings exist with custom weight & height
+    const rawCalib = localStorage.getItem(`fittrack-calibration-settings__${cleanScope}`);
+    if (rawCalib) {
+      const parsed = JSON.parse(rawCalib);
+      if (parsed?.weightKg && parsed?.heightCm && parsed?.age) {
+        return true;
+      }
+    }
+    return false;
   } catch {
     return false;
   }
 };
 
-export const markProfileConfigured = (): void => {
+export const hasCompletedProfile = (email?: string): boolean => {
+  return isProfileConfigured(email);
+};
+
+export const markProfileConfigured = (email?: string): void => {
   try {
+    const targetEmail = email || getActiveUserEmail();
+    const cleanScope = targetEmail ? targetEmail.replace(/[^a-z0-9]/gi, "_") : "";
+    if (cleanScope) {
+      localStorage.setItem(`fittrack_profile_configured__${cleanScope}`, "true");
+      localStorage.setItem(`fittrack_onboarding_completed__${cleanScope}`, "true");
+      localStorage.setItem(`fittrack_rexi_welcomed__${cleanScope}`, "true");
+    }
     localStorage.setItem(getScopedKey("fittrack_profile_configured"), "true");
     localStorage.setItem(getScopedKey("fittrack_onboarding_completed"), "true");
+    localStorage.setItem("fittrack_profile_configured", "true");
     sessionStorage.setItem("fittrack_rexi_welcomed", "true");
+    localStorage.removeItem("fittrack_trigger_rexi_welcome");
   } catch {}
 };
 
-export const resetProfileConfigured = (): void => {
+export const resetProfileConfigured = (email?: string): void => {
   try {
+    const targetEmail = email || getActiveUserEmail();
+    const cleanScope = targetEmail ? targetEmail.replace(/[^a-z0-9]/gi, "_") : "";
+    if (cleanScope) {
+      localStorage.removeItem(`fittrack_profile_configured__${cleanScope}`);
+      localStorage.removeItem(`fittrack_onboarding_completed__${cleanScope}`);
+      localStorage.removeItem(`fittrack_rexi_welcomed__${cleanScope}`);
+    }
     localStorage.removeItem(getScopedKey("fittrack_profile_configured"));
     localStorage.removeItem(getScopedKey("fittrack_onboarding_completed"));
     sessionStorage.removeItem("fittrack_rexi_welcomed");
   } catch {}
 };
-
-

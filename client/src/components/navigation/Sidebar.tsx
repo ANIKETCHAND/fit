@@ -161,7 +161,12 @@ export function Sidebar() {
               localStorage.removeItem("fittrack_user_name");
               localStorage.removeItem("fittrack_user_avatar");
               localStorage.removeItem("manus-runtime-user-info");
-              try { sessionStorage.removeItem("manus-cookie"); } catch {}
+              localStorage.removeItem("fittrack_trigger_rexi_welcome");
+              try { 
+                sessionStorage.removeItem("manus-cookie"); 
+                sessionStorage.removeItem("fittrack_rexi_welcomed");
+                sessionStorage.removeItem("fittrack_beginner_tour_active");
+              } catch {}
               route("/");
             }}
             title="Sign out"

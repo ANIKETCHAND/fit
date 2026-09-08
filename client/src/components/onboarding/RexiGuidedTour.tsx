@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { RexiMascotIcon } from "@/components/ai/EchoAssistant";
+import { isProfileConfigured } from "@/lib/user-store";
 
 export interface TourStep {
   stepIndex: number;
@@ -125,8 +126,13 @@ export function RexiGuidedTour() {
     setIsActive(false);
     sessionStorage.removeItem("fittrack_beginner_tour_active");
     sessionStorage.removeItem("fittrack_beginner_tour_step");
-    toast.success("Tour complete! You are ready to start tracking your fitness.");
-    setLocation("/overview");
+    if (!isProfileConfigured()) {
+      toast.success("Tour complete! Now let's calibrate your athlete profile.");
+      setLocation("/settings?onboarding=true");
+    } else {
+      toast.success("Tour complete! You are ready to start tracking your fitness.");
+      setLocation("/overview");
+    }
   };
 
   if (!isActive) return null;

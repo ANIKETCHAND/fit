@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices, getScopedKey, getExperienceTier, saveExperienceTier } from "@/lib/user-store";
+import { type AthleteProfile, type ConnectedDevice, getAthleteProfile, getConnectedDevices, saveAthleteProfile, saveConnectedDevices, getScopedKey, getExperienceTier, saveExperienceTier, markProfileConfigured } from "@/lib/user-store";
 import { GithubContributionGraph } from "@/components/profile/GithubContributionGraph";
 import "./ProfileInteractions.css";
 
@@ -208,7 +208,7 @@ export default function Profile() {
   let offset = 0;
 
   const openProfileEditor = () => { setDraft(athlete); setProfileOpen(true); };
-  const saveProfile = () => { const trimmedName = draft.name.trim(); if (!trimmedName) { toast.error("Add an athlete name before saving the record."); return; } const next = { ...draft, name: trimmedName, email: draft.email.trim(), location: draft.location.trim(), focus: draft.focus.trim() || "Focused strength protocol" }; saveAthleteProfile(next); setAthlete(next); setProfileOpen(false); toast.success("Athlete record updated on this device."); };
+  const saveProfile = () => { const trimmedName = draft.name.trim(); if (!trimmedName) { toast.error("Add an athlete name before saving the record."); return; } const next = { ...draft, name: trimmedName, email: draft.email.trim(), location: draft.location.trim(), focus: draft.focus.trim() || "Focused strength protocol" }; saveAthleteProfile(next); markProfileConfigured(next.email); setAthlete(next); setProfileOpen(false); toast.success("Athlete record updated on this device."); };
   const updatePhoto = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (!file.type.startsWith("image/")) { toast.error("Choose an image file for the profile photo."); return; } if (file.size > 1_500_000) { toast.error("Choose an image below 1.5 MB for local device storage."); return; } const reader = new FileReader(); reader.onload = () => setDraft((current) => ({ ...current, photoDataUrl: String(reader.result) })); reader.readAsDataURL(file); };
   const simulateConnection = (candidate: ConnectedDevice) => { setConnecting(candidate.id); window.setTimeout(() => { const next = [...devices, candidate]; saveConnectedDevices(next); setDevices(next); setConnecting(null); setDeviceOpen(false); toast.success(`${candidate.name} connected to this FitTrack profile.`); }, 900); };
 
