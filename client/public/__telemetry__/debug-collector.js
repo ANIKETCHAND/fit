@@ -13,13 +13,13 @@
   "use strict";
 
   // Prevent double initialization
-  if (window.__MANUS_DEBUG_COLLECTOR__) return;
+  if ((window as any).__TELEMETRY_DEBUG_COLLECTOR__) return;
 
   // ==========================================================================
   // Configuration
   // ==========================================================================
   const CONFIG = {
-    reportEndpoint: "/__manus__/logs",
+    reportEndpoint: "/__telemetry__/logs",
     bufferSize: {
       console: 500,
       network: 200,

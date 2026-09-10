@@ -1213,9 +1213,8 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 var PROJECT_ROOT = import.meta.dirname;
-var LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
+var LOG_DIR = path.join(PROJECT_ROOT, ".telemetry-logs");
 var MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024;
 var TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6);
 function ensureLogDir() {
@@ -1255,9 +1254,9 @@ function writeToLogFile(source, entries) {
 `, "utf-8");
   trimLogFile(logPath, MAX_LOG_SIZE_BYTES);
 }
-function vitePluginManusDebugCollector() {
+function vitePluginTelemetryDebugCollector() {
   return {
-    name: "manus-debug-collector",
+    name: "telemetry-debug-collector",
     transformIndexHtml(html) {
       if (process.env.NODE_ENV === "production") {
         return html;
@@ -1268,7 +1267,7 @@ function vitePluginManusDebugCollector() {
           {
             tag: "script",
             attrs: {
-              src: "/__manus__/debug-collector.js",
+              src: "/__telemetry__/debug-collector.js",
               defer: true
             },
             injectTo: "head"
@@ -1277,7 +1276,7 @@ function vitePluginManusDebugCollector() {
       };
     },
     configureServer(server) {
-      server.middlewares.use("/__manus__/logs", (req, res, next) => {
+      server.middlewares.use("/__telemetry__/logs", (req, res, next) => {
         if (req.method !== "POST") {
           return next();
         }
@@ -1321,7 +1320,7 @@ function vitePluginManusDebugCollector() {
     }
   };
 }
-var plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+var plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginTelemetryDebugCollector()];
 var vite_config_default = defineConfig({
   plugins,
   resolve: {
@@ -1341,11 +1340,6 @@ var vite_config_default = defineConfig({
   server: {
     host: true,
     allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
       "localhost",
       "127.0.0.1"
     ],

@@ -1,0 +1,28 @@
+{
+  "testEmail": "athlete.sih.1789032184414@fittrack.in",
+  "issues": [
+    {
+      "category": "Exercise Library",
+      "description": "No exercise cards rendered in Exercise Library",
+      "severity": "high",
+      "detail": "",
+      "timestamp": "2026-09-10T09:23:27.305Z"
+    },
+    {
+      "category": "Workout Videos",
+      "description": "Video modal did not open when clicking video button",
+      "severity": "high",
+      "detail": "",
+      "timestamp": "2026-09-10T09:23:29.319Z"
+    },
+    {
+      "category": "AI Engine",
+      "description": "Rexi Chat input textarea not found",
+      "severity": "high",
+      "detail": "",
+      "timestamp": "2026-09-10T09:24:20.313Z"
+    }
+  ],
+  "consoleErrors": [],
+  "networkErrors": []
+}
