@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Activity, Dumbbell, Pause, Play, RotateCcw, Sparkles, Timer, Video, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
 import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 import { advanceStreak, getScopedKey } from "@/lib/user-store";
+import { recordMuscleWorkout, getDynamicMuscleLibrary } from "@/lib/fitness-data";
 
 const format = (seconds: number) =>
   `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -25,6 +26,23 @@ export default function StartSession() {
   const [seconds, setSeconds] = useState(0);
   const [mode, setMode] = useState("Strength");
   const [selectedVideo, setSelectedVideo] = useState<{ id: string; name: string; focus?: string } | null>(null);
+  const [recoveryTick, setRecoveryTick] = useState(0);
+
+  useEffect(() => {
+    const handleUpdate = () => setRecoveryTick((t) => t + 1);
+    window.addEventListener("fittrack:recovery-update", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("fittrack:recovery-update", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  const readinessScore = useMemo(() => {
+    const dynamicLib = getDynamicMuscleLibrary();
+    const scores = Object.values(dynamicLib).map((m) => m.score);
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  }, [recoveryTick]);
 
   useEffect(() => {
     if (!running) return;
@@ -43,6 +61,17 @@ export default function StartSession() {
       const sessions = JSON.parse(localStorage.getItem(getScopedKey("fittrack_sessions")) || "[]");
       sessions.unshift({ mode, durationSeconds: seconds, startedAt: new Date().toISOString() });
       localStorage.setItem(getScopedKey("fittrack_sessions"), JSON.stringify(sessions.slice(0, 50)));
+
+      // Trigger recovery fatigue on targeted chains
+      if (mode === "Strength") {
+        recordMuscleWorkout("chest", 4, 2310);
+        recordMuscleWorkout("shoulders", 4, 1360);
+        recordMuscleWorkout("triceps", 3, 1080);
+      } else if (mode === "Conditioning") {
+        recordMuscleWorkout("quads", 4, 2160);
+        recordMuscleWorkout("calves", 4, 800);
+        recordMuscleWorkout("core", 4, 1500);
+      }
     } catch {
       /* ignore */
     }
@@ -140,16 +169,16 @@ export default function StartSession() {
           <aside className="workflow-panel session-readiness">
             <span className="panel-label">Pre-session readout</span>
             <div className="readiness-number">
-              <b>84</b>
+              <b>{readinessScore}</b>
               <span>
                 /100
                 <br />
-                ready
+                {readinessScore >= 80 ? "ready" : "fatigue"}
               </span>
             </div>
             <div className="signal-row">
-              <i />
-              Pectoral load cleared
+              <i style={{ background: readinessScore >= 80 ? "#22c55e" : readinessScore >= 65 ? "#f59e0b" : "#ef4444" }} />
+              {readinessScore >= 80 ? "Musculoskeletal chains primed" : "Residual fatigue in active chains"}
             </div>
             <div className="signal-row">
               <i />

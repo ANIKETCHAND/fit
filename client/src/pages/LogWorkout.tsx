@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Activity, Check, Dumbbell, LibraryBig, Minus, Play, Plus, TimerReset } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -11,6 +11,13 @@ import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 import { achievementStorageKey, achievements, libraryExercises, type Achievement } from "@/lib/rewards-data";
 import { advanceStreak, pushMilestoneNotification, getScopedKey, type DailyStreak } from "@/lib/user-store";
 import { trpc } from "@/lib/trpc";
+import {
+  focusToMuscleId,
+  recordLiveSetProgress,
+  recordMuscleWorkout,
+  getDynamicMuscleLibrary,
+  type MuscleId,
+} from "@/lib/fitness-data";
 
 const defaultLifts = [
   { name: "Barbell bench press", prescription: "4 × 6–8", load: 82.5, rest: "02:30", focus: "Pectorals" },
@@ -21,8 +28,29 @@ const defaultLifts = [
 export default function LogWorkout() {
   const [, setLocation] = useLocation();
   const [staged] = useState(() => localStorage.getItem("fittrack-staged-exercise"));
+  const [stagedMuscle] = useState<MuscleId | null>(() => {
+    try {
+      const sm = localStorage.getItem("fittrack-staged-muscle") as MuscleId | null;
+      if (sm) return sm;
+      if (staged) return focusToMuscleId(staged);
+    } catch {}
+    return null;
+  });
 
   const lifts = useMemo(() => {
+    if (stagedMuscle) {
+      const dynamicLib = getDynamicMuscleLibrary();
+      const m = dynamicLib[stagedMuscle];
+      if (m && m.exercises && m.exercises.length > 0) {
+        return m.exercises.map((ex) => ({
+          name: ex.name,
+          prescription: `${ex.sets} × ${ex.reps}`,
+          load: parseFloat(ex.load.replace(/[^0-9.]/g, "")) || 40,
+          rest: "02:00",
+          focus: m.label,
+        }));
+      }
+    }
     if (!staged) return defaultLifts;
     const found = libraryExercises.find((e) => e.name === staged);
     if (!found) return defaultLifts;
@@ -31,9 +59,27 @@ export default function LogWorkout() {
       { name: found.name, prescription: `${setsStr} × ${repsStr}`, load: 60, rest: "02:00", focus: found.focus.split("·")[0].trim() },
       ...defaultLifts.slice(1).map((l) => ({ ...l, focus: found.focus.split("·")[0].trim() })),
     ];
-  }, [staged]);
+  }, [staged, stagedMuscle]);
 
   const primaryFocus = lifts[0].focus;
+  const targetMuscleId: MuscleId = stagedMuscle || focusToMuscleId(primaryFocus);
+
+  const [recoveryTick, setRecoveryTick] = useState(0);
+  useEffect(() => {
+    const handleUpdate = () => setRecoveryTick((t) => t + 1);
+    window.addEventListener("fittrack:recovery-update", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("fittrack:recovery-update", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  const activeMuscleInfo = useMemo(() => {
+    const dynamicLib = getDynamicMuscleLibrary();
+    return dynamicLib[targetMuscleId] || dynamicLib.chest;
+  }, [targetMuscleId, recoveryTick]);
+
   const [complete, setComplete] = useState<number[]>([]);
   const [load, setLoad] = useState(lifts[0].load);
   const [startTime] = useState(() => Date.now());
@@ -44,10 +90,23 @@ export default function LogWorkout() {
   const [pendingAchievement, setPendingAchievement] = useState<Achievement | null>(null);
 
   const saveWorkout = trpc.workouts.create.useMutation({ onError: () => commitRewards(), onSuccess: () => commitRewards() });
-  const toggle = (index: number) => setComplete((previous) => previous.includes(index) ? previous.filter((item) => item !== index) : [...previous, index]);
+  const toggle = (index: number) => {
+    setComplete((previous) => {
+      const next = previous.includes(index) ? previous.filter((item) => item !== index) : [...previous, index];
+      const currentVolume = next.reduce((total, idx) => total + (idx === 0 ? load * 28 : lifts[idx].load * (idx === 1 ? 30 : 36)), 0);
+      recordLiveSetProgress(targetMuscleId, next.length, lifts.length, currentVolume);
+      return next;
+    });
+  };
   const completion = Math.round((complete.length / lifts.length) * 100);
   const volume = complete.reduce((total, index) => total + (index === 0 ? load * 28 : lifts[index].load * (index === 1 ? 30 : 36)), 0);
-  const finish = () => { try { localStorage.removeItem("fittrack-staged-exercise"); } catch { /* ignore */ } setLocation("/overview"); };
+  const finish = () => {
+    try {
+      localStorage.removeItem("fittrack-staged-exercise");
+      localStorage.removeItem("fittrack-staged-muscle");
+    } catch { /* ignore */ }
+    setLocation("/overview");
+  };
   const afterStreak = () => { if (pendingAchievement) { setCelebrating(pendingAchievement); setPendingAchievement(null); } else finish(); };
 
   const commitRewards = () => {
@@ -75,6 +134,9 @@ export default function LogWorkout() {
         completedAt: new Date().toISOString()
       });
       localStorage.setItem(getScopedKey("fittrack_workout_logs"), JSON.stringify(sessions.slice(0, 50)));
+
+      // Finalize the completed workout in recovery engine
+      recordMuscleWorkout(targetMuscleId, lifts.length, volume);
     } catch { /* ignore */ }
     saveWorkout.mutate({ title: `${primaryFocus} hypertrophy protocol`, focus: primaryFocus, movementCount: lifts.length, volumeKg: Number(volume.toFixed(2)), completedAt: new Date() });
   };
@@ -237,24 +299,31 @@ export default function LogWorkout() {
             <div className="focus-anatomy">
               <div className="focus-anatomy-head">
                 <span className="panel-label">Focus region</span>
-                <span className="text-[#c6ff3d] font-mono text-[10px]">ACTIVE</span>
+                <span
+                  className="font-mono text-[10px] font-bold uppercase tracking-wider"
+                  style={{ color: activeMuscleInfo.accent }}
+                >
+                  {activeMuscleInfo.intensity}
+                </span>
               </div>
               <div className="pectoral-scan">
                 <i className="pectoral-left" />
                 <i className="pectoral-right" />
                 <b>
-                  PEC
+                  {activeMuscleInfo.label.toUpperCase()}
                   <br />
-                  MAJOR
+                  <span className="text-[10px] font-mono opacity-80 font-normal">
+                    {activeMuscleInfo.anatomicalName}
+                  </span>
                 </b>
                 <span className="scan-beam" />
               </div>
               <div className="focus-meta">
                 <span>
-                  <i />
-                  Readiness 82%
+                  <i style={{ background: activeMuscleInfo.accent }} />
+                  Readiness {activeMuscleInfo.score}%
                 </span>
-                <span>{primaryFocus} volume</span>
+                <span>{activeMuscleInfo.weeklyVolume} volume</span>
               </div>
             </div>
 

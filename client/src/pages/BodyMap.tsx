@@ -1,15 +1,32 @@
-import { useState } from "react";
-import { Activity, ArrowLeft, RotateCcw, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, ArrowLeft, RotateCcw, Sparkles, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { BodyScene } from "@/components/3d/BodyScene";
 import { MuscleInfo } from "@/components/3d/MuscleInfo";
-import { muscleLibrary, type MuscleId } from "@/lib/fitness-data";
+import { muscleLibrary, resetAllMuscleRecovery, type MuscleId } from "@/lib/fitness-data";
 
 export default function BodyMap() {
   const [selected, setSelected] = useState<MuscleId>("chest");
   const [, setLocation] = useLocation();
+  const [libraryTick, setLibraryTick] = useState(0);
+
+  useEffect(() => {
+    const handleUpdate = () => setLibraryTick((t) => t + 1);
+    window.addEventListener("fittrack:recovery-update", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("fittrack:recovery-update", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  const handleResetToFresh = () => {
+    resetAllMuscleRecovery();
+    toast.success("All muscle groups reset to 100% Fully Recovered");
+  };
 
   return (
     <div className="app-shell">
@@ -36,6 +53,14 @@ export default function BodyMap() {
             </div>
           </div>
           <div className="topbar-actions flex items-center gap-2">
+            <button
+              onClick={handleResetToFresh}
+              className="px-3 py-1.5 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 border border-[#22c55e]/30 rounded-xl text-xs font-mono text-[#22c55e] transition-colors flex items-center gap-1.5"
+              title="Reset all muscles to 100% Fully Recovered"
+            >
+              <RefreshCw size={13} />
+              <span>Reset to 100% (Fresh)</span>
+            </button>
             <button
               onClick={() => setSelected("chest")}
               className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono text-[#8b9c8a] hover:text-white transition-colors flex items-center gap-1.5"
@@ -65,7 +90,7 @@ export default function BodyMap() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.35, delay: 0.05 }}
           >
-            <MuscleInfo muscle={muscleLibrary[selected]} />
+            <MuscleInfo key={`${selected}-${libraryTick}`} muscle={muscleLibrary[selected]} />
           </motion.div>
         </div>
       </main>

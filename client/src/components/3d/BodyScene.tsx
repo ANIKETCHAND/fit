@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Kinetic Anatomy Lab: 3D Body Scene & Anatomy Visualization
  * Consolidates BodyScene, HumanBody, Muscle, and BodyControls into an integrated Three.js module.
  */
@@ -87,7 +87,7 @@ export function Muscle({
   const mesh = useRef<THREE.Mesh>(null);
   const reduceMotion = useReducedMotion() ?? false;
   const muscleData = muscleLibrary[id];
-  const score = muscleData?.score ?? 80;
+  const score = muscleData?.score ?? 100;
   const recovery = getRecoveryStatus(score);
 
   useFrame(({ clock }) => {
@@ -327,9 +327,10 @@ type SceneInnerProps = {
   selected: MuscleId;
   onSelected: (id: MuscleId) => void;
   isMobile: boolean;
+  recoveryTick?: number;
 };
 
-function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMobile }: SceneInnerProps) {
+function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMobile, recoveryTick }: SceneInnerProps) {
   const controls = useRef<any>(null);
   const [hovered, setHovered] = useState<MuscleId | null>(null);
   const isTransitioning = useRef<boolean>(false);
@@ -382,7 +383,7 @@ function SceneInner({ view, autoRotate, reduceMotion, selected, onSelected, isMo
       <pointLight position={[-4, 1.5, 3]} intensity={7.2} distance={8} color="#76c44e" />
       <pointLight position={[3, -2.4, 3]} intensity={3.2} distance={6} color="#8ec4dd" />
       <group>
-        <HumanBody selected={selected} hovered={hovered} onHover={setHovered} onSelect={onSelected} />
+        <HumanBody key={recoveryTick} selected={selected} hovered={hovered} onHover={setHovered} onSelect={onSelected} />
       </group>
       {!reduceMotion && (
         <Sparkles count={28} scale={[5.7, 8.7, 4.2]} size={1.2} speed={0.22} color="#c6ff3d" opacity={0.22} />
@@ -420,8 +421,20 @@ type BodySceneProps = {
 export function BodyScene({ selected, onSelected }: BodySceneProps) {
   const [view, setView] = useState<BodyView>("front");
   const [autoRotate, setAutoRotate] = useState(false);
+  const [recoveryTick, setRecoveryTick] = useState(0);
   const reduceMotion = useReducedMotion() ?? false;
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleUpdate = () => setRecoveryTick((t) => t + 1);
+    window.addEventListener("fittrack:recovery-update", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("fittrack:recovery-update", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
   const reset = () => {
     setView("front");
     setAutoRotate(false);
@@ -489,6 +502,7 @@ export function BodyScene({ selected, onSelected }: BodySceneProps) {
           selected={selected}
           onSelected={onSelected}
           isMobile={isMobile}
+          recoveryTick={recoveryTick}
         />
       </Canvas>
       <BodyControls

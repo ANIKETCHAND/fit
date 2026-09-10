@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FitTrack Comprehensive Master Unit Test Suite
  * Consolidates activity router, auth logout, date calculations, Zod fitness contracts,
  * and frontend navigation integrity tests.
@@ -280,3 +280,57 @@ describe("FitTrack navigation and activity frontend contracts", () => {
     expect(map).toContain("map-service-unavailable");
   });
 });
+
+// =============================================================================
+// 6. DYNAMIC MUSCLE RECOVERY ENGINE & MATHEMATICAL TELEMETRY TESTS
+// =============================================================================
+
+describe("FitTrack dynamic muscle recovery engine", () => {
+  it("implements the asymptotic recovery curve S(t) = S0 + (100 - S0)(1 - e^(-t / tau))", () => {
+    const s0 = 35;
+    const tau = 48;
+    const calcScore = (hours: number) =>
+      Math.min(100, Math.round(s0 + (100 - s0) * (1 - Math.exp(-hours / tau))));
+
+    // At t = 0 immediately after workout
+    expect(calcScore(0)).toBe(35);
+    // At t = 24 hours (moderate recovery)
+    expect(calcScore(24)).toBe(61);
+    // At t = 48 hours (tau time constant)
+    expect(calcScore(48)).toBe(76);
+    // At t = 96 hours (full regeneration)
+    expect(calcScore(96)).toBe(91);
+    expect(calcScore(200)).toBe(99);
+    expect(calcScore(250)).toBe(100);
+  });
+
+  it("verifies dynamic recovery wiring across 3D body map and workout logging", () => {
+    const bodyScene = readSource("client/src/components/3d/BodyScene.tsx");
+    const bodyMap = readSource("client/src/pages/BodyMap.tsx");
+    const muscleInfo = readSource("client/src/components/3d/MuscleInfo.tsx");
+    const logWorkout = readSource("client/src/pages/LogWorkout.tsx");
+    const startSession = readSource("client/src/pages/StartSession.tsx");
+    const fitnessData = readSource("client/src/lib/fitness-data.ts");
+
+    // Default 100% fresh state
+    expect(fitnessData).toContain('status: "Recovered"');
+    expect(fitnessData).toContain('label: "Fully Recovered"');
+    expect(fitnessData).toContain('color: "#22c55e"');
+    expect(fitnessData).toContain("resetAllMuscleRecovery");
+
+    // Dynamic recovery events & live updates
+    expect(bodyMap).toContain("fittrack:recovery-update");
+    expect(bodyMap).toContain("Reset to 100% (Fresh)");
+    expect(bodyScene).toContain("fittrack:recovery-update");
+    expect(bodyScene).toContain("recoveryTick");
+    expect(muscleInfo).toContain("Launch");
+    expect(muscleInfo).toContain("Simulate 4 Completed Sets");
+
+    // Live workout set recording
+    expect(logWorkout).toContain("recordLiveSetProgress");
+    expect(logWorkout).toContain("recordMuscleWorkout");
+    expect(logWorkout).toContain("fittrack-staged-muscle");
+    expect(startSession).toContain("recordMuscleWorkout");
+  });
+});
+

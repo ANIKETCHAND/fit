@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ArrowUpRight, CalendarDays, Dumbbell, Play, Sparkles, Zap, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import { type MuscleInfo as MuscleInfoType, getRecoveryStatus } from "@/lib/fitness-data";
+import { type MuscleInfo as MuscleInfoType, getRecoveryStatus, recordMuscleWorkout } from "@/lib/fitness-data";
+import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 
@@ -10,8 +11,23 @@ export function MuscleInfo({ muscle }: { muscle: MuscleInfoType }) {
   const [selectedVideo, setSelectedVideo] = useState<{ name: string; focus?: string } | null>(null);
 
   // Compute dynamic recovery metrics
-  const score = muscle.score || 80;
+  const score = muscle.score || 100;
   const recovery = getRecoveryStatus(score);
+
+  const handleLaunchRoutine = () => {
+    try {
+      localStorage.setItem("fittrack-staged-muscle", muscle.id);
+      if (muscle.exercises && muscle.exercises.length > 0) {
+        localStorage.setItem("fittrack-staged-exercise", muscle.exercises[0].name);
+      }
+    } catch {}
+    setLocation("/log-workout");
+  };
+
+  const handleQuickCompleteSets = () => {
+    recordMuscleWorkout(muscle.id, 4, 2150);
+    toast.success(`Completed 4 sets for ${muscle.label}! Muscle entered Recovery Mode (${35}% Readiness).`);
+  };
 
   return (
     <motion.aside
@@ -145,14 +161,26 @@ export function MuscleInfo({ muscle }: { muscle: MuscleInfoType }) {
         </div>
       </div>
 
-      {/* Start Workout Button */}
-      <button
-        onClick={() => setLocation("/log-workout")}
-        className="w-full py-3 px-4 bg-[#c6ff3d] hover:bg-[#b8f52e] text-[#0a100c] rounded-xl font-bold font-sans text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-lg shadow-[#c6ff3d]/10"
-      >
-        <Play size={14} fill="currentColor" />
-        <span>Launch {muscle.label} Routine</span>
-      </button>
+      {/* Action Buttons */}
+      <div className="space-y-2">
+        <button
+          onClick={handleLaunchRoutine}
+          className="w-full py-3 px-4 bg-[#c6ff3d] hover:bg-[#b8f52e] text-[#0a100c] rounded-xl font-bold font-sans text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-lg shadow-[#c6ff3d]/10"
+        >
+          <Play size={14} fill="currentColor" />
+          <span>Launch {muscle.label} Routine</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleQuickCompleteSets}
+          className="w-full py-2 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-[#edf4e9] rounded-xl font-mono text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+          title="Simulate completing 4 heavy sets for this muscle group"
+        >
+          <Dumbbell size={12} className="text-[#c6ff3d]" />
+          <span>⚡ Simulate 4 Completed Sets (-65% Fatigue)</span>
+        </button>
+      </div>
 
       {/* Video Demonstration Modal */}
       <ExerciseVideoModal
