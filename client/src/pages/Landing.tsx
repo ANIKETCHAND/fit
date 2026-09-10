@@ -621,6 +621,12 @@ export default function Landing() {
               <span>Or sign in with email</span>
             </div>
 
+            {typeof window !== "undefined" && window.location.hostname === "localhost" && (
+              <p className="text-[11px] text-[#8fa88d] text-center font-['Space_Mono'] bg-[#1a2318]/60 border border-[#2a3827] rounded px-2.5 py-1.5 -mt-1">
+                💡 <strong>Localhost Mode:</strong> Use the Email & Password form below to sign in instantly.
+              </p>
+            )}
+
             <form onSubmit={handleAuthSubmit} className="auth-form-stack">
               {authMode === "signup" && (
                 <div className="auth-input-group">
