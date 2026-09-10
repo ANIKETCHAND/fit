@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { OrbitalReadinessScene } from "@/components/3d/OrbitalReadinessScene";
-import { WorkoutRecommendationCard } from "@/components/dashboard/WorkoutRecommendationCard";
-import { NutritionLedgerCard } from "@/components/dashboard/NutritionLedgerCard";
-import { TrainingRhythmCard } from "@/components/dashboard/TrainingRhythmCard";
+import {
+  WorkoutRecommendationCard,
+  NutritionLedgerCard,
+  TrainingRhythmCard,
+} from "@/components/dashboard/DashboardCards";
 import { getAthleteProfile, getScopedKey } from "@/lib/user-store";
 
 export default function Home() {

@@ -1400,6 +1400,7 @@ function serveStatic(app) {
 }
 
 // server/_core/index.ts
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
 function isPortAvailable(port) {
   return new Promise((resolve) => {
     const server = net.createServer();
@@ -1418,6 +1419,7 @@ async function findAvailablePort(startPort = 3e3) {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 async function startServer() {
+  console.log("[FitTrack] Initializing server...");
   const app = express2();
   const server = createServer(app);
   app.use(express2.json({ limit: "50mb" }));

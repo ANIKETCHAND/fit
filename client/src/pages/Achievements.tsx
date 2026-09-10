@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight, Award, Calendar, Flame, LockKeyhole, Share2, Sparkles, Trophy, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
-import { PixelBadge } from "@/components/achievements/PixelBadge";
-import { BadgeShareSheet } from "@/components/achievements/BadgeShareSheet";
-import { BadgeUnlockOverlay } from "@/components/achievements/BadgeUnlockOverlay";
+import {
+  PixelBadge,
+  BadgeShareSheet,
+  BadgeUnlockOverlay,
+} from "@/components/achievements/BadgeComponents";
 import { achievementStorageKey, achievements, type Achievement, type AchievementCategory } from "@/lib/rewards-data";
 import { getExercisePreferences, getScopedKey, getStreak, pushMilestoneNotification } from "@/lib/user-store";
 
