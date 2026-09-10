@@ -1,6 +1,34 @@
+import {
+  playNotificationSound,
+  playAlarmSound,
+  isSoundEnabled,
+  setSoundEnabled,
+  toggleSoundEnabled,
+  type NotificationSoundType,
+  type AlarmSoundType,
+} from "./audio-cue";
+
+export {
+  playNotificationSound,
+  playAlarmSound,
+  isSoundEnabled,
+  setSoundEnabled,
+  toggleSoundEnabled,
+  type NotificationSoundType,
+  type AlarmSoundType,
+};
+
+export type WorkoutAlarmSound = "radar_pulse" | "digital_alarm" | "boxing_gong" | "kinetic_chime";
+
 export type ExercisePreference = { favorite?: boolean; hidden?: boolean; viewedAt?: string };
 export type NotificationRecord = { id: string; title: string; detail: string; kind: "milestone" | "reminder" | "system"; createdAt: string; read: boolean };
-export type ReminderSettings = { enabled: boolean; time: string; days: string[] };
+export type ReminderSettings = {
+  enabled: boolean;
+  time: string;
+  days: string[];
+  alarmSoundEnabled?: boolean;
+  soundType?: WorkoutAlarmSound;
+};
 export type StreakData = { count: number; lastCompletedDate: string };
 export type DailyStreak = StreakData;
 export type AthleteProfile = { name: string; email: string; location: string; focus: string; photoDataUrl?: string };
@@ -82,8 +110,22 @@ export const getExercisePreferences = () => safeRead<Record<string, ExercisePref
 export const saveExercisePreferences = (value: Record<string, ExercisePreference>) => write(preferenceKey, value);
 export const getNotifications = () => safeRead<NotificationRecord[]>(notificationKey, defaultNotifications);
 export const saveNotifications = (value: NotificationRecord[]) => write(notificationKey, value);
-export const pushMilestoneNotification = (title: string, detail: string) => { const notifications = getNotifications(); const id = `milestone-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`; if (!notifications.some((item) => item.id === id)) saveNotifications([{ id, title, detail, kind: "milestone", createdAt: new Date().toISOString(), read: false }, ...notifications]); };
-export const getReminderSettings = () => safeRead<ReminderSettings>(reminderKey, { enabled: true, time: "18:30", days: ["Mon", "Wed", "Fri"] });
+export const pushMilestoneNotification = (title: string, detail: string) => {
+  const notifications = getNotifications();
+  const id = `milestone-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  if (!notifications.some((item) => item.id === id)) {
+    saveNotifications([{ id, title, detail, kind: "milestone", createdAt: new Date().toISOString(), read: false }, ...notifications]);
+    playNotificationSound("milestone");
+  }
+};
+export const getReminderSettings = () =>
+  safeRead<ReminderSettings>(reminderKey, {
+    enabled: true,
+    time: "18:30",
+    days: ["Mon", "Wed", "Fri"],
+    alarmSoundEnabled: true,
+    soundType: "radar_pulse",
+  });
 export const saveReminderSettings = (value: ReminderSettings) => write(reminderKey, value);
 export const getAthleteProfile = () => safeRead<AthleteProfile>(athleteProfileKey, getDefaultAthleteProfile());
 export const saveAthleteProfile = (value: AthleteProfile) => {
@@ -207,54 +249,7 @@ export const addHydrationMl = (ml: number): number => {
 };
 
 export function playHydrationChime(soundType: "water_droplet" | "gentle_bell" | "digital_beep" = "water_droplet") {
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-
-    if (soundType === "water_droplet") {
-      // Liquid droplet pitch bend
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(450, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.4);
-    } else if (soundType === "gentle_bell") {
-      // Harmonic bell
-      [587.33, 880, 1174.66].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + i * 0.08);
-        osc.stop(ctx.currentTime + 0.8);
-      });
-    } else {
-      // Digital beep
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "square";
-      osc.frequency.setValueAtTime(800, ctx.currentTime);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.2);
-    }
-  } catch (e) {
-    console.warn("AudioContext chime not permitted without gesture", e);
-  }
+  playAlarmSound(soundType);
 }
 
 export const isProfileConfigured = (email?: string): boolean => {

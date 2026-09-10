@@ -12,7 +12,9 @@ import {
   SlidersHorizontal, 
   Sparkles,
   Play,
-  RotateCcw
+  RotateCcw,
+  Volume2,
+  VolumeX
 } from "lucide-react";
 import { toast } from "sonner";
 import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
@@ -26,9 +28,14 @@ import {
   playHydrationChime, 
   getTodayHydrationMl, 
   addHydrationMl,
+  playNotificationSound,
+  playAlarmSound,
+  isSoundEnabled,
+  toggleSoundEnabled,
   type NotificationRecord, 
   type ReminderSettings, 
-  type HydrationReminderSettings 
+  type HydrationReminderSettings,
+  type WorkoutAlarmSound
 } from "@/lib/user-store";
 
 function formatNotificationTime(createdAt: string): string {
@@ -60,8 +67,31 @@ export default function Notifications() {
   const [workoutReminder, setWorkoutReminder] = useState<ReminderSettings>(getReminderSettings);
   const [hydrationReminder, setHydrationReminder] = useState<HydrationReminderSettings>(getHydrationReminderSettings);
   const [todayWaterMl, setTodayWaterMl] = useState<number>(getTodayHydrationMl);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled);
 
   const unread = notifications.filter((item) => !item.read).length;
+
+  const handleToggleSound = () => {
+    const next = toggleSoundEnabled();
+    setSoundOn(next);
+    if (next) {
+      playNotificationSound("chime");
+      toast.success("Sound effects enabled");
+    } else {
+      toast.info("Sound effects muted");
+    }
+  };
+
+  const handleTestNotification = () => {
+    playNotificationSound("chime");
+    toast.info("🔔 Playing FitTrack notification chime");
+  };
+
+  const handleTestWorkoutAlarm = () => {
+    const snd = workoutReminder.soundType || "radar_pulse";
+    playAlarmSound(snd);
+    toast.info(`⏰ Playing workout alarm: "${snd.replace("_", " ")}"`);
+  };
 
   const saveWorkout = (next: ReminderSettings) => {
     setWorkoutReminder(next);
@@ -77,6 +107,7 @@ export default function Notifications() {
     const next = notifications.map((item) => ({ ...item, read: true }));
     setNotifications(next);
     saveNotifications(next);
+    playNotificationSound("success");
     toast.success("Notification archive marked as reviewed");
   };
 
@@ -122,6 +153,36 @@ export default function Notifications() {
     return () => clearInterval(intervalTimer);
   }, [hydrationReminder]);
 
+  // Background ticker for workout reminder alarm
+  useEffect(() => {
+    if (!workoutReminder.enabled) return;
+
+    let lastFiredMinute = "";
+
+    const checkWorkoutAlarm = () => {
+      const now = new Date();
+      const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][now.getDay()];
+      const currentHours = now.getHours();
+      const currentMins = now.getMinutes();
+      const currentTimeStr = `${String(currentHours).padStart(2, "0")}:${String(currentMins).padStart(2, "0")}`;
+
+      if (
+        workoutReminder.days.includes(dayName) &&
+        currentTimeStr === workoutReminder.time &&
+        lastFiredMinute !== currentTimeStr
+      ) {
+        lastFiredMinute = currentTimeStr;
+        if (workoutReminder.alarmSoundEnabled !== false) {
+          playAlarmSound(workoutReminder.soundType || "radar_pulse");
+        }
+        toast.success("🏋️ Workout Reminder: It's time for your training protocol!");
+      }
+    };
+
+    const workoutTimer = setInterval(checkWorkoutAlarm, 30000);
+    return () => clearInterval(workoutTimer);
+  }, [workoutReminder]);
+
   const targetMl = Math.round(hydrationReminder.targetDailyLiters * 1000);
   const hydrationPct = Math.min(100, Math.round((todayWaterMl / targetMl) * 100));
 
@@ -148,14 +209,37 @@ export default function Notifications() {
                   {unread ? `${unread} update${unread > 1 ? "s" : ""}` : "Archive clear"}
                 </h2>
               </div>
-              <button 
-                type="button" 
-                onClick={markAll}
-                className="px-3 py-1.5 bg-white/5 hover:bg-[#c6ff3d]/20 text-[#8b9c8a] hover:text-[#c6ff3d] border border-white/10 rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all"
-              >
-                <CheckCheck size={14} />
-                <span>Mark all read</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  onClick={handleTestNotification}
+                  className="px-2.5 py-1.5 bg-[#c6ff3d]/10 hover:bg-[#c6ff3d]/20 text-[#c6ff3d] border border-[#c6ff3d]/30 rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all"
+                  title="Test notification sound effect"
+                >
+                  <Bell size={13} />
+                  <span>Test Chime</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleToggleSound}
+                  className={`p-1.5 rounded-xl border transition-all ${
+                    soundOn 
+                      ? "bg-white/5 border-white/10 text-[#c6ff3d] hover:bg-white/10" 
+                      : "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                  }`}
+                  title={soundOn ? "Sound effects active (click to mute)" : "Sound effects muted (click to enable)"}
+                >
+                  {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={markAll}
+                  className="px-3 py-1.5 bg-white/5 hover:bg-[#c6ff3d]/20 text-[#8b9c8a] hover:text-[#c6ff3d] border border-white/10 rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all"
+                >
+                  <CheckCheck size={14} />
+                  <span>Mark all read</span>
+                </button>
+              </div>
             </div>
 
             {/* Active signals */}
@@ -170,6 +254,7 @@ export default function Notifications() {
                       key={item.id}
                       item={item}
                       onRead={() => {
+                        playNotificationSound("chime");
                         const next = notifications.map((value) =>
                           value.id === item.id ? { ...value, read: true } : value
                         );
@@ -412,7 +497,15 @@ export default function Notifications() {
                   </h2>
                 </div>
               </div>
-              <Settings2 size={18} className="text-[#8b9c8a]" />
+              <button
+                type="button"
+                onClick={handleTestWorkoutAlarm}
+                className="px-2.5 py-1 bg-[#c6ff3d]/10 hover:bg-[#c6ff3d]/20 text-[#c6ff3d] border border-[#c6ff3d]/30 rounded-xl text-[11px] font-mono flex items-center gap-1 transition-all"
+                title="Test Workout Alarm Sound"
+              >
+                <Play size={11} />
+                <span>Test</span>
+              </button>
             </div>
 
             <div className="flex items-center justify-between bg-black/30 p-3 rounded-2xl border border-white/5">
@@ -438,18 +531,36 @@ export default function Notifications() {
               </button>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-[11px] font-mono text-[#8b9c8a] block">
-                <Clock3 size={13} className="inline mr-1 text-[#c6ff3d]" />
-                Preferred time
-              </span>
-              <input
-                type="time"
-                value={workoutReminder.time}
-                disabled={!workoutReminder.enabled}
-                onChange={(event) => saveWorkout({ ...workoutReminder, time: event.target.value })}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#c6ff3d]/50"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono text-[#8b9c8a] block">
+                  <Clock3 size={12} className="inline mr-1 text-[#c6ff3d]" />
+                  Preferred time
+                </span>
+                <input
+                  type="time"
+                  value={workoutReminder.time}
+                  disabled={!workoutReminder.enabled}
+                  onChange={(event) => saveWorkout({ ...workoutReminder, time: event.target.value })}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white font-mono outline-none focus:border-[#c6ff3d]/50"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono text-[#8b9c8a] block">
+                  Alarm Sound
+                </span>
+                <select
+                  value={workoutReminder.soundType || "radar_pulse"}
+                  disabled={!workoutReminder.enabled}
+                  onChange={(e) => saveWorkout({ ...workoutReminder, soundType: e.target.value as WorkoutAlarmSound })}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-2 py-1.5 text-xs text-white outline-none font-mono focus:border-[#c6ff3d]/50"
+                >
+                  <option value="radar_pulse">Radar Pulse</option>
+                  <option value="digital_alarm">Digital Alarm</option>
+                  <option value="boxing_gong">Boxing Gong</option>
+                  <option value="kinetic_chime">Kinetic Chime</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -478,8 +589,11 @@ export default function Notifications() {
 
             <button
               type="button"
-              className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-mono border border-white/10 transition-all flex items-center justify-center gap-1.5 mt-2"
-              onClick={() => toast.success("Workout reminder settings saved to this device")}
+              className="w-full py-2.5 bg-white/5 hover:bg-[#c6ff3d]/15 text-white hover:text-[#c6ff3d] rounded-xl text-xs font-mono border border-white/10 hover:border-[#c6ff3d]/30 transition-all flex items-center justify-center gap-1.5 mt-2 font-bold uppercase tracking-wider"
+              onClick={() => {
+                playNotificationSound("success");
+                toast.success("Workout reminder and alarm saved to this device");
+              }}
             >
               <SlidersHorizontal size={14} />
               <span>Save workout protocol</span>

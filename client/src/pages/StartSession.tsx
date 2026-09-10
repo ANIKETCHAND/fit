@@ -7,6 +7,7 @@ import { WorkflowLayout } from "@/components/workflows/WorkflowLayout";
 import { ExerciseVideoModal } from "@/components/video/ExerciseVideoModal";
 import { advanceStreak, getScopedKey } from "@/lib/user-store";
 import { recordMuscleWorkout, getDynamicMuscleLibrary } from "@/lib/fitness-data";
+import { playAlarmSound, playNotificationSound } from "@/lib/audio-cue";
 
 const format = (seconds: number) =>
   `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -50,11 +51,24 @@ export default function StartSession() {
     return () => window.clearInterval(interval);
   }, [running]);
 
+  const handleToggleRunning = () => {
+    setRunning((prev) => {
+      const next = !prev;
+      if (next) {
+        playAlarmSound("digital_beep");
+      } else {
+        playNotificationSound("alert");
+      }
+      return next;
+    });
+  };
+
   const end = () => {
     if (seconds === 0) {
       toast("Start a session first before archiving.");
       return;
     }
+    playAlarmSound("boxing_gong");
     setRunning(false);
     advanceStreak();
     try {
@@ -117,7 +131,7 @@ export default function StartSession() {
               <button onClick={() => setSeconds(0)} aria-label="Reset session">
                 <RotateCcw size={17} />
               </button>
-              <button className="session-primary" onClick={() => setRunning((value) => !value)}>
+              <button className="session-primary" onClick={handleToggleRunning}>
                 {running ? <Pause size={18} /> : <Play size={18} />}
                 {running ? "Pause session" : "Launch session"}
               </button>

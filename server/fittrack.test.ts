@@ -334,3 +334,44 @@ describe("FitTrack dynamic muscle recovery engine", () => {
   });
 });
 
+// =============================================================================
+// 7. AUDIO CUE SYNTHESIS & ALARM / NOTIFICATION TESTS
+// =============================================================================
+
+describe("FitTrack audio cue synthesis & alarm notification wiring", () => {
+  it("verifies audio engine exports and zero-dependency synthesis contracts", () => {
+    const audioCueSource = readSource("client/src/lib/audio-cue.ts");
+    const userStoreSource = readSource("client/src/lib/user-store.ts");
+    const notificationsSource = readSource("client/src/pages/Notifications.tsx");
+    const workoutSource = readSource("client/src/pages/LogWorkout.tsx");
+    const sessionSource = readSource("client/src/pages/StartSession.tsx");
+
+    // Audio cue synthesizer
+    expect(audioCueSource).toContain("playNotificationSound");
+    expect(audioCueSource).toContain("playAlarmSound");
+    expect(audioCueSource).toContain("isSoundEnabled");
+    expect(audioCueSource).toContain("toggleSoundEnabled");
+    expect(audioCueSource).toContain("radar_pulse");
+    expect(audioCueSource).toContain("boxing_gong");
+    expect(audioCueSource).toContain("kinetic_chime");
+
+    // Milestone sound wiring
+    expect(userStoreSource).toContain('playNotificationSound("milestone")');
+    expect(userStoreSource).toContain("playAlarmSound(soundType)");
+
+    // Notification center controls & alarm tickers
+    expect(notificationsSource).toContain("handleTestNotification");
+    expect(notificationsSource).toContain("handleTestWorkoutAlarm");
+    expect(notificationsSource).toContain("handleToggleSound");
+    expect(notificationsSource).toContain("radar_pulse");
+    expect(notificationsSource).toContain("checkWorkoutAlarm");
+
+    // Workout & live session cues
+    expect(workoutSource).toContain('playNotificationSound("chime")');
+    expect(workoutSource).toContain('playAlarmSound("kinetic_chime")');
+    expect(sessionSource).toContain('playAlarmSound("digital_beep")');
+    expect(sessionSource).toContain('playAlarmSound("boxing_gong")');
+  });
+});
+
+

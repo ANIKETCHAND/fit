@@ -18,6 +18,7 @@ import {
   getDynamicMuscleLibrary,
   type MuscleId,
 } from "@/lib/fitness-data";
+import { playNotificationSound, playAlarmSound } from "@/lib/audio-cue";
 
 const defaultLifts = [
   { name: "Barbell bench press", prescription: "4 × 6–8", load: 82.5, rest: "02:30", focus: "Pectorals" },
@@ -92,9 +93,13 @@ export default function LogWorkout() {
   const saveWorkout = trpc.workouts.create.useMutation({ onError: () => commitRewards(), onSuccess: () => commitRewards() });
   const toggle = (index: number) => {
     setComplete((previous) => {
-      const next = previous.includes(index) ? previous.filter((item) => item !== index) : [...previous, index];
+      const isCompleting = !previous.includes(index);
+      const next = isCompleting ? [...previous, index] : previous.filter((item) => item !== index);
       const currentVolume = next.reduce((total, idx) => total + (idx === 0 ? load * 28 : lifts[idx].load * (idx === 1 ? 30 : 36)), 0);
       recordLiveSetProgress(targetMuscleId, next.length, lifts.length, currentVolume);
+      if (isCompleting) {
+        playNotificationSound("chime");
+      }
       return next;
     });
   };
@@ -110,6 +115,7 @@ export default function LogWorkout() {
   const afterStreak = () => { if (pendingAchievement) { setCelebrating(pendingAchievement); setPendingAchievement(null); } else finish(); };
 
   const commitRewards = () => {
+    playAlarmSound("kinetic_chime");
     const streakResult = advanceStreak();
     const benchBreaker = achievements.find((a) => a.id === "bench-breaker")!;
     const alreadyUnlocked = localStorage.getItem(achievementStorageKey(benchBreaker.id)) === "unlocked";
