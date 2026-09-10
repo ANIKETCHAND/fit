@@ -13,6 +13,7 @@ Complete technical and architectural documentation has been prepared and indexed
 
 | Document | File Link | Description |
 | :--- | :--- | :--- |
+| **Master Technical Report** | [🏆 `REPORT.md`](./REPORT.md) | Comprehensive project report covering mathematics, backend, frontend, database, security, and AI. |
 | **Product Requirements (PRD)** | [📄 `PRD.md`](./PRD.md) | Problem statement, Indian fitness context, user personas, functional matrix, and KPIs. |
 | **System Architecture** | [🏛️ `ARCHITECTURE.md`](./ARCHITECTURE.md) | High-level topology, Mermaid diagrams, multi-tenant RLS, and offline-first sync. |
 | **Design System & UI/UX** | [🎨 `DESIGN.md`](./DESIGN.md) | Carbon Editorial Performance Deck, color tokens, typography, component hierarchies, and UX flows. |
