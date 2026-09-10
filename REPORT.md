@@ -6,8 +6,8 @@
 
 ## 📋 Document Metadata
 * **Project Name**: FitTrack Performance OS
-* **Current Version**: 2.0.0 (Production Release)
-* **Live Deployment URL**: [https://fittrack-app-blue.vercel.app](https://fittrack-app-blue.vercel.app)
+* **Current Version**: 2.0.0 (Pre-Hackathon Release)
+* **Deployment Status**: Pre-Hackathon Development Phase (Intentionally undeployed prior to hackathon kickoff to comply with competition regulations; local build verified)
 * **GitHub Monorepo**: [https://github.com/ANIKETCHAND/fit.git](https://github.com/ANIKETCHAND/fit.git)
 * **Engineering Team**: FitTrack Core Team
 * **Primary Target Demographic**: Indian fitness enthusiasts, students, athletes, desk workers, and citizens combating sedentary lifestyle disorders.
@@ -548,7 +548,7 @@ Rexi is never queried with ungrounded text. Every prompt automatically injects:
 
 ## 9. Full System Verification & Production Test Report
 
-An automated end-to-end user simulation was executed on the live production deployment (`https://fittrack-app-blue.vercel.app`) using headless Chrome:
+An automated end-to-end user simulation was executed on the production build via headless Chrome:
 
 | Test Step | Target Feature | Automated Assertion Result | Status |
 | :---: | :--- | :--- | :---: |

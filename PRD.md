@@ -8,7 +8,7 @@
 * **Product Name**: FitTrack Performance OS
 * **Version**: 2.0.0 (Production Release)
 * **Author / Team**: FitTrack Engineering Team (SIH 2026)
-* **Status**: Live in Production (`https://fittrack-app-blue.vercel.app`)
+* **Status**: Pre-Hackathon Phase (Undeployed in compliance with competition guidelines; local build verified)
 * **Target Audience**: Indian fitness enthusiasts, students, athletes, desk workers, and gym-goers combating sedentary lifestyles.
 
 ---

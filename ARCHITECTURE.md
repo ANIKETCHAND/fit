@@ -145,7 +145,7 @@ flowchart TD
 
 ## 5. Deployment & Infrastructure Pipeline
 
-* **Hosting Platform**: Vercel Serverless Edge Platform (`https://fittrack-app-blue.vercel.app`).
+* **Target Hosting Platform**: Vercel Serverless Edge Platform (Undeployed in pre-hackathon phase; ready for instant deployment at competition kickoff).
 * **Source Control**: Git GitHub Monorepo (`https://github.com/ANIKETCHAND/fit.git` branch `main`).
 * **Continuous Deployment (CI/CD)**: Every push to `main` triggers automated asset compilation (`vite build`), tree-shaking, chunk optimization, and atomic global edge deployment within 45 seconds.
 * **Zero Infrastructure Maintenance**: All compute nodes are serverless edge instances; the database is a managed cloud PostgreSQL instance on Supabase.
