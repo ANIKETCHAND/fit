@@ -55,12 +55,12 @@ export function BodyControls({ view, autoRotate, onView, onReset, onToggleRotate
 }
 
 // =============================================================================
-// 2. MUSCLE COMPONENT
+// 2. ANATOMICAL MUSCLE SHAPES & GEOMETRIES
 // =============================================================================
 
 export type MuscleShape = "sphere" | "capsule" | "box";
 
-type MuscleProps = {
+export type MuscleProps = {
   id: MuscleId;
   position: [number, number, number];
   rotation?: [number, number, number];
@@ -72,6 +72,358 @@ type MuscleProps = {
   onSelect: (id: MuscleId) => void;
 };
 
+// 1. PECTORALIS MAJOR (CHEST)
+function createPecShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.04, 0.44);
+  s.bezierCurveTo(0.24, 0.46, 0.52, 0.42, 0.74, 0.28);
+  s.bezierCurveTo(0.82, 0.12, 0.78, -0.10, 0.68, -0.24);
+  s.bezierCurveTo(0.48, -0.34, 0.20, -0.32, 0.04, -0.24);
+  s.lineTo(0.04, 0.44);
+  return s;
+}
+
+// 2. RECTUS ABDOMINIS SEGMENT (CORE 6-PACK)
+function createAbBlockShape(w = 0.25, h = 0.21, r = 0.04): THREE.Shape {
+  const s = new THREE.Shape();
+  const x = -w / 2;
+  const y = -h / 2;
+  s.moveTo(x + r, y);
+  s.lineTo(x + w - r, y);
+  s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r);
+  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h);
+  s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r);
+  s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+
+// 3. LOWER ABDOMEN V-PLATE (CORE)
+function createLowerAbShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(-0.25, 0.14);
+  s.lineTo(0.25, 0.14);
+  s.bezierCurveTo(0.20, -0.08, 0.12, -0.26, 0.0, -0.42);
+  s.bezierCurveTo(-0.12, -0.26, -0.20, -0.08, -0.25, 0.14);
+  return s;
+}
+
+// 4. EXTERNAL OBLIQUE (CORE)
+function createObliqueShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.02, 0.55);
+  s.bezierCurveTo(0.20, 0.42, 0.26, 0.15, 0.22, -0.20);
+  s.bezierCurveTo(0.18, -0.44, 0.06, -0.60, -0.08, -0.66);
+  s.bezierCurveTo(-0.02, -0.38, 0.02, -0.08, -0.08, 0.24);
+  s.bezierCurveTo(-0.06, 0.42, -0.02, 0.52, 0.02, 0.55);
+  return s;
+}
+
+// 5. DELTOID CAP (SHOULDERS)
+function createDeltoidShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.46);
+  s.bezierCurveTo(0.36, 0.40, 0.48, 0.14, 0.40, -0.16);
+  s.bezierCurveTo(0.30, -0.38, 0.14, -0.52, 0, -0.60);
+  s.bezierCurveTo(-0.14, -0.52, -0.30, -0.38, -0.40, -0.16);
+  s.bezierCurveTo(-0.48, 0.14, -0.36, 0.40, 0, 0.46);
+  return s;
+}
+
+// 6. BICEPS BRACHII (BICEPS)
+function createBicepShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.60);
+  s.bezierCurveTo(0.18, 0.44, 0.22, 0.10, 0.18, -0.32);
+  s.bezierCurveTo(0.13, -0.54, 0.05, -0.64, 0, -0.68);
+  s.bezierCurveTo(-0.05, -0.64, -0.13, -0.54, -0.18, -0.32);
+  s.bezierCurveTo(-0.22, 0.10, -0.18, 0.44, 0, 0.60);
+  return s;
+}
+
+// 7. TRICEPS BRACHII (TRICEPS)
+function createTricepShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.60);
+  s.bezierCurveTo(0.24, 0.46, 0.26, 0.12, 0.20, -0.26);
+  s.bezierCurveTo(0.14, -0.54, 0.05, -0.66, 0, -0.70);
+  s.bezierCurveTo(-0.05, -0.66, -0.14, -0.54, -0.20, -0.26);
+  s.bezierCurveTo(-0.26, 0.12, -0.24, 0.46, 0, 0.60);
+  return s;
+}
+
+// 8. TRAPEZIUS (BACK)
+function createTrapeziusShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.54);
+  s.bezierCurveTo(0.28, 0.50, 0.60, 0.38, 0.78, 0.22);
+  s.bezierCurveTo(0.52, -0.06, 0.28, -0.32, 0, -0.54);
+  s.bezierCurveTo(-0.28, -0.32, -0.52, -0.06, -0.78, 0.22);
+  s.bezierCurveTo(-0.60, 0.38, -0.28, 0.50, 0, 0.54);
+  return s;
+}
+
+// 9. LATISSIMUS DORSI (BACK)
+function createLatissimusShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.05, 0.66);
+  s.bezierCurveTo(0.32, 0.70, 0.64, 0.60, 0.80, 0.38);
+  s.bezierCurveTo(0.70, 0.05, 0.52, -0.34, 0.26, -0.64);
+  s.bezierCurveTo(0.14, -0.68, 0.08, -0.60, 0.05, -0.50);
+  s.lineTo(0.05, 0.66);
+  return s;
+}
+
+// 10. GLUTEUS MAXIMUS (GLUTES)
+function createGluteShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.04, 0.44);
+  s.bezierCurveTo(0.30, 0.48, 0.58, 0.36, 0.60, 0.08);
+  s.bezierCurveTo(0.62, -0.28, 0.42, -0.50, 0.15, -0.48);
+  s.bezierCurveTo(0.04, -0.46, 0.03, -0.16, 0.04, 0.44);
+  return s;
+}
+
+// 11. RECTUS FEMORIS (QUADS)
+function createQuadRectusShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.72);
+  s.bezierCurveTo(0.19, 0.54, 0.21, 0.12, 0.17, -0.34);
+  s.bezierCurveTo(0.13, -0.60, 0.06, -0.74, 0, -0.78);
+  s.bezierCurveTo(-0.06, -0.74, -0.13, -0.60, -0.17, -0.34);
+  s.bezierCurveTo(-0.21, 0.12, -0.19, 0.54, 0, 0.72);
+  return s;
+}
+
+// 12. VASTUS LATERALIS (QUADS)
+function createVastusLateralisShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.02, 0.66);
+  s.bezierCurveTo(0.28, 0.52, 0.36, 0.14, 0.30, -0.28);
+  s.bezierCurveTo(0.24, -0.56, 0.08, -0.70, -0.04, -0.72);
+  s.bezierCurveTo(0.02, -0.46, 0.05, 0.12, 0.02, 0.66);
+  return s;
+}
+
+// 13. VASTUS MEDIALIS (QUADS - TEARDROP)
+function createVastusMedialisShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0.0, 0.34);
+  s.bezierCurveTo(0.20, 0.24, 0.24, -0.05, 0.16, -0.30);
+  s.bezierCurveTo(0.08, -0.44, -0.02, -0.44, -0.09, -0.34);
+  s.bezierCurveTo(-0.13, -0.16, -0.09, 0.19, 0.0, 0.34);
+  return s;
+}
+
+// 14. HAMSTRINGS
+function createHamstringShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(-0.19, 0.70);
+  s.bezierCurveTo(0.0, 0.74, 0.19, 0.70, 0.23, 0.66);
+  s.bezierCurveTo(0.28, 0.26, 0.25, -0.28, 0.17, -0.68);
+  s.bezierCurveTo(0.0, -0.74, -0.13, -0.72, -0.17, -0.68);
+  s.bezierCurveTo(-0.25, -0.28, -0.27, 0.26, -0.19, 0.70);
+  return s;
+}
+
+// 15. GASTROCNEMIUS (CALVES - REAR TWIN-HEAD)
+function createGastrocnemiusShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.56);
+  s.bezierCurveTo(0.30, 0.50, 0.38, 0.24, 0.30, -0.10);
+  s.bezierCurveTo(0.20, -0.38, 0.09, -0.62, 0.03, -0.72);
+  s.bezierCurveTo(-0.03, -0.72, -0.20, -0.38, -0.30, -0.10);
+  s.bezierCurveTo(-0.38, 0.24, -0.30, 0.50, 0, 0.56);
+  return s;
+}
+
+// 16. ANTERIOR TIBIALIS (CALVES - FRONT SHIN)
+function createAnteriorCalfShape(): THREE.Shape {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.54);
+  s.bezierCurveTo(0.20, 0.46, 0.24, 0.12, 0.16, -0.26);
+  s.bezierCurveTo(0.10, -0.52, 0.04, -0.68, 0, -0.72);
+  s.bezierCurveTo(-0.04, -0.72, -0.10, -0.52, -0.16, -0.26);
+  s.bezierCurveTo(-0.24, 0.12, -0.20, 0.46, 0, 0.54);
+  return s;
+}
+
+// Extrusion Settings
+const STANDARD_EXTRUDE: THREE.ExtrudeGeometryOptions = {
+  depth: 0.08,
+  bevelEnabled: true,
+  bevelSegments: 4,
+  steps: 1,
+  bevelSize: 0.024,
+  bevelThickness: 0.035,
+};
+
+const THICK_EXTRUDE: THREE.ExtrudeGeometryOptions = {
+  depth: 0.12,
+  bevelEnabled: true,
+  bevelSegments: 4,
+  steps: 1,
+  bevelSize: 0.03,
+  bevelThickness: 0.045,
+};
+
+function useAnatomyGeometries() {
+  return useMemo(() => {
+    return {
+      pec: new THREE.ExtrudeGeometry(createPecShape(), THICK_EXTRUDE),
+      abBlock: new THREE.ExtrudeGeometry(createAbBlockShape(0.25, 0.21, 0.04), STANDARD_EXTRUDE),
+      lowerAb: new THREE.ExtrudeGeometry(createLowerAbShape(), STANDARD_EXTRUDE),
+      oblique: new THREE.ExtrudeGeometry(createObliqueShape(), STANDARD_EXTRUDE),
+      deltoid: new THREE.ExtrudeGeometry(createDeltoidShape(), THICK_EXTRUDE),
+      bicep: new THREE.ExtrudeGeometry(createBicepShape(), THICK_EXTRUDE),
+      tricep: new THREE.ExtrudeGeometry(createTricepShape(), THICK_EXTRUDE),
+      trapezius: new THREE.ExtrudeGeometry(createTrapeziusShape(), STANDARD_EXTRUDE),
+      lat: new THREE.ExtrudeGeometry(createLatissimusShape(), THICK_EXTRUDE),
+      glute: new THREE.ExtrudeGeometry(createGluteShape(), THICK_EXTRUDE),
+      quadRectus: new THREE.ExtrudeGeometry(createQuadRectusShape(), THICK_EXTRUDE),
+      vastusLat: new THREE.ExtrudeGeometry(createVastusLateralisShape(), THICK_EXTRUDE),
+      vastusMed: new THREE.ExtrudeGeometry(createVastusMedialisShape(), THICK_EXTRUDE),
+      hamstring: new THREE.ExtrudeGeometry(createHamstringShape(), THICK_EXTRUDE),
+      gastrocnemius: new THREE.ExtrudeGeometry(createGastrocnemiusShape(), THICK_EXTRUDE),
+      anteriorCalf: new THREE.ExtrudeGeometry(createAnteriorCalfShape(), STANDARD_EXTRUDE),
+    };
+  }, []);
+}
+
+type AnatomicalPlateProps = {
+  id: MuscleId;
+  geometry: THREE.BufferGeometry;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: [number, number, number];
+  active: boolean;
+  baseColor: string;
+  emissiveColor: string;
+  onHover: (id: MuscleId | null) => void;
+  onSelect: (id: MuscleId) => void;
+};
+
+function AnatomicalPlate({
+  id,
+  geometry,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = [1, 1, 1],
+  active,
+  baseColor,
+  emissiveColor,
+  onHover,
+  onSelect,
+}: AnatomicalPlateProps) {
+  const enter = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    document.body.style.cursor = "pointer";
+    onHover(id);
+  };
+
+  const leave = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    document.body.style.cursor = "auto";
+    onHover(null);
+  };
+
+  const click = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    onSelect(id);
+  };
+
+  return (
+    <mesh
+      geometry={geometry}
+      position={position}
+      rotation={rotation}
+      scale={scale}
+      onPointerOver={enter}
+      onPointerOut={leave}
+      onClick={click}
+      renderOrder={2}
+      castShadow
+    >
+      <meshStandardMaterial
+        color={baseColor}
+        emissive={emissiveColor}
+        emissiveIntensity={active ? 0.95 : 0.46}
+        roughness={0.34}
+        metalness={0.16}
+        transparent
+        opacity={active ? 0.98 : 0.88}
+      />
+      <Edges
+        scale={1.012}
+        color={active ? "#ffffff" : "#0d1410"}
+        threshold={15}
+        transparent
+        opacity={active ? 0.96 : 0.60}
+      />
+    </mesh>
+  );
+}
+
+type AnatomicalMuscleGroupProps = {
+  id: MuscleId;
+  hovered: boolean;
+  selected: boolean;
+  onHover: (id: MuscleId | null) => void;
+  onSelect: (id: MuscleId) => void;
+  children: (props: {
+    active: boolean;
+    baseColor: string;
+    emissiveColor: string;
+    plateProps: {
+      id: MuscleId;
+      active: boolean;
+      baseColor: string;
+      emissiveColor: string;
+      onHover: (id: MuscleId | null) => void;
+      onSelect: (id: MuscleId) => void;
+    };
+  }) => React.ReactNode;
+};
+
+function AnatomicalMuscleGroup({
+  id,
+  hovered,
+  selected,
+  onHover,
+  onSelect,
+  children,
+}: AnatomicalMuscleGroupProps) {
+  const active = hovered || selected;
+  const groupRef = useRef<THREE.Group>(null);
+  const reduceMotion = useReducedMotion() ?? false;
+  const muscleData = muscleLibrary[id];
+  const score = muscleData?.score ?? 100;
+  const recovery = getRecoveryStatus(score);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current || reduceMotion) return;
+    const pulse = active ? 1 + Math.sin(clock.elapsedTime * 3.8) * 0.028 : 1;
+    groupRef.current.scale.set(pulse, pulse, pulse);
+  });
+
+  const baseColor = recovery.color;
+  const emissiveColor = active ? recovery.color : recovery.emissive;
+
+  const plateProps = {
+    id,
+    active,
+    baseColor,
+    emissiveColor,
+    onHover,
+    onSelect,
+  };
+
+  return <group ref={groupRef}>{children({ active, baseColor, emissiveColor, plateProps })}</group>;
+}
+
+// Fallback generic Muscle component for backwards-compatibility
 export function Muscle({
   id,
   position,
@@ -158,7 +510,7 @@ export function Muscle({
 }
 
 // =============================================================================
-// 3. HUMAN BODY ARCHITECTURE
+// 3. HUMAN BODY ARCHITECTURE & ATHLETIC MANNEQUIN BASE
 // =============================================================================
 
 export const BODY_MODEL_PATH = "/models/body.glb";
@@ -184,19 +536,15 @@ function ContourRings() {
       {[1.66, 1.32, 0.96, 0.58].map((y, index) => (
         <mesh key={y} position={[0, y, 0.505]} scale={[1.05 - index * 0.08, 0.7, 1]}>
           <torusGeometry args={[0.84 - index * 0.06, 0.012, 5, 48]} />
-          <meshBasicMaterial color="#9bcf86" transparent opacity={0.12} />
+          <meshBasicMaterial color="#9bcf86" transparent opacity={0.08} />
         </mesh>
       ))}
       {[-0.65, -0.98, -1.33, -1.72, -2.13].map((y) => (
         <mesh key={y} position={[0, y, 0.46]} scale={[0.64, 0.72, 1]}>
           <torusGeometry args={[0.72, 0.01, 5, 36]} />
-          <meshBasicMaterial color="#7dab70" transparent opacity={0.1} />
+          <meshBasicMaterial color="#7dab70" transparent opacity={0.06} />
         </mesh>
       ))}
-      <mesh position={[0, 0.42, -0.51]} scale={[0.08, 2.16, 0.06]}>
-        <capsuleGeometry args={[0.42, 3.35, 8, 12]} />
-        <meshBasicMaterial color="#b4dca1" transparent opacity={0.16} />
-      </mesh>
     </group>
   );
 }
@@ -210,42 +558,113 @@ function MuscleFiberDetail({ selected }: { selected: MuscleId }) {
   );
   return (
     <group>
-      {[-0.64, -0.51, -0.38, -0.25].map((x, index) => strip(`l-pec-${x}`, [x, 1.42 + index * 0.035, 0.81], [0.42, 0.022, 0.018], -0.22 + index * 0.08, "chest", 0.25))}
-      {[0.64, 0.51, 0.38, 0.25].map((x, index) => strip(`r-pec-${x}`, [x, 1.42 + index * 0.035, 0.81], [0.42, 0.022, 0.018], 0.22 - index * 0.08, "chest", 0.25))}
-      {[-0.26, 0.26].map((x) => [-0.02, -0.24, -0.46].map((y, index) => strip(`core-${x}-${y}`, [x, y, 0.59], [0.19, 0.016, 0.018], 0, "core", 0.22 - index * 0.025)))}
-      {[-1, 1].map((side) => [-0.14, 0.05, 0.22].map((offset, index) => strip(`shoulder-${side}-${index}`, [side * 1.08, 1.65 + offset, 0.39], [0.25, 0.018, 0.017], side * (0.4 - index * 0.12), "shoulders", 0.2)))}
-      {[-1, 1].map((side) => [-0.36, -0.05, 0.26].map((offset, index) => strip(`arm-${side}-${index}`, [side * 1.28, 0.83 + offset, 0.49], [0.022, 0.27, 0.017], side * 0.1, "biceps", 0.17)))}
-      {[-0.45, 0.45].map((x) => [-1.28, -1.6, -1.92, -2.24].map((y, index) => strip(`quad-${x}-${y}`, [x, y, 0.52], [0.05, 0.27, 0.017], x < 0 ? -0.14 : 0.14, "quads", 0.18 - index * 0.015)))}
-      {[-0.43, 0.43].map((x) => [-2.72, -3.02].map((y, index) => strip(`calf-${x}-${y}`, [x, y, 0.47], [0.04, 0.19, 0.017], x < 0 ? -0.1 : 0.1, "calves", 0.14 - index * 0.01)))}
-      <mesh position={[0, 1.42, 0.825]} scale={[0.018, 0.49, 0.018]}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial color="#dffabf" transparent opacity={0.38} />
-      </mesh>
+      {[-0.64, -0.51, -0.38, -0.25].map((x, index) => strip(`l-pec-${x}`, [x, 1.42 + index * 0.035, 0.62], [0.38, 0.018, 0.014], -0.22 + index * 0.08, "chest", 0.25))}
+      {[0.64, 0.51, 0.38, 0.25].map((x, index) => strip(`r-pec-${x}`, [x, 1.42 + index * 0.035, 0.62], [0.38, 0.018, 0.014], 0.22 - index * 0.08, "chest", 0.25))}
+      {[-0.15, 0.15].map((x) => [0.70, 0.45, 0.20].map((y, index) => strip(`core-${x}-${y}`, [x, y, 0.62], [0.18, 0.014, 0.014], 0, "core", 0.22 - index * 0.025)))}
+      {[-1, 1].map((side) => [-0.14, 0.05, 0.22].map((offset, index) => strip(`shoulder-${side}-${index}`, [side * 1.08, 1.62 + offset, 0.35], [0.22, 0.016, 0.014], side * (0.35 - index * 0.12), "shoulders", 0.2)))}
+      {[-1, 1].map((side) => [-0.36, -0.05, 0.26].map((offset, index) => strip(`arm-${side}-${index}`, [side * 1.24, 0.86 + offset, 0.38], [0.018, 0.24, 0.014], side * 0.1, "biceps", 0.17)))}
+      {[-0.44, 0.44].map((x) => [-1.28, -1.55, -1.82].map((y, index) => strip(`quad-${x}-${y}`, [x, y, 0.46], [0.045, 0.22, 0.014], x < 0 ? -0.12 : 0.12, "quads", 0.18 - index * 0.015)))}
+      {[-0.43, 0.43].map((x) => [-2.70, -2.95].map((y, index) => strip(`calf-${x}-${y}`, [x, y, 0.32], [0.035, 0.18, 0.014], x < 0 ? -0.08 : 0.08, "calves", 0.14 - index * 0.01)))}
     </group>
   );
 }
 
-function BaseMaterial() {
-  return <meshStandardMaterial color="#2c5435" emissive="#245132" emissiveIntensity={0.75} roughness={0.42} metalness={0.17} />;
+function MannequinMaterial() {
+  return (
+    <meshStandardMaterial
+      color="#121714"
+      emissive="#090d0a"
+      emissiveIntensity={0.35}
+      roughness={0.62}
+      metalness={0.22}
+    />
+  );
 }
 
 function BodyBase() {
   return (
     <group>
-      <mesh position={[0, 2.78, 0]} castShadow><sphereGeometry args={[0.53, 30, 30]} /><meshStandardMaterial color="#2e5637" emissive="#17361f" emissiveIntensity={0.48} roughness={0.5} metalness={0.12} /></mesh>
-      <mesh position={[0, 2.12, 0]} scale={[0.34, 0.4, 0.34]} castShadow><sphereGeometry args={[1, 22, 22]} /><BaseMaterial /></mesh>
-      <mesh position={[0, 1.22, -0.02]} scale={[1.06, 1.18, 0.49]} castShadow><sphereGeometry args={[1, 36, 28]} /><BaseMaterial /></mesh>
-      <mesh position={[0, 1.22, -0.015]} scale={[1.075, 1.195, 0.5]}><sphereGeometry args={[1, 24, 18]} /><meshBasicMaterial color="#c6ff3d" wireframe transparent opacity={0.085} /></mesh>
-      <mesh position={[0, -0.1, 0]} scale={[0.72, 0.63, 0.42]} castShadow><sphereGeometry args={[1, 32, 24]} /><BaseMaterial /></mesh>
-      <mesh position={[0, -0.22, 0]} rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.78, 0.012, 5, 52]} /><meshBasicMaterial color="#c6ff3d" transparent opacity={0.3} /></mesh>
+      {/* Head: athletic cranium and jawline */}
+      <mesh position={[0, 2.78, 0]} castShadow>
+        <sphereGeometry args={[0.50, 32, 32]} />
+        <MannequinMaterial />
+        <Edges scale={1.008} color="#1c251f" threshold={20} />
+      </mesh>
+      {/* Jaw / chin taper */}
+      <mesh position={[0, 2.46, 0.10]} scale={[0.34, 0.28, 0.32]} castShadow>
+        <sphereGeometry args={[1, 24, 24]} />
+        <MannequinMaterial />
+      </mesh>
+      {/* Neck */}
+      <mesh position={[0, 2.12, 0]} scale={[0.32, 0.42, 0.32]} castShadow>
+        <cylinderGeometry args={[0.9, 1.0, 1, 24]} />
+        <MannequinMaterial />
+      </mesh>
+      {/* Torso core underlay (shows behind sternum, linea alba, spine furrow) */}
+      <mesh position={[0, 1.18, -0.01]} scale={[0.98, 1.15, 0.46]} castShadow>
+        <cylinderGeometry args={[0.92, 0.80, 1, 32]} />
+        <MannequinMaterial />
+      </mesh>
+      {/* Pelvic / groin notch (athletic dark brief contour matching the reference image) */}
+      <mesh position={[0, -0.28, 0.02]} scale={[0.70, 0.58, 0.40]} castShadow>
+        <cylinderGeometry args={[0.82, 0.65, 1, 28]} />
+        <MannequinMaterial />
+      </mesh>
+      {/* Bilateral limbs underlay */}
       {[-1, 1].map((side) => (
         <group key={side}>
-          <mesh position={[side * 1.16, 1.08, 0]} rotation={[0, 0, -side * 0.16]} scale={[0.26, 0.95, 0.26]} castShadow><capsuleGeometry args={[0.65, 1.55, 12, 22]} /><BaseMaterial /></mesh>
-          <mesh position={[side * 1.55, -0.18, 0]} rotation={[0, 0, side * 0.08]} scale={[0.2, 0.82, 0.22]} castShadow><capsuleGeometry args={[0.65, 1.45, 12, 22]} /><BaseMaterial /></mesh>
-          <mesh position={[side * 1.7, -1.1, 0.02]} scale={[0.22, 0.32, 0.16]} castShadow><sphereGeometry args={[1, 20, 20]} /><BaseMaterial /></mesh>
-          <mesh position={[side * 0.43, -1.38, 0]} scale={[0.43, 1.2, 0.44]} castShadow><capsuleGeometry args={[0.74, 1.8, 12, 22]} /><BaseMaterial /></mesh>
-          <mesh position={[side * 0.42, -2.78, 0]} scale={[0.3, 1.1, 0.31]} castShadow><capsuleGeometry args={[0.62, 1.8, 12, 22]} /><BaseMaterial /></mesh>
-          <mesh position={[side * 0.43, -3.85, 0.23]} scale={[0.43, 0.16, 0.78]} castShadow><sphereGeometry args={[1, 20, 20]} /><BaseMaterial /></mesh>
+          {/* Shoulder joint notch */}
+          <mesh position={[side * 1.02, 1.62, 0]} scale={[0.26, 0.26, 0.26]}>
+            <sphereGeometry args={[1, 18, 18]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Upper arm bone core */}
+          <mesh position={[side * 1.22, 0.85, 0]} rotation={[0, 0, -side * 0.14]} scale={[0.22, 0.72, 0.22]}>
+            <cylinderGeometry args={[0.7, 0.65, 1, 20]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Elbow joint notch */}
+          <mesh position={[side * 1.34, 0.32, 0]} scale={[0.20, 0.20, 0.20]}>
+            <sphereGeometry args={[1, 16, 16]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Forearms extending down */}
+          <mesh position={[side * 1.50, -0.20, 0.02]} rotation={[0, 0, side * 0.12]} scale={[0.18, 0.85, 0.20]} castShadow>
+            <cylinderGeometry args={[0.75, 0.55, 1, 20]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Wrist & Sculpted Hand */}
+          <mesh position={[side * 1.68, -1.02, 0.03]} rotation={[0, 0, side * 0.15]} scale={[0.16, 0.36, 0.12]} castShadow>
+            <boxGeometry args={[1, 1, 1]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Femur / Thigh core */}
+          <mesh position={[side * 0.44, -1.45, 0]} scale={[0.36, 1.15, 0.38]}>
+            <cylinderGeometry args={[0.85, 0.70, 1, 24]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Knee joint notch (Patellar notch in front, Popliteal fossa in rear) */}
+          <mesh position={[side * 0.43, -2.12, 0.02]} scale={[0.30, 0.18, 0.32]}>
+            <cylinderGeometry args={[0.82, 0.78, 1, 24]} />
+            <MannequinMaterial />
+            <Edges scale={1.01} color="#1c251f" threshold={15} />
+          </mesh>
+          {/* Shin & calf bone core */}
+          <mesh position={[side * 0.43, -2.78, 0]} scale={[0.26, 1.05, 0.26]}>
+            <cylinderGeometry args={[0.75, 0.60, 1, 20]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Ankle joint */}
+          <mesh position={[side * 0.43, -3.48, 0.02]} scale={[0.22, 0.14, 0.24]}>
+            <cylinderGeometry args={[0.7, 0.65, 1, 16]} />
+            <MannequinMaterial />
+          </mesh>
+          {/* Athletic foot extending forward */}
+          <mesh position={[side * 0.43, -3.82, 0.22]} scale={[0.36, 0.16, 0.76]} castShadow>
+            <boxGeometry args={[1, 1, 1]} />
+            <MannequinMaterial />
+            <Edges scale={1.01} color="#1c251f" threshold={20} />
+          </mesh>
         </group>
       ))}
       <ContourRings />
@@ -254,36 +673,306 @@ function BodyBase() {
 }
 
 function AnatomyFallback({ selected, hovered, onHover, onSelect }: Omit<HumanBodyProps, "modelUrl" | "useDetailedModel">) {
-  const muscle = (id: MuscleId, position: [number, number, number], scale: [number, number, number], rotation?: [number, number, number], shape?: "sphere" | "capsule" | "box") => (
-    <Muscle key={`${id}-${position.join("-")}`} id={id} position={position} scale={scale} rotation={rotation} shape={shape} selected={selected === id} hovered={hovered === id} onHover={onHover} onSelect={onSelect} />
-  );
+  const geoms = useAnatomyGeometries();
+
   return (
     <>
       <BodyBase />
       <MuscleFiberDetail selected={selected} />
-      {muscle("chest", [-0.47, 1.66, 0.58], [0.46, 0.2, 0.17], [0.04, 0, 0.16])}
-      {muscle("chest", [0.47, 1.66, 0.58], [0.46, 0.2, 0.17], [0.04, 0, -0.16])}
-      {muscle("chest", [-0.49, 1.4, 0.62], [0.49, 0.24, 0.19], [0.04, 0, 0.1])}
-      {muscle("chest", [0.49, 1.4, 0.62], [0.49, 0.24, 0.19], [0.04, 0, -0.1])}
-      {muscle("chest", [-0.38, 1.14, 0.59], [0.4, 0.18, 0.16], [0.05, 0, 0.05])}
-      {muscle("chest", [0.38, 1.14, 0.59], [0.4, 0.18, 0.16], [0.05, 0, -0.05])}
-      {muscle("shoulders", [-1.05, 1.67, 0.03], [0.43, 0.46, 0.39])}
-      {muscle("shoulders", [1.05, 1.67, 0.03], [0.43, 0.46, 0.39])}
-      {muscle("biceps", [-1.26, 0.86, 0.28], [0.25, 0.63, 0.22], [-0.1, 0, -0.12], "capsule")}
-      {muscle("biceps", [1.26, 0.86, 0.28], [0.25, 0.63, 0.22], [-0.1, 0, 0.12], "capsule")}
-      {muscle("triceps", [-1.27, 0.83, -0.27], [0.27, 0.65, 0.21], [0.08, 0, -0.12], "capsule")}
-      {muscle("triceps", [1.27, 0.83, -0.27], [0.27, 0.65, 0.21], [0.08, 0, 0.12], "capsule")}
-      {[-0.3, 0.3].map((x) => [-0.4, 0.2, 0.76].map((y) => muscle("core", [x, y, 0.48], [0.24, 0.25, 0.18], [0, 0, x * -0.12])))}
-      {muscle("back", [-0.62, 1.01, -0.44], [0.61, 0.87, 0.17], [0, 0, -0.12])}
-      {muscle("back", [0.62, 1.01, -0.44], [0.61, 0.87, 0.17], [0, 0, 0.12])}
-      {muscle("glutes", [-0.44, -0.3, -0.42], [0.48, 0.47, 0.22])}
-      {muscle("glutes", [0.44, -0.3, -0.42], [0.48, 0.47, 0.22])}
-      {muscle("quads", [-0.43, -1.5, 0.42], [0.38, 0.84, 0.26], [0.04, 0, 0.04], "capsule")}
-      {muscle("quads", [0.43, -1.5, 0.42], [0.38, 0.84, 0.26], [0.04, 0, -0.04], "capsule")}
-      {muscle("hamstrings", [-0.43, -1.5, -0.4], [0.37, 0.85, 0.23], [0.04, 0, 0.04], "capsule")}
-      {muscle("hamstrings", [0.43, -1.5, -0.4], [0.37, 0.85, 0.23], [0.04, 0, -0.04], "capsule")}
-      {muscle("calves", [-0.43, -2.9, 0.22], [0.28, 0.68, 0.2], [-0.05, 0, 0.03], "capsule")}
-      {muscle("calves", [0.43, -2.9, 0.22], [0.28, 0.68, 0.2], [-0.05, 0, -0.03], "capsule")}
+
+      {/* 1. CHEST (Pectoralis Major) */}
+      <AnatomicalMuscleGroup id="chest" hovered={hovered === "chest"} selected={selected === "chest"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.pec}
+              position={[0, 1.42, 0.48]}
+              rotation={[0.05, 0.12, -0.03]}
+              scale={[1, 1, 1]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.pec}
+              position={[0, 1.42, 0.48]}
+              rotation={[0.05, -0.12, 0.03]}
+              scale={[-1, 1, 1]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 2. CORE (Rectus Abdominis 6-Pack, Lower V-Plate & External Obliques) */}
+      <AnatomicalMuscleGroup id="core" hovered={hovered === "core"} selected={selected === "core"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate {...plateProps} geometry={geoms.abBlock} position={[-0.15, 0.70, 0.52]} />
+            <AnatomicalPlate {...plateProps} geometry={geoms.abBlock} position={[0.15, 0.70, 0.52]} />
+            <AnatomicalPlate {...plateProps} geometry={geoms.abBlock} position={[-0.15, 0.45, 0.52]} />
+            <AnatomicalPlate {...plateProps} geometry={geoms.abBlock} position={[0.15, 0.45, 0.52]} />
+            <AnatomicalPlate {...plateProps} geometry={geoms.abBlock} position={[-0.15, 0.20, 0.51]} />
+            <AnatomicalPlate {...plateProps} geometry={geoms.abBlock} position={[0.15, 0.20, 0.51]} />
+            <AnatomicalPlate {...plateProps} geometry={geoms.lowerAb} position={[0, -0.02, 0.48]} />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.oblique}
+              position={[-0.50, 0.35, 0.36]}
+              rotation={[0.05, -0.38, -0.08]}
+              scale={[-1, 1, 1]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.oblique}
+              position={[0.50, 0.35, 0.36]}
+              rotation={[0.05, 0.38, 0.08]}
+              scale={[1, 1, 1]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 3. SHOULDERS (Deltoids - Anterior & Posterior Heads) */}
+      <AnatomicalMuscleGroup id="shoulders" hovered={hovered === "shoulders"} selected={selected === "shoulders"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.deltoid}
+              position={[-1.08, 1.62, 0.06]}
+              rotation={[0.10, -0.22, 0.18]}
+              scale={[0.85, 0.85, 0.85]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.deltoid}
+              position={[1.08, 1.62, 0.06]}
+              rotation={[0.10, 0.22, -0.18]}
+              scale={[0.85, 0.85, 0.85]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.deltoid}
+              position={[-1.05, 1.62, -0.12]}
+              rotation={[-0.10, 0.22, 0.18]}
+              scale={[0.82, 0.82, 0.82]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.deltoid}
+              position={[1.05, 1.62, -0.12]}
+              rotation={[-0.10, -0.22, -0.18]}
+              scale={[0.82, 0.82, 0.82]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 4. BICEPS (Biceps Brachii) */}
+      <AnatomicalMuscleGroup id="biceps" hovered={hovered === "biceps"} selected={selected === "biceps"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.bicep}
+              position={[-1.24, 0.86, 0.16]}
+              rotation={[-0.08, 0, -0.14]}
+              scale={[0.85, 0.95, 0.85]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.bicep}
+              position={[1.24, 0.86, 0.16]}
+              rotation={[-0.08, 0, 0.14]}
+              scale={[0.85, 0.95, 0.85]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 5. TRICEPS (Triceps Brachii) */}
+      <AnatomicalMuscleGroup id="triceps" hovered={hovered === "triceps"} selected={selected === "triceps"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.tricep}
+              position={[-1.24, 0.84, -0.16]}
+              rotation={[0.08, 0, -0.14]}
+              scale={[0.88, 0.95, 0.88]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.tricep}
+              position={[1.24, 0.84, -0.16]}
+              rotation={[0.08, 0, 0.14]}
+              scale={[0.88, 0.95, 0.88]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 6. BACK (Trapezius & Latissimus Dorsi V-Taper Wings) */}
+      <AnatomicalMuscleGroup id="back" hovered={hovered === "back"} selected={selected === "back"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.trapezius}
+              position={[0, 1.70, -0.38]}
+              rotation={[-0.06, 0, 0]}
+              scale={[0.88, 0.88, 0.88]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.lat}
+              position={[0, 0.95, -0.36]}
+              rotation={[-0.04, -0.08, 0]}
+              scale={[1, 1, 1]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.lat}
+              position={[0, 0.95, -0.36]}
+              rotation={[-0.04, 0.08, 0]}
+              scale={[-1, 1, 1]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 7. GLUTES (Gluteus Maximus Butterfly Cheeks) */}
+      <AnatomicalMuscleGroup id="glutes" hovered={hovered === "glutes"} selected={selected === "glutes"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.glute}
+              position={[0, -0.34, -0.38]}
+              rotation={[-0.08, 0.12, 0.04]}
+              scale={[-1, 1, 1]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.glute}
+              position={[0, -0.34, -0.38]}
+              rotation={[-0.08, -0.12, -0.04]}
+              scale={[1, 1, 1]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 8. QUADS (Quadriceps Femoris - Rectus, Vastus Lat, Vastus Med Teardrop) */}
+      <AnatomicalMuscleGroup id="quads" hovered={hovered === "quads"} selected={selected === "quads"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            {/* Left Thigh */}
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.quadRectus}
+              position={[-0.44, -1.45, 0.35]}
+              rotation={[0.04, 0, 0.03]}
+              scale={[0.9, 0.9, 0.9]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.vastusLat}
+              position={[-0.44, -1.45, 0.33]}
+              rotation={[0.04, -0.15, 0.03]}
+              scale={[-0.9, 0.9, 0.9]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.vastusMed}
+              position={[-0.32, -1.75, 0.36]}
+              rotation={[0.04, 0.20, -0.04]}
+              scale={[-0.9, 0.9, 0.9]}
+            />
+            {/* Right Thigh */}
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.quadRectus}
+              position={[0.44, -1.45, 0.35]}
+              rotation={[0.04, 0, -0.03]}
+              scale={[0.9, 0.9, 0.9]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.vastusLat}
+              position={[0.44, -1.45, 0.33]}
+              rotation={[0.04, 0.15, -0.03]}
+              scale={[0.9, 0.9, 0.9]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.vastusMed}
+              position={[0.32, -1.75, 0.36]}
+              rotation={[0.04, -0.20, 0.04]}
+              scale={[0.9, 0.9, 0.9]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 9. HAMSTRINGS (Biceps Femoris & Posterior Thigh Columns) */}
+      <AnatomicalMuscleGroup id="hamstrings" hovered={hovered === "hamstrings"} selected={selected === "hamstrings"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.hamstring}
+              position={[-0.44, -1.45, -0.34]}
+              rotation={[0.04, 0.06, 0.02]}
+              scale={[0.92, 0.92, 0.92]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.hamstring}
+              position={[0.44, -1.45, -0.34]}
+              rotation={[0.04, -0.06, -0.02]}
+              scale={[0.92, 0.92, 0.92]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
+
+      {/* 10. CALVES (Gastrocnemius Twin-Heads Rear & Anterior Tibialis Front) */}
+      <AnatomicalMuscleGroup id="calves" hovered={hovered === "calves"} selected={selected === "calves"} onHover={onHover} onSelect={onSelect}>
+        {({ plateProps }) => (
+          <>
+            {/* Anterior Front Calves */}
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.anteriorCalf}
+              position={[-0.43, -2.80, 0.20]}
+              rotation={[0.04, 0, 0]}
+              scale={[0.85, 0.85, 0.85]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.anteriorCalf}
+              position={[0.43, -2.80, 0.20]}
+              rotation={[0.04, 0, 0]}
+              scale={[0.85, 0.85, 0.85]}
+            />
+            {/* Posterior Twin-Head Gastrocnemius */}
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.gastrocnemius}
+              position={[-0.43, -2.75, -0.22]}
+              rotation={[-0.04, 0.04, 0]}
+              scale={[0.88, 0.88, 0.88]}
+            />
+            <AnatomicalPlate
+              {...plateProps}
+              geometry={geoms.gastrocnemius}
+              position={[0.43, -2.75, -0.22]}
+              rotation={[-0.04, -0.04, 0]}
+              scale={[0.88, 0.88, 0.88]}
+            />
+          </>
+        )}
+      </AnatomicalMuscleGroup>
     </>
   );
 }
